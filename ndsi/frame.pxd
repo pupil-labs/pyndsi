@@ -8,6 +8,15 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-import cython
+cimport cturbojpeg as turbojpeg
 
-include "frame.pxi"
+cdef class Frame:
+    cdef turbojpeg.tjhandle tj_context
+    cdef unsigned char[:] _bgr_buffer, _gray_buffer,_yuv_buffer #we use numpy for memory management.
+    cdef bint _yuv_converted, _bgr_converted
+    cdef public double timestamp
+    cdef public yuv_subsampling
+    cdef bint owns_uvc_frame
+
+    cdef yuv2bgr(self)
+    cdef jpeg2yuv(self)

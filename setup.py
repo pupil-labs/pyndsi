@@ -37,18 +37,19 @@ elif platform.system() == 'Windows':
 
 
 extensions = [
-    Extension(  name="ndsi",
-                sources=['src/ndsi.pyx'],
+    Extension(  name="*",
+                sources=['ndsi/*.pyx'],
                 include_dirs =  [numpy.get_include()]+include_dirs,
                 libraries = libs,
                 extra_link_args=extra_link_args,
                 extra_objects = [tj_lib],
                 extra_compile_args=[]
-            ),
+            )
 ]
 
 setup(  name="ndsi",
         version="0.0.1", #make sure this is the same in v4l2.pxy
         description="Remote Device Sensor Interface",
+        packages = ['ndsi'],
         ext_modules=cythonize(extensions)
 )
