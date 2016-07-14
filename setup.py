@@ -43,7 +43,7 @@ extensions = [
                 libraries = libs,
                 extra_link_args=extra_link_args,
                 extra_objects = [tj_lib],
-                extra_compile_args=[]
+                extra_compile_args=['-w'] # TODO: Remove
             )
 ]
 

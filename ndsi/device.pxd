@@ -7,3 +7,14 @@
  License details are in the file LICENSE, distributed as part of this software.
 ----------------------------------------------------------------------------------~(*)
 '''
+
+import uuid
+cimport network
+
+cdef class Device(object):
+    ''' Device representation
+    '''
+    cdef network.Network _network
+    cdef object _uuid
+    cdef unicode _name
+    cdef dict _headers

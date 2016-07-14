@@ -61,7 +61,7 @@ logger = logging.getLogger(__name__)
 __version__ = '0.0.1' #make sure this is the same in setup.py
 
 
-cdef class Frame:
+cdef class JEPG_Frame(object):
     '''
     The Frame Object holds image data and image metadata.
 

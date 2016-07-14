@@ -10,7 +10,7 @@
 
 cimport cturbojpeg as turbojpeg
 
-cdef class Frame:
+cdef class JEPG_Frame(object):
     cdef turbojpeg.tjhandle tj_context
     cdef unsigned char[:] _bgr_buffer, _gray_buffer,_yuv_buffer #we use numpy for memory management.
     cdef bint _yuv_converted, _bgr_converted
