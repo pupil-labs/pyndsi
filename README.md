@@ -1,1 +1,1 @@
-# pyrcp
+# Python Network Device Sensor Interface
