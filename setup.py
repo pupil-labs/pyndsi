@@ -50,6 +50,6 @@ extensions = [
 setup(  name="ndsi",
         version="0.0.1", #make sure this is the same in v4l2.pxy
         description="Remote Device Sensor Interface",
-        packages = ['ndsi'],
+        packages = ['ndsi','ndsi.const'],
         ext_modules=cythonize(extensions)
 )
