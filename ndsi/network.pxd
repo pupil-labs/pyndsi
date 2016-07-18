@@ -10,9 +10,10 @@
 
 cdef class Network(object):
 
-    cdef object _context
-    cdef unicode _name
-    cdef object _uuid
-    cdef object _headers
-    cdef object _thread_pipe
-    cdef dict _devices
+    cdef object context
+    cdef object thread_pipe
+    cdef readonly unicode name
+    cdef readonly object uuid
+    cdef readonly object headers
+    cdef readonly list callbacks
+    cdef readonly dict devices

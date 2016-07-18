@@ -8,13 +8,15 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-import uuid
-cimport network
+from network cimport Network
 
 cdef class Device(object):
     ''' Device representation
     '''
-    cdef network.Network _network
-    cdef object _uuid
-    cdef unicode _name
-    cdef dict _headers
+    cdef readonly Network network
+    cdef readonly object uuid
+    cdef readonly unicode name
+    cdef readonly dict headers
+
+    cdef readonly list callbacks
+    cdef readonly dict sensors

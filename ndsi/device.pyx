@@ -7,6 +7,7 @@
  License details are in the file LICENSE, distributed as part of this software.
 ----------------------------------------------------------------------------------~(*)
 '''
+from .const.event import *
 
 cdef class Device(object):
     ''' Device representation
@@ -15,21 +16,22 @@ cdef class Device(object):
     def __cinit__(self, *args, **kwargs):
         pass
 
-    def __init__(self, network, uuid, name, headers):
-        self._network = network
-        self._uuid = uuid
-        self._name = name
-        self._headers = headers
+    def __init__(self, network, uuid, name, headers=(), callbacks=(), *args, **kwargs):
+        self.network = network
+        self.uuid = uuid
+        self.name = name
+        self.headers = headers
+        self.sensors = {}
+        self.callbacks = [self.on_event]+list(callbacks)
 
     def __str__(self):
         return '<%s %s [%s]>'%(__name__, self.name, self.uuid.hex)
 
-    property name:
-        def __get__(self):
-            return self._name
-    property uuid:
-        def __get__(self):
-            return self._uuid
-    property headers:
-        def __get__(self):
-            return self._headers
+    def on_event(self, caller, name, event):
+        if name == EVENT_SENSOR_ADDED:
+            self.sensors.update(event)
+        elif name == EVENT_SENSOR_REMOVED:
+            try:
+                del self.sensors[event]
+            except KeyError:
+                pass
