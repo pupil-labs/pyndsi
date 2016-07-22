@@ -8,12 +8,12 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-import zmq, time, logging
+import zmq, time, logging, sys, traceback as tb, json as serial
 from pyre import Pyre, PyreEvent, zhelper
 logger = logging.getLogger(__name__)
 
-from device cimport Device
-from .const.event import *
+from . import NDS_PROTOCOL_VERSION
+from sensor cimport Sensor
 
 cdef class Network(object):
     ''' Communication node
@@ -25,109 +25,93 @@ cdef class Network(object):
 
     def __init__(self, context=None, name=None, headers=(), callbacks=()):
         self.name = name
-        self.uuid = None
-        self.headers = headers
-        self.thread_pipe = None
+        self.headers = [('nds-protocol-version', NDS_PROTOCOL_VERSION)]+list(headers)
+        self.pyre_node = None
         self.context = context or zmq.Context()
-        self.devices = {}
+        self.sensors = {}
         self.callbacks = [self.on_event]+list(callbacks)
 
     def start(self):
-        if self.thread_pipe:
-            logger.warning('Network has already started.')
-        else:
-            logger.debug('Starting network...')
-            self.thread_pipe = zhelper.zthread_fork(self.context, self._thread_loop)
+        # Setup node
+        logger.debug('Starting network...')
+        self.pyre_node = Pyre(self.name)
+        self.name = self.pyre_node.name()
+        for header in self.headers:
+            self.pyre_node.set_header(*header)
+        self.pyre_node.join(self.group)
+        self.pyre_node.start()
 
     def stop(self):
-        if not self.thread_pipe:
-            logger.warning('Network has already stopped.')
+        logger.debug('Stopping network...')
+        self.pyre_node.leave(self.group)
+        self.pyre_node.stop()
+        self.pyre_node = None
+
+    def handle_event(self):
+        event = PyreEvent(self.pyre_node)
+        uuid = event.peer_uuid
+        if event.type == 'SHOUT' or event.type == 'WHISPER':
+            try:
+                msg = serial.loads(event.msg.pop(0))
+                msg['subject']
+                key = '%s@%s'%(msg['sensor_name'], event.peer_uuid.hex)
+                msg['sensor_id'] = key
+                msg['host_uuid'] = unicode(event.peer_uuid.hex)
+                msg['host_name'] = event.peer_name
+            except (ValueError, KeyError):
+                logger.warning('Malformatted message: %s'%msg)
+            except Exception:
+                tb.print_exc()
+            else:
+                self.execute_callbacks(msg)
+        elif event.type == 'EXIT':
+            gone_peer = event.peer_uuid.hex
+            for sensor_id in self.sensors.keys():
+                host = sensor_id.split('@')[-1]
+                if host == gone_peer:
+                    self.execute_callbacks({
+                        'subject'    : 'detach',
+                        'sensor_id'  : sensor_id,
+                        'sensor_name': self.sensors[sensor_id]['sensor_name'],
+                        'host_uuid'  : self.sensors[sensor_id]['host_uuid'],
+                        'host_name'  : self.sensors[sensor_id]['host_name']
+                    })
         else:
-            logger.debug('Stopping network...')
-            self.thread_pipe.send('$TERM')
-            while self.thread_pipe:
-                time.sleep(.1)
+            logger.debug('Dropping %s'%event)
 
     def execute_callbacks(self, event):
         for callback in self.callbacks:
             callback(self, event)
 
-    def device(self, callbacks=()):
-        return Device(self, *args, **kwargs)
-
-    def __str__(self):
-        return '<%s %s [%s]>'%(__name__, self.name, self.uuid.hex)
+    def sensor(self, sensor_id, callbacks=()):
+        try:
+            sensor = Sensor(context=self.context, callbacks=callbacks, **self.sensors[sensor_id])
+            return sensor
+        except KeyError:
+            raise ValueError('"%s" is not a available sensor id.'%sensor_id)
 
     def on_event(self, caller, event):
-        if event['type'] == EVENT_DEVICE_ADDED:
-            self.devices.update(event['device'])
-        elif event['type'] == EVENT_DEVICE_REMOVED:
+        if   event['subject'] == 'attach':
+            subject_less = event.copy()
+            del subject_less['subject']
+            self.sensors.update({ event['sensor_id']: subject_less })
+        elif event['subject'] == 'detach':
             try:
-                del self.devices[event['device_uuid']]
+                del self.sensors[event['sensor_id']]
             except KeyError:
                 pass
 
+    def __str__(self):
+        return '<%s %s [%s]>'%(__name__, self.name, self.pyre_node.uuid().hex)
+
+    property has_events:
+        def __get__(self):
+            return self.running and self.pyre_node.socket().get(zmq.EVENTS) & zmq.POLLIN
+
     property running:
         def __get__(self):
-            return self.thread_pipe is not None
+            return bool(self.pyre_node)
 
     property group:
         def __get__(self):
             return 'pupil-mobile'
-
-##############################################################################
-##                              Background                                  ##
-##############################################################################
-
-    def _thread_loop(self,context,pipe):
-        try:
-            # Setup node
-            node = Pyre(self.name)
-            self.name = node.name() 
-            self.uuid = node.uuid()
-            for header in self.headers:
-                node.set_header(*header)
-            node.join(self.group)
-            node.start()
-
-            # Configure poller
-            poller = zmq.Poller()
-            poller.register(pipe, zmq.POLLIN)
-            poller.register(node.socket(), zmq.POLLIN)
-
-            # Event loop
-            while True:
-                # Check for readable sockets
-                readable = dict(poller.poll())
-
-                # Network input
-                if node.socket() in readable:
-                    event = PyreEvent(node)
-                    if event.type == 'JOIN' and event.group == self.group:
-                        self.execute_callbacks({
-                            'type': EVENT_DEVICE_ADDED,
-                            'device': description
-                        })
-                    elif (event.type == 'LEAVE' and \
-                          event.group == self.group) or \
-                          event.type == 'EXIT':
-                        self.execute_callbacks({
-                            'type': EVENT_DEVICE_REMOVED,
-                            'device_uuid': event.peer_uuid
-                        })
-
-                # Local input
-                if pipe in readable:
-                    frame = pipe.recv_multipart()
-                    command = frame.pop(0).decode('UTF-8')
-                    if command == '$TERM':
-                        break
-                    else:
-                        logger.warning('Unknown local command: %s'%command)
-        except Exception as e:
-            raise e
-        finally:
-            # Shutdown node
-            node.leave(self.group)
-            node.stop()
-            self.thread_pipe = None

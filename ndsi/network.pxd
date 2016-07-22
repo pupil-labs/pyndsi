@@ -11,9 +11,8 @@
 cdef class Network(object):
 
     cdef object context
-    cdef object thread_pipe
-    cdef readonly unicode name
-    cdef readonly object uuid
-    cdef readonly object headers
+    cdef unicode name
+    cdef object headers
     cdef readonly list callbacks
-    cdef readonly dict devices
+    cdef readonly dict sensors
+    cdef readonly object pyre_node

@@ -8,7 +8,8 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
+NDS_PROTOCOL_VERSION = '0.2.5'
+
 from network import Network
-from device import Device
-import sensor
+from sensor  import Sensor
 import frame
