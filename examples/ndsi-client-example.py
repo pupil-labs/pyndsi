@@ -1,4 +1,4 @@
-import logging, time, signal
+import logging, time, signal, sys
 logging.basicConfig(
     format='%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s',
     datefmt='%H:%M:%S',
@@ -12,7 +12,7 @@ import ndsi
 sensors = {}
 
 def on_sensor_event(sensor, event):
-    logger.debug('%s: %s'%(sensor, repr(event)))
+    logger.debug('%s [%s] %s %s'%(sensor, event['seq'], event['subject'], event['control_id']))
 
 def on_network_event(network, event):
     if event['subject'] == 'attach':
@@ -37,3 +37,4 @@ try:
         time.sleep(.1)
 except (KeyboardInterrupt, SystemExit):
     n.stop()
+    sys.exit()

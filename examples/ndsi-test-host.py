@@ -1,5 +1,5 @@
 from pyre import Pyre, zhelper, PyreEvent
-import zmq, time, json, logging, traceback as tb, uuid
+import zmq, time, json, logging, traceback as tb, uuid, sys
 
 logging.basicConfig(
     format='%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s',
@@ -26,6 +26,7 @@ class NDSITestHost(object):
         super(NDSITestHost, self).__init__()
         self.pipe = None
         self.state = {}
+        self.sequences = {}
 
     @property
     def running(self):
@@ -75,6 +76,7 @@ class NDSITestHost(object):
             sensor = sp.recv_pyobj()
             name = sensor['sensor_name']
             sensor_pipes[name] = sp
+            self.sequences[name] = 0
             poller.register(sp, zmq.POLLIN)
             self.state.update({name: sensor.copy()})
             sensor['subject'] = 'attach'
@@ -87,9 +89,9 @@ class NDSITestHost(object):
                 sensor_pipes[sensor_name].close()
             del sensor_pipes[sensor_name]
             del self.state[sensor_name]
-            n.shout(json.dumps({
+            del self.sequences[sensor_name]
+            n.shout('pupil-mobile', json.dumps({
                 "subject"     : "detach",
-                "host_uuid"   : n.uuid,
                 "sensor_name" : sensor_name
             }))
 
@@ -162,6 +164,41 @@ class NDSITestHost(object):
         logger.debug('Started sensor <%s>'%repr(sensor))
 
         pipe.send_pyobj(sensor)
+        this_sensor = sensor['sensor_name']
+
+        def sensor_publish_control(control_id, changes=None):
+            logger.debug('Publishing control change for <%s>'%control_id)
+            changes = changes or controls[control_id]
+            seq = self.sequences[this_sensor]
+            self.sequences[this_sensor] += 1
+            self.sequences[this_sensor] %= 65535
+            serial = json.dumps({
+                'subject'   : 'update',
+                'control_id': control_id,
+                'changes'   : changes,
+                'seq'       : seq
+            })
+            note.send(serial)
+
+        def sensor_set_control(control_id, control):
+            controls.update({control_id: control})
+            sensor_publish_control(control_id, changes=control)
+
+        def sensor_set_control_value(control_id, value):
+            controls[control_id]['value'] = value
+            sensor_publish_control(control_id, changes={'value': value})
+
+        def sensor_publish_error(error, control_id=None):
+            seq = self.sequences[this_sensor]
+            self.sequences[this_sensor] += 1
+            self.sequences[this_sensor] %= 65535
+            serial = json.dumps({
+                'subject'   : 'error',
+                'control_id': control_id,
+                'info'      : error,
+                'seq'       : seq
+            })
+            note.send(serial)
 
         try:
             while(True):
@@ -177,13 +214,13 @@ class NDSITestHost(object):
                         logger.debug('%s received command: %s'%(sensor['sensor_name'],repr(client_cmd)))
                         if client_cmd['action'] == 'refresh_controls':
                             for cid in controls:
-                                self.sensor_publish_control(note,controls,cid)
+                                sensor_publish_control(cid)
                         elif client_cmd['action'] == 'set_control_value':
                             try:
-                                self.sensor_set_control_value(note,controls, client_cmd['control_id'], client_cmd['value'])
+                                sensor_set_control_value(client_cmd['control_id'], client_cmd['value'])
                             except KeyError:
                                 logger.warning('Malformed command: %s'%e)
-                                self.sensor_publish_error(note, {'error_no': -1, 'error_id': 'Malformed command'})
+                                sensor_publish_error({'error_no': -1, 'error_id': 'Malformed command'})
                         else:
                             raise NotImplementedError('<%s> is not implemented'%client_cmd['action'])
 
@@ -196,38 +233,13 @@ class NDSITestHost(object):
                         control_id = msg.pop(0)
                         json_msg = msg.pop(0)
                         ctrl = json.loads(json_msg)
-                        self.sensor_set_control(note,controls,control_id, ctrl)
+                        sensor_set_control(control_id, ctrl)
 
         except Exception:
             tb.print_exc()
         finally:
             pipe.send('STOP')
             logger.debug('Shutting down sensor <%s>'%repr(sensor))
-
-    def sensor_set_control(self,notify_sock, all_controls, control_id, control):
-        all_controls.update({control_id: control})
-        self.sensor_publish_control(notify_sock, all_controls, control_id, changes=control)
-
-    def sensor_set_control_value(self,notify_sock, all_controls, control_id, value):
-        all_controls[control_id]['value'] = value
-        self.sensor_publish_control(notify_sock, all_controls, control_id, changes={'value': value})
-
-    def sensor_publish_control(self,notify_sock, all_controls, control_id, changes=None):
-        logger.debug('Publishing control change for <%s>'%control_id)
-        changes = changes or all_controls[control_id]
-        serial = json.dumps({
-            'subject'   : 'update',
-            'control_id': control_id,
-            'changes'   : changes
-        })
-        notify_sock.send(serial)
-    def sensor_publish_error(self,notify_sock, error, control_id=None):
-        serial = json.dumps({
-            'subject': 'error',
-            'control_id': control_id,
-            'info': error
-        })
-        notify_sock.send(serial)
 
     def bind_socket(self, ctx, sock_type, url, n):
         sock = ctx.socket(sock_type)
@@ -273,3 +285,4 @@ if __name__ == '__main__':
         host.stop()
     finally:
         logger.debug(host)
+        sys.exit()
