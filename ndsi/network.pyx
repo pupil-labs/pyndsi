@@ -54,8 +54,6 @@ cdef class Network(object):
             try:
                 msg = serial.loads(event.msg.pop(0))
                 msg['subject']
-                key = '%s@%s'%(msg['sensor_name'], event.peer_uuid.hex)
-                msg['sensor_id'] = key
                 msg['host_uuid'] = unicode(event.peer_uuid.hex)
                 msg['host_name'] = event.peer_name
             except (ValueError, KeyError):
@@ -66,15 +64,15 @@ cdef class Network(object):
                 self.execute_callbacks(msg)
         elif event.type == 'EXIT':
             gone_peer = event.peer_uuid.hex
-            for sensor_id in self.sensors.keys():
-                host = sensor_id.split('@')[-1]
+            for sensor_uuid in self.sensors.keys():
+                host = self.sensors[sensor_uuid]['host_uuid']
                 if host == gone_peer:
                     self.execute_callbacks({
                         'subject'    : 'detach',
-                        'sensor_id'  : sensor_id,
-                        'sensor_name': self.sensors[sensor_id]['sensor_name'],
-                        'host_uuid'  : self.sensors[sensor_id]['host_uuid'],
-                        'host_name'  : self.sensors[sensor_id]['host_name']
+                        'sensor_uuid'  : sensor_uuid,
+                        'sensor_name': self.sensors[sensor_uuid]['sensor_name'],
+                        'host_uuid'  : host,
+                        'host_name'  : self.sensors[sensor_uuid]['host_name']
                     })
         else:
             logger.debug('Dropping %s'%event)
@@ -83,21 +81,21 @@ cdef class Network(object):
         for callback in self.callbacks:
             callback(self, event)
 
-    def sensor(self, sensor_id, callbacks=()):
+    def sensor(self, sensor_uuid, callbacks=()):
         try:
-            sensor = Sensor(context=self.context, callbacks=callbacks, **self.sensors[sensor_id])
+            sensor = Sensor(context=self.context, callbacks=callbacks, **self.sensors[sensor_uuid])
             return sensor
         except KeyError:
-            raise ValueError('"%s" is not a available sensor id.'%sensor_id)
+            raise ValueError('"%s" is not a available sensor id.'%sensor_uuid)
 
     def on_event(self, caller, event):
         if   event['subject'] == 'attach':
             subject_less = event.copy()
             del subject_less['subject']
-            self.sensors.update({ event['sensor_id']: subject_less })
+            self.sensors.update({ event['sensor_uuid']: subject_less })
         elif event['subject'] == 'detach':
             try:
-                del self.sensors[event['sensor_id']]
+                del self.sensors[event['sensor_uuid']]
             except KeyError:
                 pass
 

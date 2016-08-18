@@ -19,7 +19,7 @@ cdef class Sensor(object):
     cdef readonly unicode host_uuid
     cdef readonly unicode host_name
     cdef readonly unicode name
-    cdef readonly unicode id
+    cdef readonly unicode uuid
     cdef readonly unicode type
     cdef readonly unicode notify_endpoint
     cdef readonly unicode command_endpoint

@@ -16,13 +16,13 @@ def on_sensor_event(sensor, event):
 
 def on_network_event(network, event):
     if event['subject'] == 'attach':
-        sensor = network.sensor(event['sensor_id'], callbacks=(on_sensor_event,))
+        sensor = network.sensor(event['sensor_uuid'], callbacks=(on_sensor_event,))
         logger.debug('Linking sensor %s...'%sensor)
-        sensors[event['sensor_id']] = sensor
+        sensors[event['sensor_uuid']] = sensor
     if event['subject'] == 'detach':
-        logger.debug('Unlinking sensor %s...'%event['sensor_id'])
-        sensors[event['sensor_id']].unlink()
-        del sensors[event['sensor_id']]
+        logger.debug('Unlinking sensor %s...'%event['sensor_uuid'])
+        sensors[event['sensor_uuid']].unlink()
+        del sensors[event['sensor_uuid']]
 
 n = ndsi.Network(callbacks=(on_network_event,))
 n.start()

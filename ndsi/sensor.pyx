@@ -25,7 +25,7 @@ cdef class Sensor(object):
     def __init__(self,
             host_uuid,
             host_name,
-            sensor_id,
+            sensor_uuid,
             sensor_name,
             sensor_type,
             notify_endpoint,
@@ -39,7 +39,7 @@ cdef class Sensor(object):
         self.host_name = host_name
         self.name = sensor_name
         self.type = sensor_type
-        self.id = sensor_id or '%s@%s'%(sensor_name,host_uuid)
+        self.uuid = sensor_uuid
         self.notify_endpoint = notify_endpoint
         self.command_endpoint = command_endpoint
         self.data_endpoint = data_endpoint
@@ -47,7 +47,7 @@ cdef class Sensor(object):
 
         self.notify_sub = context.socket(zmq.SUB)
         self.notify_sub.connect(self.notify_endpoint)
-        self.notify_sub.setsockopt(zmq.SUBSCRIBE, '')
+        self.notify_sub.setsockopt(zmq.SUBSCRIBE, str(self.uuid))
 
         self.command_push = context.socket(zmq.PUSH)
         self.command_push.connect(self.command_endpoint)
@@ -55,7 +55,7 @@ cdef class Sensor(object):
         if self.data_endpoint:
             self.data_sub = context.socket(zmq.SUB)
             self.data_sub.connect(self.data_endpoint)
-            self.data_sub.setsockopt(zmq.SUBSCRIBE, '')
+            self.data_sub.setsockopt(zmq.SUBSCRIBE, str(self.uuid))
         else:
             self.data_sub = None
 
@@ -91,9 +91,11 @@ cdef class Sensor(object):
         return '<%s %s@%s [%s]>'%(__name__, self.name, self.host_name, self.type)
 
     def handle_notification(self):
-        msg = self.notify_sub.recv()
+        msg = self.notify_sub.recv_multipart()
         try:
-            notification = serial.loads(msg)
+            if msg[0] != self.uuid:
+                raise ValueError('Message was destined for %s but was recieved by %s'%(msg[0],self.uuid))
+            notification = serial.loads(msg[1])
             notification['subject']
         except Exception:
             tb.print_exc()
@@ -106,8 +108,12 @@ cdef class Sensor(object):
 
     def on_notification(self, caller, notification):
         if   notification['subject'] == 'update':
+            class UnsettableDict(dict):
+                def __setitem__(self, key, value):
+                    raise ValueError('Dictionary is read-only. Use Sensor.set_control_value instead.')
+
             self.controls.update({
-                notification['control_id']: notification['changes']
+                notification['control_id']: UnsettableDict(notification['changes'])
             })
         elif notification['subject'] == 'remove':
             try:
@@ -123,7 +129,15 @@ cdef class Sensor(object):
 
     def refresh_controls(self):
         cmd = serial.dumps({'action': 'refresh_controls'})
-        self.command_push.send(cmd)
+        self.command_push.send_multipart([str(self.uuid), cmd])
+
+    def reset_all_control_values(self):
+        for control_id in self.controls:
+            self.reset_control_value(control_id)
+
+    def reset_control_value(self, control_id):
+        value = self.controls[control_id]['def']
+        self.set_control_value(control_id, value)
 
     def set_control_value(self, control_id, value):
         cmd = serial.dumps({
@@ -131,20 +145,20 @@ cdef class Sensor(object):
             "control_id": control_id,
             "value"     : value
         })
-        self.command_push.send(cmd)
+        self.command_push.send_multipart([str(self.uuid), cmd])
 
     def stream_on(self):
         cmd = serial.dumps({'action': 'stream_on'})
-        self.command_push.send(cmd)
+        self.command_push.send_multipart([str(self.uuid), cmd])
 
     def stream_off(self):
         cmd = serial.dumps({'action': 'stream_off'})
-        self.command_push.send(cmd)
+        self.command_push.send_multipart([str(self.uuid), cmd])
 
     def record_on(self):
         cmd = serial.dumps({'action': 'record_on'})
-        self.command_push.send(cmd)
+        self.command_push.send_multipart([str(self.uuid), cmd])
 
     def record_off(self):
         cmd = serial.dumps({'action': 'record_off'})
-        self.command_push.send(cmd)
+        self.command_push.send_multipart([str(self.uuid), cmd])

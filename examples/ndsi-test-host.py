@@ -50,11 +50,11 @@ class NDSITestHost(object):
     def attach(self,sensor):
         self.pipe.send_multipart(['ATTACH SENSOR', json.dumps(sensor)])
 
-    def detach(self,sensor_name):
-        self.pipe.send_multipart(['DETACH SENSOR', sensor_name])
+    def detach(self,sensor_uuid):
+        self.pipe.send_multipart(['DETACH SENSOR', sensor_uuid])
 
-    def set_control(self, sensor_name, control_id, control):
-        self.pipe.send_multipart(['TELL SENSOR', sensor_name, 'SET CONTROL', control_id, json.dumps(control)])
+    def set_control(self, sensor_uuid, control_id, control):
+        self.pipe.send_multipart(['TELL SENSOR', sensor_uuid, 'SET CONTROL', control_id, json.dumps(control)])
 
     def whisper_sensor_state(self, node, peer_uuid):
         for sensor in self.state.values():
@@ -74,7 +74,7 @@ class NDSITestHost(object):
             logger.debug('Attaching <%s>...', sensor)
             sp = zhelper.zthread_fork(ctx, self.sensor_task, n, sensor)
             sensor = sp.recv_pyobj()
-            name = sensor['sensor_name']
+            name = sensor['sensor_uuid']
             sensor_pipes[name] = sp
             self.sequences[name] = 0
             poller.register(sp, zmq.POLLIN)
@@ -82,17 +82,17 @@ class NDSITestHost(object):
             sensor['subject'] = 'attach'
             n.shout('pupil-mobile', json.dumps(sensor))
 
-        def _detach_sensor(sensor_name,send_term=False):
-            logger.debug('Detaching %s...', sensor_name)
+        def _detach_sensor(sensor_uuid,send_term=False):
+            logger.debug('Detaching %s...', sensor_uuid)
             if not send_term:
-                sensor_pipes[sensor_name].send('$TERM')
-                sensor_pipes[sensor_name].close()
-            del sensor_pipes[sensor_name]
-            del self.state[sensor_name]
-            del self.sequences[sensor_name]
+                sensor_pipes[sensor_uuid].send('$TERM')
+                sensor_pipes[sensor_uuid].close()
+            del sensor_pipes[sensor_uuid]
+            del self.state[sensor_uuid]
+            del self.sequences[sensor_uuid]
             n.shout('pupil-mobile', json.dumps({
                 "subject"     : "detach",
-                "sensor_name" : sensor_name
+                "sensor_uuid" : sensor_uuid
             }))
 
         try:
@@ -114,24 +114,24 @@ class NDSITestHost(object):
                         sensor = msg.pop(0)
                         _attach_sensor(sensor)
                     elif cmd == 'DETACH SENSOR':
-                        sensor_name = msg.pop(0)
-                        _detach_sensor(sensor_name)
+                        sensor_uuid = msg.pop(0)
+                        _detach_sensor(sensor_uuid)
                     elif cmd == 'TELL SENSOR':
                         # forward message
-                        sensor_name = msg.pop(0)
-                        if sensor_name in sensor_pipes:
-                            logger.debug('Forwarding to %s...'%sensor_name)
-                            sp = sensor_pipes[sensor_name]
+                        sensor_uuid = msg.pop(0)
+                        if sensor_uuid in sensor_pipes:
+                            logger.debug('Forwarding to %s...'%sensor_uuid)
+                            sp = sensor_pipes[sensor_uuid]
                             sp.send_multipart(msg)
                         else:
-                            logger.warning('Could not tell %s.'%sensor_name)
+                            logger.warning('Could not tell %s.'%sensor_uuid)
                 else:
-                    for sensor_name in sensor_pipes.keys():
-                        sp = sensor_pipes[sensor_name]
+                    for sensor_uuid in sensor_pipes.keys():
+                        sp = sensor_pipes[sensor_uuid]
                         if sp in items:
                             sp_cmd = sp.recv()
                             if sp_cmd == 'STOP':
-                                _detach_sensor(sensor_name,send_term=True)
+                                _detach_sensor(sensor_uuid,send_term=True)
 
 
         except Exception:
@@ -165,20 +165,21 @@ class NDSITestHost(object):
 
         pipe.send_pyobj(sensor)
         this_sensor = sensor['sensor_name']
+        this_sensor_uuid = sensor['sensor_uuid']
 
         def sensor_publish_control(control_id, changes=None):
             logger.debug('Publishing control change for <%s>'%control_id)
             changes = changes or controls[control_id]
-            seq = self.sequences[this_sensor]
-            self.sequences[this_sensor] += 1
-            self.sequences[this_sensor] %= 65535
+            seq = self.sequences[this_sensor_uuid]
+            self.sequences[this_sensor_uuid] += 1
+            self.sequences[this_sensor_uuid] %= 65535
             serial = json.dumps({
                 'subject'   : 'update',
                 'control_id': control_id,
                 'changes'   : changes,
                 'seq'       : seq
             })
-            note.send(serial)
+            note.send_multipart([str(this_sensor_uuid),serial])
 
         def sensor_set_control(control_id, control):
             controls.update({control_id: control})
@@ -189,27 +190,29 @@ class NDSITestHost(object):
             sensor_publish_control(control_id, changes={'value': value})
 
         def sensor_publish_error(error, control_id=None):
-            seq = self.sequences[this_sensor]
-            self.sequences[this_sensor] += 1
-            self.sequences[this_sensor] %= 65535
+            seq = self.sequences[this_sensor_uuid]
+            self.sequences[this_sensor_uuid] += 1
+            self.sequences[this_sensor_uuid] %= 65535
             serial = json.dumps({
                 'subject'   : 'error',
                 'control_id': control_id,
                 'info'      : error,
                 'seq'       : seq
             })
-            note.send(serial)
+            note.send_multipart([str(this_sensor_uuid),serial])
 
         try:
             while(True):
                 items = dict(poller.poll())
                 if cmd in items:
-                    msg = cmd.recv()
+                    msg = cmd.recv_multipart()
                     try:
-                        client_cmd = json.loads(msg)
+                        if msg[0] != this_sensor_uuid:
+                            raise ValueError('Message was destined for %s but was recieved by %s'%(msg[0],this_sensor_uuid))
+                        client_cmd = json.loads(msg[1])
                         client_cmd['action']
                     except:
-                        logger.warning('Invalid message: %s', msg)
+                        logger.warning('Sensor %s: Invalid message: %s'%(this_sensor_uuid, msg))
                     else:
                         logger.debug('%s received command: %s'%(sensor['sensor_name'],repr(client_cmd)))
                         if client_cmd['action'] == 'refresh_controls':
@@ -252,9 +255,12 @@ class NDSITestHost(object):
         return sock, ':'.join(public_addr+[port])
 
 if __name__ == '__main__':
+    uuid_no1 = uuid.uuid4().hex
+    uuid_no2 = uuid.uuid4().hex
     config = [
         {
             'sensor_name': 'sensor0',
+            'sensor_uuid': uuid_no1,
             'sensor_type': 'TEST',
             'controls': {
                 'ctrl_id0': make_control('0','float','0','1','0','TC0',None),
@@ -263,6 +269,7 @@ if __name__ == '__main__':
         },
         {
             'sensor_name': 'sensor1',
+            'sensor_uuid': uuid_no2,
             'sensor_type': 'TEST'
         }
     ]
@@ -276,7 +283,7 @@ if __name__ == '__main__':
         'ctrl_id3': make_control('0','integer','0','100','0','TC1',None),
     }
     for cid, ctrl in additional_controls.iteritems():
-        host.set_control('sensor1', cid, ctrl)
+        host.set_control(uuid_no2, cid, ctrl)
 
     try:
         while host.running:
