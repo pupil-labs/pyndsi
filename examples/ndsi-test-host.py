@@ -1,6 +1,8 @@
 from pyre import Pyre, zhelper, PyreEvent
 import zmq, time, json, logging, traceback as tb, uuid, sys
 
+from fake_source import Fake_Source
+
 logging.basicConfig(
     format='%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s',
     datefmt='%H:%M:%S',
@@ -9,12 +11,13 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 logging.getLogger('pyre').setLevel(logging.WARNING)
 
-def make_control(value,dtype,min_v,max_v,def_v,cap,selector):
+def make_control(value,dtype,min_v,max_v,res_v,def_v,cap,selector):
     return {
         "value"   : value,
         "dtype"   : dtype,
         "min"     : min_v,
         "max"     : max_v,
+        "res"     : res_v,
         "def"     : def_v,
         "caption" : cap,
         "selector": selector
@@ -22,11 +25,12 @@ def make_control(value,dtype,min_v,max_v,def_v,cap,selector):
 
 class NDSITestHost(object):
     """docstring for NDSITestHost"""
-    def __init__(self):
+    def __init__(self,host_name=None):
         super(NDSITestHost, self).__init__()
         self.pipe = None
         self.state = {}
         self.sequences = {}
+        self.host_name = host_name or 'Test Host'
 
     @property
     def running(self):
@@ -64,17 +68,17 @@ class NDSITestHost(object):
 
     def host_task(self, ctx, pipe):
         sensor_pipes = {}
-        n = Pyre("TestHost")
+        n = Pyre(self.host_name)
         n.start()
         poller = zmq.Poller()
         poller.register(pipe, zmq.POLLIN)
         poller.register(n.socket(), zmq.POLLIN)
 
         def _attach_sensor(sensor):
-            logger.debug('Attaching <%s>...', sensor)
             sp = zhelper.zthread_fork(ctx, self.sensor_task, n, sensor)
             sensor = sp.recv_pyobj()
             name = sensor['sensor_uuid']
+            logger.debug('Attaching %s...', name)
             sensor_pipes[name] = sp
             self.sequences[name] = 0
             poller.register(sp, zmq.POLLIN)
@@ -150,11 +154,15 @@ class NDSITestHost(object):
             controls = {}
 
         note, note_url = self.bind_socket(ctx, zmq.PUB , generic_url, network)
+        data, data_url = self.bind_socket(ctx, zmq.PUB , generic_url, network)
         cmd , cmd_url  = self.bind_socket(ctx, zmq.PULL, generic_url, network)
+
+        data_source = Fake_Source()
 
         sensor.update({
             'notify_endpoint': note_url,
-            'command_endpoint': cmd_url
+            'command_endpoint': cmd_url,
+            'data_endpoint': data_url
         })
 
         poller = zmq.Poller()
@@ -168,7 +176,7 @@ class NDSITestHost(object):
         this_sensor_uuid = sensor['sensor_uuid']
 
         def sensor_publish_control(control_id, changes=None):
-            logger.debug('Publishing control change for <%s>'%control_id)
+            logger.debug('Publishing control change for <%s: %s>'%(this_sensor, control_id))
             changes = changes or controls[control_id]
             seq = self.sequences[this_sensor_uuid]
             self.sequences[this_sensor_uuid] += 1
@@ -201,9 +209,14 @@ class NDSITestHost(object):
             })
             note.send_multipart([str(this_sensor_uuid),serial])
 
+        def sensor_publish_data_frame():
+            frame = data_source.get_frame()
+            meta_data = json.dumps(frame.meta_data)
+            data.send_multipart([str(this_sensor_uuid), meta_data, frame.img])
+
         try:
             while(True):
-                items = dict(poller.poll())
+                items = dict(poller.poll(timeout=0))
                 if cmd in items:
                     msg = cmd.recv_multipart()
                     try:
@@ -238,6 +251,8 @@ class NDSITestHost(object):
                         ctrl = json.loads(json_msg)
                         sensor_set_control(control_id, ctrl)
 
+                sensor_publish_data_frame()
+
         except Exception:
             tb.print_exc()
         finally:
@@ -261,29 +276,42 @@ if __name__ == '__main__':
         {
             'sensor_name': 'sensor0',
             'sensor_uuid': uuid_no1,
-            'sensor_type': 'TEST',
+            'sensor_type': 'video',
             'controls': {
-                'ctrl_id0': make_control('0','float','0','1','0','TC0',None),
-                'ctrl_id1': make_control('0','integer','0','100','0','TC1',None),
+                'ctrl_id0': make_control(0.,'bool',0.,1.,None,1.,'Bool Example',None),
+                'ctrl_id1': make_control(0,'integer',0,100,5,42,'Integer Example',None)
             }
         },
         {
             'sensor_name': 'sensor1',
             'sensor_uuid': uuid_no2,
-            'sensor_type': 'TEST'
+            'sensor_type': 'video',
+            'controls': {
+                'ctrl_id0': make_control(0,'selector',None,None,None,1,'Selector Example',
+                    [{
+                        "id"      : 0,
+                        "value"   : 0,
+                        "caption" : 'Zero'
+                    },
+                    {
+                        "id"      : 1,
+                        "value"   : 1,
+                        "caption" : 'One'
+                    }])
+            }
         }
     ]
-    host = NDSITestHost()
+    host = NDSITestHost(host_name=(sys.argv[1] if len(sys.argv)>1 else None))
     host.start(config)
     logger.debug(host)
 
     time.sleep(5)
     additional_controls = {
-        'ctrl_id2': make_control('0','float','0','1','0','TC0',None),
-        'ctrl_id3': make_control('0','integer','0','100','0','TC1',None),
+        'ctrl_id2': make_control(0.,'float',0.,1.,.05,.75,'Float Example',None),
+        'ctrl_id3': make_control("Initial value",'string',None,None,None,"Default",'String Example',None),
     }
     for cid, ctrl in additional_controls.iteritems():
-        host.set_control(uuid_no2, cid, ctrl)
+        host.set_control(uuid_no1, cid, ctrl)
 
     try:
         while host.running:

@@ -1,4 +1,4 @@
-# Network Device Sensor Interface Protocol Specification v2.7
+# Network Device Sensor Interface Protocol Specification v2.8
 
 Status: draft
 
@@ -153,9 +153,10 @@ error = {
 control_info = {
     "value"           : <value>,
     "dtype"           : <dtype>,
-    "min"             : <number> or null,
-    "max"             : <number> or null,
-    "def"             : <value>,
+    "min"             : <number> or null, // minimal value
+    "max"             : <number> or null, // maximal value
+    "res"             : <number> or null, // resolution or step size
+    "def"             : <value>,          // default value
     "caption"         : <String>,
     "selector"        : [<selector_desc>,...] XOR [<bitmap_desc>,...] XOR null
 }

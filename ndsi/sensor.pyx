@@ -112,18 +112,19 @@ cdef class Sensor(object):
                 def __setitem__(self, key, value):
                     raise ValueError('Dictionary is read-only. Use Sensor.set_control_value instead.')
 
-            self.controls.update({
-                notification['control_id']: UnsettableDict(notification['changes'])
-            })
+            ctrl_id_key = notification['control_id']
+            if ctrl_id_key in self.controls:
+                self.controls[ctrl_id_key].update(UnsettableDict(notification['changes']))
+            else: self.controls[ctrl_id_key] = UnsettableDict(notification['changes'])
         elif notification['subject'] == 'remove':
             try:
                 del self.controls[notification['control_id']]
             except KeyError:
                 pass
 
-    def get_data(self):
+    def get_data(self,copy=True):
         try:
-            return self.data_sub.recv()
+            return self.data_sub.recv_multipart(copy=copy)
         except AttributeError:
             raise NotDataSubSupportedError()
 

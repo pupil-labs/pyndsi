@@ -8,7 +8,7 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-NDS_PROTOCOL_VERSION = '0.2.7'
+NDS_PROTOCOL_VERSION = '0.2.8'
 
 from network import Network
 from sensor  import Sensor
