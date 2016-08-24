@@ -169,7 +169,7 @@ class NDSITestHost(object):
         poller.register(pipe, zmq.POLLIN)
         poller.register(cmd, zmq.POLLIN)
 
-        logger.debug('Started sensor <%s>'%repr(sensor))
+        logger.debug('Started sensor <%s>'%sensor['sensor_name'])
 
         pipe.send_pyobj(sensor)
         this_sensor = sensor['sensor_name']
@@ -257,7 +257,7 @@ class NDSITestHost(object):
             tb.print_exc()
         finally:
             pipe.send('STOP')
-            logger.debug('Shutting down sensor <%s>'%repr(sensor))
+            logger.debug('Shutting down sensor <%s>'%sensor['sensor_name'])
 
     def bind_socket(self, ctx, sock_type, url, n):
         sock = ctx.socket(sock_type)
@@ -270,6 +270,11 @@ class NDSITestHost(object):
         return sock, ':'.join(public_addr+[port])
 
 if __name__ == '__main__':
+
+    if filter((lambda x: x in '--help'), sys.argv):
+        print('Usage: python host_script_file [ host_name ]\n')
+        sys.exit()
+
     uuid_no1 = uuid.uuid4().hex
     uuid_no2 = uuid.uuid4().hex
     config = [

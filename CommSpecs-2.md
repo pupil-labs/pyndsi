@@ -77,7 +77,7 @@ is used for addressing purposes.
 
 All sensor related messages MUST be zeromq multi-part messages with at least
 two frames. The first frame MUST include the `sensor`'s unique identifier and
-the second the content of a notification or a command.
+the second the content of a notification or a command. The unique identfier MUST be formatted as an unicode string.
 
 ### Notifications
 
