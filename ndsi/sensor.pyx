@@ -8,14 +8,36 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-import zmq, traceback as tb, json as serial, logging
+import zmq, traceback as tb, json as serial, logging, numpy as np
 logger = logging.getLogger(__name__)
+
+from . import StreamError
 
 class NotDataSubSupportedError(Exception):
     def __init__(self, value=None):
         self.value = value or 'This sensor does not support data subscription.'
     def __str__(self):
         return repr(self.value)
+
+class Frame(object):
+    def __init__(self, meta_data, data):
+        self.height = meta_data['height']
+        self.width  = meta_data['width']
+        self.depth  = meta_data['depth']
+        self.timestamp = meta_data['timestamp']
+
+        img = np.ndarray(
+            shape=(self.height,self.width,self.depth),
+            dtype=np.dtype(meta_data.get('dtype','uint8')),
+            buffer=data)
+        img.flags.writeable = True
+        self.img = img
+        self.bgr = img
+        self._gray = None
+        self.index = meta_data['seq']
+        #indicate that the frame does not have a native yuv or jpeg buffer
+        self.yuv_buffer = None
+        self.jpeg_buffer = None
 
 cdef class Sensor(object):
 
@@ -127,6 +149,16 @@ cdef class Sensor(object):
             return self.data_sub.recv_multipart(copy=copy)
         except AttributeError:
             raise NotDataSubSupportedError()
+
+    def get_newest_data_frame(self, timeout=None):
+        # blocks until new frame arrives or times out
+        if self.data_sub.poll(timeout=timeout):
+            # skip to newest frame
+            while self.has_data:
+                data_msg = self.get_data(copy=False)
+            meta_data = serial.loads(data_msg[1].bytes)
+            return Frame(meta_data, data_msg[2].bytes)
+        else: raise StreamError('Operation timed out.')
 
     def refresh_controls(self):
         cmd = serial.dumps({'action': 'refresh_controls'})

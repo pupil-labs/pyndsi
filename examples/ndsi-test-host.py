@@ -1,5 +1,5 @@
 from pyre import Pyre, zhelper, PyreEvent
-import zmq, time, json, logging, traceback as tb, uuid, sys
+import zmq, time, json, logging, traceback as tb, uuid, sys, os
 
 from fake_source import Fake_Source
 
@@ -274,6 +274,8 @@ if __name__ == '__main__':
     if filter((lambda x: x in '--help'), sys.argv):
         print('Usage: python host_script_file [ host_name ]\n')
         sys.exit()
+
+    print('Starting NDSI Test Server - PID: %s'%os.getpid())
 
     uuid_no1 = uuid.uuid4().hex
     uuid_no2 = uuid.uuid4().hex

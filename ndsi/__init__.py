@@ -10,6 +10,16 @@
 
 NDS_PROTOCOL_VERSION = '0.2.8'
 
+class CaptureError(Exception):
+    def __init__(self, message):
+        super(CaptureError, self).__init__()
+        self.message = message
+
+class StreamError(CaptureError):
+    def __init__(self, message):
+        super(StreamError, self).__init__(message)
+        self.message = message
+
 from network import Network
 from sensor  import Sensor
 import frame
