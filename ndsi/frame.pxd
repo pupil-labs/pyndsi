@@ -10,13 +10,15 @@
 
 cimport cturbojpeg as turbojpeg
 
-cdef class JEPG_Frame(object):
+cdef class JEPGFrame(object):
     cdef turbojpeg.tjhandle tj_context
-    cdef unsigned char[:] _bgr_buffer, _gray_buffer,_yuv_buffer #we use numpy for memory management.
+    #we use numpy for memory management.
+    cdef unsigned char[:] _jpeg_buffer, _bgr_buffer, _gray_buffer,_yuv_buffer
+    cdef long _width, _height, _index, _buffer_len
     cdef bint _yuv_converted, _bgr_converted
     cdef public double timestamp
     cdef public yuv_subsampling
-    cdef bint owns_uvc_frame
+    cdef bint owns_ndsi_frame
 
     cdef yuv2bgr(self)
     cdef jpeg2yuv(self)

@@ -8,11 +8,14 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
+cimport cturbojpeg as turbojpeg
+
 cdef class Sensor(object):
 
     cdef list callbacks
     cdef object context
     cdef object command_push
+    cdef turbojpeg.tjhandle tj_context
     cdef readonly object notify_sub
     cdef readonly object data_sub
 

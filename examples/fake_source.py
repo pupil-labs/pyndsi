@@ -53,8 +53,7 @@ class Frame(object):
             'timestamp': self.timestamp,
             'height': self.height,
             'width': self.width,
-            'depth': self.depth,
-            'dtype': self.img.dtype.name
+            'format': 'bgr'
         }
 
 

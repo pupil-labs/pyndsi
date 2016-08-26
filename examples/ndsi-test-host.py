@@ -1,5 +1,5 @@
 from pyre import Pyre, zhelper, PyreEvent
-import zmq, time, json, logging, traceback as tb, uuid, sys, os
+import zmq, time, json, logging, traceback as tb, uuid, sys, os, struct
 
 from fake_source import Fake_Source
 
@@ -22,6 +22,13 @@ def make_control(value,dtype,min_v,max_v,res_v,def_v,cap,selector):
         "caption" : cap,
         "selector": selector
     }
+
+sequence_limit = 2**32-1
+with open('test.jpg') as test_file:
+    test_jpeg_data = test_file.read()
+    test_jpeg_data_len = len(test_jpeg_data)
+    test_jpeg_width = 425
+    test_jpeg_height = 423
 
 class NDSITestHost(object):
     """docstring for NDSITestHost"""
@@ -48,8 +55,8 @@ class NDSITestHost(object):
 
     def stop(self):
         self.pipe.send('$TERM')
-        while self.pipe:
-            time.sleep(.1)
+        self.pipe.recv()
+        self.pipe.close()
 
     def attach(self,sensor):
         self.pipe.send_multipart(['ATTACH SENSOR', json.dumps(sensor)])
@@ -81,6 +88,7 @@ class NDSITestHost(object):
             logger.debug('Attaching %s...', name)
             sensor_pipes[name] = sp
             self.sequences[name] = 0
+            self.sequences[name+'data'] = 0
             poller.register(sp, zmq.POLLIN)
             self.state.update({name: sensor.copy()})
             sensor['subject'] = 'attach'
@@ -88,12 +96,14 @@ class NDSITestHost(object):
 
         def _detach_sensor(sensor_uuid,send_term=False):
             logger.debug('Detaching %s...', sensor_uuid)
-            if not send_term:
+            if send_term:
                 sensor_pipes[sensor_uuid].send('$TERM')
+                sensor_pipes[sensor_uuid].recv()
                 sensor_pipes[sensor_uuid].close()
             del sensor_pipes[sensor_uuid]
             del self.state[sensor_uuid]
             del self.sequences[sensor_uuid]
+            del self.sequences[sensor_uuid+'data']
             n.shout('pupil-mobile', json.dumps({
                 "subject"     : "detach",
                 "sensor_uuid" : sensor_uuid
@@ -113,6 +123,8 @@ class NDSITestHost(object):
                     if cmd == '$TERM':
                         for sp in sensor_pipes.values():
                             sp.send('$TERM')
+                            sp.recv()
+                            sp.close()
                         break
                     elif cmd == 'ATTACH SENSOR':
                         sensor = msg.pop(0)
@@ -180,7 +192,7 @@ class NDSITestHost(object):
             changes = changes or controls[control_id]
             seq = self.sequences[this_sensor_uuid]
             self.sequences[this_sensor_uuid] += 1
-            self.sequences[this_sensor_uuid] %= 65535
+            self.sequences[this_sensor_uuid] %= sequence_limit
             serial = json.dumps({
                 'subject'   : 'update',
                 'control_id': control_id,
@@ -200,7 +212,7 @@ class NDSITestHost(object):
         def sensor_publish_error(error, control_id=None):
             seq = self.sequences[this_sensor_uuid]
             self.sequences[this_sensor_uuid] += 1
-            self.sequences[this_sensor_uuid] %= 65535
+            self.sequences[this_sensor_uuid] %= sequence_limit
             serial = json.dumps({
                 'subject'   : 'error',
                 'control_id': control_id,
@@ -210,9 +222,14 @@ class NDSITestHost(object):
             note.send_multipart([str(this_sensor_uuid),serial])
 
         def sensor_publish_data_frame():
-            frame = data_source.get_frame()
-            meta_data = json.dumps(frame.meta_data)
-            data.send_multipart([str(this_sensor_uuid), meta_data, frame.img])
+            data_source.get_frame() # used for timing
+            seq = self.sequences[this_sensor_uuid+'data']
+            self.sequences[this_sensor_uuid+'data'] += 1
+            self.sequences[this_sensor_uuid+'data'] %= sequence_limit
+            now = int(time.time()*1000000) # timestamp in millisec precision
+
+            meta_data = struct.pack('<LLLLQL', 0x10, test_jpeg_width, test_jpeg_height, seq, now, test_jpeg_data_len)
+            data.send_multipart([str(this_sensor_uuid), meta_data, test_jpeg_data])
 
         try:
             while(True):
@@ -256,8 +273,8 @@ class NDSITestHost(object):
         except Exception:
             tb.print_exc()
         finally:
-            pipe.send('STOP')
             logger.debug('Shutting down sensor <%s>'%sensor['sensor_name'])
+            pipe.send('STOP')
 
     def bind_socket(self, ctx, sock_type, url, n):
         sock = ctx.socket(sock_type)
@@ -312,15 +329,15 @@ if __name__ == '__main__':
     host.start(config)
     logger.debug(host)
 
-    time.sleep(5)
-    additional_controls = {
-        'ctrl_id2': make_control(0.,'float',0.,1.,.05,.75,'Float Example',None),
-        'ctrl_id3': make_control("Initial value",'string',None,None,None,"Default",'String Example',None),
-    }
-    for cid, ctrl in additional_controls.iteritems():
-        host.set_control(uuid_no1, cid, ctrl)
-
     try:
+        time.sleep(5)
+        additional_controls = {
+            'ctrl_id2': make_control(0.,'float',0.,1.,.05,.75,'Float Example',None),
+            'ctrl_id3': make_control("Initial value",'string',None,None,None,"Default",'String Example',None),
+        }
+        for cid, ctrl in additional_controls.iteritems():
+            host.set_control(uuid_no1, cid, ctrl)
+
         while host.running:
             time.sleep(.3)
     except KeyboardInterrupt as e:

@@ -13,6 +13,8 @@ cimport cturbojpeg as turbojpeg
 cimport numpy as np
 import numpy as np
 
+import struct
+
 IF UNAME_SYSNAME == "Windows":
     include "windows_time.pxi"
 ELIF UNAME_SYSNAME == "Darwin":
@@ -38,6 +40,14 @@ uvc_error_codes = {  0:"Success (no error)",
                     -52:"Resource has a callback (can't use polling and async)",
                     -99:"Undefined error."}
 
+VIDEO_FRAME_HEADER_FMT = "<LLLLQL"
+AUDIO_FRAME_HEADER_FMT = "<LLLQL"
+
+VIDEO_FRAME_FORMAT_UNKNOWN     = 0x00
+VIDEO_FRAME_FORMAT_YUYV        = 0x01
+VIDEO_FRAME_FORMAT_MJPEG       = 0x10
+VIDEO_FRAME_FORMAT_H264        = 0x12
+VIDEO_FRAME_FORMAT_VP8         = 0x13
 
 class CaptureError(Exception):
     def __init__(self, message):
@@ -60,8 +70,11 @@ logger = logging.getLogger(__name__)
 
 __version__ = '0.0.1' #make sure this is the same in setup.py
 
+@staticmethod
+def unpack_metadata(packed_metadata):
+    return struct.unpack("<LLLLQL", packed_metadata)
 
-cdef class JEPG_Frame(object):
+cdef class JEPGFrame(object):
     '''
     The Frame Object holds image data and image metadata.
 
@@ -80,34 +93,44 @@ cdef class JEPG_Frame(object):
     Previously converted formats are still valid.
     '''
 
-    def __cinit__(self):
+    def __cinit__(self,*args,**kwargs):
         self._yuv_converted = False
         self._bgr_converted = False
         self.tj_context = NULL
 
-    def __init__(self):
-        pass
+    def __init__(self, data_format, width, height, index, timestamp, data_len, unsigned char [:] raw_data, copy=False):
+        if data_format != VIDEO_FRAME_FORMAT_MJPEG:
+            raise ValueError('%s does not support format 0x%x'%(self.__class__.__name__, data_format))
+        self._width      = width
+        self._height     = height
+        self._index      = index
+        self._buffer_len = data_len
+        self.timestamp   = (<double>timestamp)/1000000
+        if copy:
+            self._jpeg_buffer = np.empty(data_len, dtype=np.uint8)
+            self._jpeg_buffer[:data_len] = raw_data
+        else:
+            self._jpeg_buffer = raw_data
+        self.owns_ndsi_frame = copy
 
     def __dealloc__(self):
         pass
 
     property width:
         def __get__(self):
-            return 0
+            return self._width
 
     property height:
         def __get__(self):
-            return 0
+            return self._height
 
     property index:
         def __get__(self):
-            return 0
+            return self._index
 
     property jpeg_buffer:
         def __get__(self):
-            #cdef np.uint8_t[::1] view = <np.uint8_t[:self._uvc_frame.data_bytes]>self._uvc_frame.data
-            #return view
-            return np.empty(0, dtype=np.uint8)
+            return self._jpeg_buffer
 
     property yuv_buffer:
         def __get__(self):
@@ -222,8 +245,10 @@ cdef class JEPG_Frame(object):
         cdef int channels = 3
         cdef int result
         self._bgr_buffer = np.empty(self.width*self.height*channels, dtype=np.uint8)
-        result = turbojpeg.tjDecodeYUV(self.tj_context, &self._yuv_buffer[0], 4, self.yuv_subsampling,
-                                        &self._bgr_buffer[0], self.width, 0, self.height, turbojpeg.TJPF_BGR, 0)
+        result = turbojpeg.tjDecodeYUV(
+            self.tj_context, &self._yuv_buffer[0], 4, self.yuv_subsampling,
+            &self._bgr_buffer[0], self.width, 0,
+            self.height, turbojpeg.TJPF_BGR, 0)
         if result == -1:
             logger.error('Turbojpeg yuv2bgr: %s'%turbojpeg.tjGetErrorStr() )
         self._bgr_converted = True
@@ -235,25 +260,21 @@ cdef class JEPG_Frame(object):
         cdef int jpegSubsamp, j_width,j_height
         cdef int result
         cdef long unsigned int buf_size
-        # result = turbojpeg.tjDecompressHeader2(self.tj_context,  <unsigned char *>self._uvc_frame.data,
-        #                                 self._uvc_frame.data_bytes,
-        #                                 &j_width, &j_height, &jpegSubsamp)
-        result = -1
+        result = turbojpeg.tjDecompressHeader2(
+            self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
+            &j_width, &j_height, &jpegSubsamp)
 
         if result == -1:
             logger.error('Turbojpeg could not read jpeg header: %s'%turbojpeg.tjGetErrorStr() )
             # hacky creation of dummy data, this will break if capture does work with different subsampling:
             j_width, j_height, jpegSubsamp = self.width, self.height, turbojpeg.TJSAMP_422
 
-        buf_size = turbojpeg.tjBufSizeYUV(j_width, j_height, jpegSubsamp)
+        buf_size = turbojpeg.tjBufSizeYUV(j_height, j_width, jpegSubsamp)
         self._yuv_buffer = np.empty(buf_size, dtype=np.uint8)
         if result != -1:
-            # result =  turbojpeg.tjDecompressToYUV(self.tj_context,
-            #                                  <unsigned char *>self._uvc_frame.data,
-            #                                  self._uvc_frame.data_bytes,
-            #                                  &self._yuv_buffer[0],
-            #                                   0)
-            result = -1
+            result =  turbojpeg.tjDecompressToYUV(
+                self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
+                &self._yuv_buffer[0], 0)
         if result == -1:
             logger.warning('Turbojpeg jpeg2yuv: %s'%turbojpeg.tjGetErrorStr() )
         self.yuv_subsampling = jpegSubsamp

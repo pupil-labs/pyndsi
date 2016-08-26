@@ -1,4 +1,4 @@
-# Network Device Sensor Interface Protocol Specification v2.8
+# Network Device Sensor Interface Protocol Specification v2.9
 
 Status: draft
 
@@ -43,12 +43,12 @@ socket.
     their static information (this includes especially the unique identifier
     defined by the **host**, see **Sensor Messages** below).
 - To receive control updates of a specific `sensor`, **Clients** MUST:
-    1) Create a `zmq.SUB` socket, connected to
+    1. Create a `zmq.SUB` socket, connected to
         `notify_endpoint`,
-    2) Subscribe to the `sensor`s unique identifier
+    2. Subscribe to the `sensor`s unique identifier
         (`zmq_setsockopt(<socket>,ZMQ_SUBSCRIBE,<unique identifier>)`) and
         start listening for *update* and *remove* notifications.
-    3) Create a `zmq.PUSH` socket, connected to `command_endpoint` (see
+    3. Create a `zmq.PUSH` socket, connected to `command_endpoint` (see
         `<attach>` below), send `<refresh_controls>` command.
 
     - All messages send over these sockets MUST follow the format described below in **Sensor Messages**
@@ -84,7 +84,7 @@ the second the content of a notification or a command. The unique identfier MUST
 #### Sequence numbers
 
 All notifications and data messages MUST include a sequence number.
-Sequence numbers are cycling, unsigned 2-octet (short) integers `[0 - 65535]`.
+Sequence numbers are cycling `uint32_t` integers.
 
 Sequence number counters are per sensor and per message type. This means that
 each `sensor` needs to maintain a counter for notifications and an other
@@ -211,18 +211,60 @@ sensor_cmd = {
 
 Data messages MUST contain at least three frames:
 
-1) The `sensor`'s unique identifier.
-2) A json decoded `<meta_data>` object.
-3) A raw byte buffer.
+1. The `sensor`'s unique identifier as unicode string.
+2. The data header as 32 bit aligned, little-endian binary
+3. The data body as binary
 
-`<meta_data>` MUST contain at least the following fields:
+Data header according to `<sensor_type>`:
 
-```javascript
-meta_data = {
-    "seq"             : <sequence_no>,
-    "timestamp"       : <Double>
-}
+**video**
+
+```c
+typedef struct publish_header {
+    uint32_t format_le; // MJPEG, H264, (YUYV, VP8)
+    uint32_t width_le;
+    uint32_t height_le;
+    uint32_t sequence_le;
+    int64_t presentation_time_us_le;
+    uint32_t data_bytes_le;
+} __attribute__ ((packed)) publish_header_t;
+
+ VIDEO_FRAME_FORMAT_UNKNOWN     = 0     // supported, unknown
+ VIDEO_FRAME_FORMAT_YUYV        = 0x01  // supported, YUYV
+(VIDEO_FRAME_FORMAT_UYVY        = 0x02)
+(VIDEO_FRAME_FORMAT_GRAY8       = 0x03)
+(VIDEO_FRAME_FORMAT_BY8         = 0x04)
+(VIDEO_FRAME_FORMAT_NV21        = 0x05)
+(VIDEO_FRAME_FORMAT_YV12        = 0x06)
+(VIDEO_FRAME_FORMAT_I420        = 0x07)
+(VIDEO_FRAME_FORMAT_Y16         = 0x08)
+(VIDEO_FRAME_FORMAT_RGBP        = 0x09)
+(VIDEO_FRAME_FORMAT_M420        = 0x0a)
+(VIDEO_FRAME_FORMAT_NV12        = 0x0b)
+(VIDEO_FRAME_FORMAT_RGB565      = 0x0c)
+(VIDEO_FRAME_FORMAT_RGB         = 0x0d)
+(VIDEO_FRAME_FORMAT_BGR         = 0x0e)
+(VIDEO_FRAME_FORMAT_RGBX        = 0x0f)
+ VIDEO_FRAME_FORMAT_MJPEG       = 0x10  // supported, MJPEG
+(VIDEO_FRAME_FORMAT_MPEG2TS     = 0x11)
+ VIDEO_FRAME_FORMAT_H264        = 0x12  // supported, H264
+ VIDEO_FRAME_FORMAT_VP8         = 0x13  // supported, VP8
+(VIDEO_FRAME_FORMAT_YCbCr       = 0x14)
+(VIDEO_FRAME_FORMAT_FRAME_H264  = 0x15)
+(VIDEO_FRAME_FORMAT_FRAME_VP8   = 0x16)
+(VIDEO_FRAME_FORMAT_DV          = 0x17)
 ```
 
-Depending on the `<sensor_type>` the **host** SHOULD add relevant
-meta information to the `<meta_data>` object.
+**audio**:
+
+```c
+typedef struct audio_header {
+    uint32_t format_le;  // PCM8, PCM16, etc., usually use PCM8 on most of Android devices.
+    uint32_t channel_le; // 1 or 2, but most of Android devices just support 1
+    uint32_t sequence_le;
+    int64_t presentation_time_us_le;
+    uint32_t data_bytes_le;
+} __attribute__ ((packed)) audio_header;
+```
+
+**IMU** and other headers are still to be defined.
