@@ -1,7 +1,7 @@
 from pyre import Pyre, zhelper, PyreEvent
 import zmq, time, json, logging, traceback as tb, uuid, sys, os, struct
 
-from fake_source import Fake_Source
+import uvc
 
 logging.basicConfig(
     format='%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s',
@@ -10,6 +10,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logging.getLogger('pyre').setLevel(logging.WARNING)
+logging.getLogger('uvc').setLevel(logging.WARNING)
 
 def make_control(value,dtype,min_v,max_v,res_v,def_v,cap,selector):
     return {
@@ -24,11 +25,17 @@ def make_control(value,dtype,min_v,max_v,res_v,def_v,cap,selector):
     }
 
 sequence_limit = 2**32-1
-with open('test.jpg') as test_file:
-    test_jpeg_data = test_file.read()
-    test_jpeg_data_len = len(test_jpeg_data)
-    test_jpeg_width = 425
-    test_jpeg_height = 423
+
+def get_any_cap():
+    dev_list =  uvc.device_list()
+    try:
+        for x in range(2):
+            uuid = dev_list[x]['uid']
+            if uvc.is_accessible(uuid):
+                return uvc.Capture(uuid)
+    except Exception as e:
+        return None
+
 
 class NDSITestHost(object):
     """docstring for NDSITestHost"""
@@ -169,8 +176,6 @@ class NDSITestHost(object):
         data, data_url = self.bind_socket(ctx, zmq.PUB , generic_url, network)
         cmd , cmd_url  = self.bind_socket(ctx, zmq.PULL, generic_url, network)
 
-        data_source = Fake_Source()
-
         sensor.update({
             'notify_endpoint': note_url,
             'command_endpoint': cmd_url,
@@ -186,6 +191,12 @@ class NDSITestHost(object):
         pipe.send_pyobj(sensor)
         this_sensor = sensor['sensor_name']
         this_sensor_uuid = sensor['sensor_uuid']
+
+        capture_dev = get_any_cap()
+        if not capture_dev:
+            logger.error('Sensor %s could not find a image source. Shutting down sensor.'%this_sensor)
+            pipe.send('STOP')
+            return
 
         def sensor_publish_control(control_id, changes=None):
             logger.debug('Publishing control change for <%s: %s>'%(this_sensor, control_id))
@@ -222,14 +233,16 @@ class NDSITestHost(object):
             note.send_multipart([str(this_sensor_uuid),serial])
 
         def sensor_publish_data_frame():
-            data_source.get_frame() # used for timing
+            frame = capture_dev.get_frame_robust()
             seq = self.sequences[this_sensor_uuid+'data']
             self.sequences[this_sensor_uuid+'data'] += 1
             self.sequences[this_sensor_uuid+'data'] %= sequence_limit
             now = int(time.time()*1000000) # timestamp in millisec precision
 
-            meta_data = struct.pack('<LLLLQL', 0x10, test_jpeg_width, test_jpeg_height, seq, now, test_jpeg_data_len)
-            data.send_multipart([str(this_sensor_uuid), meta_data, test_jpeg_data])
+            jpeg_buffer = frame.jpeg_buffer
+
+            meta_data = struct.pack('<LLLLQL', 0x10, frame.width, frame.height, frame.index, now, jpeg_buffer.size)
+            data.send_multipart([str(this_sensor_uuid), meta_data, jpeg_buffer])
 
         try:
             while(True):
