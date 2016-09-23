@@ -1,4 +1,4 @@
-# Network Device Sensor Interface Protocol Specification v2.9
+# Network Device Sensor Interface Protocol Specification v2.10
 
 Status: draft
 
@@ -54,10 +54,7 @@ socket.
     - All messages send over these sockets MUST follow the format described below in **Sensor Messages**
 
 ### Host Representation Hierarchy
-Each host has multiple `sensor` instances, including a reserved `sensor` named
-"hardware". It includes all device specific controls. Each `sensor` has a list
-of controls and a unique identifier which is assigned by the **host**. This ID
-is used for addressing purposes.
+Each host has multiple `sensor` instances. These can be of different types. The "hardware" type includes all device specific controls. Each `sensor` has a list of controls and a unique identifier which is assigned by the **host**. This ID is used for addressing purposes.
 
 ```
  pupil-mobile-host ------------     Notifications:          Send/Recv Context:
@@ -65,7 +62,7 @@ is used for addressing purposes.
         +-- <sensor "hardware">     (attach/detach)         WHISPER or SHOUT
         |       +-- <control>       (update/remove)         PUB/SUB socket
         |       |       :
-        +-- <sensor>                (attach/detach)         WHISPER or SHOUT
+        +-- <sensor "video">        (attach/detach)         WHISPER or SHOUT
         |       +-- <control>       (update/remove)         PUB/SUB socket
         |       |       :
         |       :
@@ -117,7 +114,7 @@ detach = {
     "sensor_uuid"     : <String>
 }
 
-sensor_type = "video" XOR "audio" XOR "imu" XOR <String>
+sensor_type = "video" XOR "audio" XOR "imu" XOR "hardware" XOR <String>
 ```
 
 Endpoints are strings which are used for zmq sockets and follow the `<protocol>://<address>:<port>` scheme.
@@ -147,7 +144,8 @@ error = {
     "subject"         : "error",
     "control_id"      : <String> XOR null,
     "seq"             : <sequence_no>,
-    "info"            : <Dict error_info>
+    "error_no"        : <Integer>,
+    "error_str"       : <String>
 }
 
 control_info = {
@@ -158,12 +156,8 @@ control_info = {
     "res"             : <number> or null, // resolution or step size
     "def"             : <value>,          // default value
     "caption"         : <String>,
+    "readonly"        : <Bool>,
     "selector"        : [<selector_desc>,...] XOR [<bitmap_desc>,...] XOR null
-}
-
-error_info = {
-    "error_no"        : <Integer>,
-    "error_id"        : <String>
 }
 
 selector_desc = {
@@ -184,13 +178,56 @@ value  = <String> XOR <Bool> XOR <number> XOR null
 number = <Integer> XOR <Float>
 ```
 
+#### Recommended controls:
+
+```javascript
+local_capture_control_id = "local_capture"
+local_capture_control = {
+    "value"           : false,
+    "dtype"           : "bool",
+    "min"             : null, // minimal value
+    "max"             : null, // maximal value
+    "res"             : null, // resolution or step size
+    "def"             : false,// default value
+    "caption"         : "Local Capture",
+    "readonly"        : false,
+    "selector"        : null
+}
+
+streaming_control_id = "streaming"
+streaming_control = {
+    "value"           : false,
+    "dtype"           : "bool",
+    "min"             : null, // minimal value
+    "max"             : null, // maximal value
+    "res"             : null, // resolution or step size
+    "def"             : false,// default value
+    "caption"         : "Streaming",
+    "readonly"        : false,
+    "selector"        : null
+}
+
+session_recording_name_control_id = "session_recording_name"
+session_recording_name_control = {
+    "value"           : "Unnamed recording",
+    "dtype"           : "string",
+    "min"             : null, // minimal value
+    "max"             : null, // maximal value
+    "res"             : null, // resolution or step size
+    "def"             : "Default",// default value
+    "caption"         : "Recording name",
+    "readonly"        : false,
+    "selector"        : null
+}
+```
+
 ### Commands
 
 Commands are `sensor` specific, since they can only be send through the
 `sensor` announced **command** socket.
 
 ```javascript
-command = <refresh_controls> XOR <set_control_value> XOR <sensor_cmd>
+command = <refresh_controls> XOR <set_control_value>
 
 refresh_controls = {
     "action"          : "refresh_controls"
@@ -200,10 +237,6 @@ set_control_value = {
     "action"          : "set_control_value",
     "control_id"      : <String>,
     "value"           : <value>
-}
-
-sensor_cmd = {
-    "action": "stream_on" XOR "stream_off" XOR "record_on" XOR "record_off"
 }
 ```
 
