@@ -61,6 +61,8 @@ cdef class Network(object):
             except Exception:
                 tb.print_exc()
             else:
+                if msg['subject'] == 'detach':
+                    msg.update(self.sensors[msg['sensor_uuid']])
                 self.execute_callbacks(msg)
         elif event.type == 'EXIT':
             gone_peer = event.peer_uuid.hex

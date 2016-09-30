@@ -137,6 +137,9 @@ cdef class Sensor(object):
             raise NotDataSubSupportedError()
 
     def get_newest_data_frame(self, timeout=None):
+        if not self.supports_data_subscription:
+            raise NotDataSubSupportedError()
+
         # blocks until new frame arrives or times out
         cdef JEPGFrame frame
         if self.data_sub.poll(timeout=timeout):
