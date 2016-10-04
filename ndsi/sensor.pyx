@@ -171,19 +171,3 @@ cdef class Sensor(object):
             "value"     : value
         })
         self.command_push.send_multipart([str(self.uuid), cmd])
-
-    def stream_on(self):
-        cmd = serial.dumps({'action': 'stream_on'})
-        self.command_push.send_multipart([str(self.uuid), cmd])
-
-    def stream_off(self):
-        cmd = serial.dumps({'action': 'stream_off'})
-        self.command_push.send_multipart([str(self.uuid), cmd])
-
-    def record_on(self):
-        cmd = serial.dumps({'action': 'record_on'})
-        self.command_push.send_multipart([str(self.uuid), cmd])
-
-    def record_off(self):
-        cmd = serial.dumps({'action': 'record_off'})
-        self.command_push.send_multipart([str(self.uuid), cmd])
