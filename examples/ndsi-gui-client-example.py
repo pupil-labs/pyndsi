@@ -1,3 +1,16 @@
+'''
+(*)~----------------------------------------------------------------------------------
+ Pupil - eye tracking platform
+ Copyright (C) 2012-2016  Pupil Labs
+
+ Distributed under the terms of the GNU Lesser General Public License (LGPL v3.0).
+ License details are in the file license.txt, distributed as part of this software.
+----------------------------------------------------------------------------------~(*)
+
+pyglui code taken from:
+https://github.com/pupil-labs/pyglui/blob/master/example/example.py
+'''
+
 import logging, time, signal, sys
 logging.basicConfig(
     format='%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s',
@@ -5,7 +18,8 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
+logger.setLevel(logging.DEBUG)
+logging.getLogger('ndsi').setLevel(logging.DEBUG)
 logging.getLogger('pyre').setLevel(logging.WARNING)
 
 import ndsi
@@ -17,6 +31,8 @@ from OpenGL.GL import *
 import numpy as np
 
 import time
+from pyglui import __version__ as pyglui_version
+assert pyglui_version >= '2.0'
 from pyglui import ui
 from pyglui.cygl.utils import init
 from pyglui.cygl.utils import RGBA
@@ -80,7 +96,7 @@ class SensorUIWrapper(object):
         x = int(x*(width-menu_width))
         y = int(y*(height-menu_height))
 
-        self.menu = ui.Scrolling_Menu(str(self.sensor),size=(menu_width,menu_height),pos=(x,y))
+        self.menu = ui.Scrolling_Menu(unicode(self.sensor),size=(menu_width,menu_height),pos=(x,y))
         self.gui.append(self.menu)
         self.update_control_menu()
 
@@ -90,6 +106,7 @@ class SensorUIWrapper(object):
             self.menu = None
 
     def on_notification(self, sensor, event):
+        logger.info('%s [%s] %s %s SET %s'%(sensor, event['seq'], event['subject'], event['control_id'],event['changes']['value']))
         if event['control_id'] not in self.control_id_ui_mapping:
             self.update_control_menu()
 
@@ -113,14 +130,14 @@ class SensorUIWrapper(object):
                     ctrl_ui = ui.Text_Input(
                         'value',
                         ctrl_dict,
-                        label=str(ctrl_dict['caption']),
+                        label=unicode(ctrl_dict['caption']),
                         setter=make_value_change_fn(ctrl_id))
                 elif dtype == "integer" or dtype == "float":
                     convert_fn = int if dtype == "integer" else float
                     ctrl_ui = ui.Slider(
                         'value',
                         ctrl_dict,
-                        label=str(ctrl_dict['caption']),
+                        label=unicode(ctrl_dict['caption']),
                         min =convert_fn(ctrl_dict.get('min', 0)),
                         max =convert_fn(ctrl_dict.get('max', 100)),
                         step=convert_fn(ctrl_dict.get('res', 0.)),
@@ -129,18 +146,18 @@ class SensorUIWrapper(object):
                     ctrl_ui = ui.Switch(
                         'value',
                         ctrl_dict,
-                        label=str(ctrl_dict['caption']),
+                        label=unicode(ctrl_dict['caption']),
                         on_val=ctrl_dict.get('max',True),
                         off_val=ctrl_dict.get('min',False),
                         setter=make_value_change_fn(ctrl_id))
                 elif dtype == "selector":
                     desc_list = ctrl_dict['selector']
-                    labels    = [str(desc['caption']) for desc in desc_list]
+                    labels    = [unicode(desc['caption']) for desc in desc_list]
                     selection = [desc['value']        for desc in desc_list]
                     ctrl_ui = ui.Selector(
                         'value',
                         ctrl_dict,
-                        label=str(ctrl_dict['caption']),
+                        label=unicode(ctrl_dict['caption']),
                         selection=selection,
                         labels=labels,
                         setter=make_value_change_fn(ctrl_id))
@@ -266,15 +283,13 @@ def runNDSIClient():
 
     sensors = {}
 
-    def on_sensor_event(sensor, event):
-        logger.info('%s [%s] %s %s'%(sensor, event['seq'], event['subject'], event['control_id']))
-
     def on_network_event(network, event):
-        if event['subject'] == 'attach' and event['sensor_type'] == 'video':
+        if event['subject'] == 'attach':# and event['sensor_type'] == 'video':
             wrapper = SensorUIWrapper(gui,n,event['sensor_uuid'])
             sensors[event['sensor_uuid']] = wrapper
             logger.info('Linking sensor %s...'%wrapper.sensor)
-        if event['subject'] == 'detach' and event['sensor_type'] == 'video':
+            logger.debug('%s'%pprint.pformat(event))
+        if event['subject'] == 'detach':# and event['sensor_type'] == 'video':
             logger.info('Unlinking sensor %s...'%event['sensor_uuid'])
             sensors[event['sensor_uuid']].cleanup()
             del sensors[event['sensor_uuid']]
