@@ -32,7 +32,8 @@ import numpy as np
 
 import time
 from pyglui import __version__ as pyglui_version
-assert pyglui_version >= '2.0'
+#assert pyglui_version >= '2.0'
+
 from pyglui import ui
 from pyglui.cygl.utils import init
 from pyglui.cygl.utils import RGBA
@@ -106,9 +107,13 @@ class SensorUIWrapper(object):
             self.menu = None
 
     def on_notification(self, sensor, event):
-        logger.info('%s [%s] %s %s SET %s'%(sensor, event['seq'], event['subject'], event['control_id'],event['changes']['value']))
-        if event['control_id'] not in self.control_id_ui_mapping:
-            self.update_control_menu()
+        if event['subject'] == 'error':
+            logger.error('Received error %i: %s'%(event['error_no'],event['error_str']))
+        else:
+            logger.info('%s [%s] %s %s'%(sensor, event['seq'], event['subject'], event['control_id']))
+            logger.debug('SET %s'%event['changes'])
+            if event['control_id'] not in self.control_id_ui_mapping:
+                self.update_control_menu()
 
     def update_control_menu(self):
         del self.menu[:]
@@ -126,7 +131,6 @@ class SensorUIWrapper(object):
                 dtype = ctrl_dict['dtype']
                 ctrl_ui = None
                 if dtype == "string":
-                    logger.debug('Text input for %s named "%s"'%(dtype,ctrl_dict['caption']))
                     ctrl_ui = ui.Text_Input(
                         'value',
                         ctrl_dict,

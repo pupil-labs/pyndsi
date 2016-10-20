@@ -115,8 +115,10 @@ cdef class Sensor(object):
             callback(self, event)
 
     def on_notification(self, caller, notification):
-        if   notification['subject'] == 'update':
+        if notification['subject'] == 'update':
             class UnsettableDict(dict):
+                def __getitem__(self, key):
+                    return self.get(key)
                 def __setitem__(self, key, value):
                     raise ValueError('Dictionary is read-only. Use Sensor.set_control_value instead.')
 
