@@ -61,8 +61,17 @@ cdef class Network(object):
             except Exception:
                 tb.print_exc()
             else:
-                if msg['subject'] == 'detach':
-                    msg.update(self.sensors[msg['sensor_uuid']])
+                if msg['subject'] == 'attach' and self.sensors.get(msg['sensor_uuid']):
+                    # Sensor already attached. Drop event
+                    return
+                elif msg['subject'] == 'detach':
+                    sensor_entry = self.sensors.get(msg['sensor_uuid'])
+                    # Check if sensor has been detached already
+                    if not sensor_entry: return
+                    msg.update(sensor_entry)
+                else:
+                    logger.debug('Unknown host message: %s'%msg)
+                    return
                 self.execute_callbacks(msg)
         elif event.type == 'EXIT':
             gone_peer = event.peer_uuid.hex

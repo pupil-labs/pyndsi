@@ -18,7 +18,7 @@ logging.basicConfig(
     level=logging.DEBUG
 )
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.WARNING)
 logging.getLogger('ndsi').setLevel(logging.DEBUG)
 logging.getLogger('pyre').setLevel(logging.WARNING)
 
@@ -112,6 +112,8 @@ class SensorUIWrapper(object):
         else:
             logger.info('%s [%s] %s %s'%(sensor, event['seq'], event['subject'], event['control_id']))
             logger.debug('SET %s'%event['changes'])
+            if event['changes'].get('value') is None:
+                logger.warning('Control value for %s is None. This is not compliant with v2.12'%event['control_id'])
             if event['control_id'] not in self.control_id_ui_mapping:
                 self.update_control_menu()
 
@@ -353,6 +355,7 @@ def runNDSIClient():
     glfwTerminate()
     logger.debug("Process done")
 
+quit = False
 if __name__ == '__main__':
     runNDSIClient()
 
