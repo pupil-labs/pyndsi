@@ -61,9 +61,10 @@ cdef class Network(object):
             except Exception:
                 tb.print_exc()
             else:
-                if msg['subject'] == 'attach' and self.sensors.get(msg['sensor_uuid']):
-                    # Sensor already attached. Drop event
-                    return
+                if msg['subject'] == 'attach':
+                    if self.sensors.get(msg['sensor_uuid']):
+                        # Sensor already attached. Drop event
+                        return
                 elif msg['subject'] == 'detach':
                     sensor_entry = self.sensors.get(msg['sensor_uuid'])
                     # Check if sensor has been detached already
