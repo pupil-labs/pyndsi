@@ -168,14 +168,10 @@ cdef class Sensor(object):
 
     def set_control_value(self, control_id, value):
         dtype = self.controls[control_id]['dtype']
-        if dtype == 'bool' and not isinstance(value,bool):
-            value = bool(value)
-        elif dtype == 'string' and not isinstance(value,basestring):
-            value = unicode(value)
-        elif dtype == 'integer' and not isinstance(value,int):
-            value = int(value)
-        elif dtype == 'float' and not isinstance(value,float):
-            value = float(value)
+        if   dtype == 'bool'   : value = bool(value)
+        elif dtype == 'string' : value = unicode(value)
+        elif dtype == 'integer': value = int(value)
+        elif dtype == 'float'  : value = float(value)
         cmd = serial.dumps({
             'action'    : 'set_control_value',
             "control_id": control_id,
