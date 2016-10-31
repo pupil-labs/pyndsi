@@ -98,20 +98,17 @@ cdef class JEPGFrame(object):
         self._bgr_converted = False
         self.tj_context = NULL
 
-    def __init__(self, data_format, width, height, index, timestamp, data_len, unsigned char [:] raw_data, copy=False):
-        if data_format != VIDEO_FRAME_FORMAT_MJPEG:
-            raise ValueError('%s does not support format 0x%x'%(self.__class__.__name__, data_format))
+    def __init__(self, data_format, width, height, index, timestamp, data_len, object raw_data):
+        #if data_format != VIDEO_FRAME_FORMAT_MJPEG:
+        #    raise ValueError('%s does not support format %s'%(self.__class__.__name__, hex(data_format)))
         self._width      = width
         self._height     = height
         self._index      = index
         self._buffer_len = data_len
+        self._raw_data   = raw_data
         self.timestamp   = (<double>timestamp)/1000000
-        if copy:
-            self._jpeg_buffer = np.empty(data_len, dtype=np.uint8)
-            self._jpeg_buffer[:data_len] = raw_data
-        else:
-            self._jpeg_buffer = raw_data
-        self.owns_ndsi_frame = copy
+        self._jpeg_buffer = raw_data
+        self.owns_ndsi_frame = False
 
     def __dealloc__(self):
         pass
