@@ -147,9 +147,9 @@ cdef class Sensor(object):
         if self.data_sub.poll(timeout=timeout):
             while self.has_data:
             # skip to newest frame
-                data_msg = self.get_data(copy=False)
-            meta_data = struct.unpack("<LLLLQL", data_msg[1].bytes)
-            frame = JEPGFrame(*meta_data, data_msg[2].__copy__())
+                data_msg = self.get_data(copy=True)
+            meta_data = struct.unpack("<LLLLQL", data_msg[1])
+            frame = JEPGFrame(*meta_data, data_msg[2])
             frame.tj_context = self.tj_context
             return frame
         else: raise StreamError('Operation timed out.')

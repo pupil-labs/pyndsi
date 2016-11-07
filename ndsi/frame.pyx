@@ -107,7 +107,7 @@ cdef class JEPGFrame(object):
         self._buffer_len = data_len
         self._raw_data   = raw_data
         self.timestamp   = (<double>timestamp)/1000000
-        self._jpeg_buffer = raw_data
+        self._jpeg_buffer = np.fromstring(raw_data,dtype=np.uint8)
         self.owns_ndsi_frame = False
 
     def __dealloc__(self):
