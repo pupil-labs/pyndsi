@@ -98,16 +98,16 @@ cdef class JEPGFrame(object):
         self._bgr_converted = False
         self.tj_context = NULL
 
-    def __init__(self, data_format, width, height, index, timestamp, data_len, object raw_data):
+    def __init__(self, data_format, width, height, index, timestamp, data_len, object zmq_frame):
         #if data_format != VIDEO_FRAME_FORMAT_MJPEG:
         #    raise ValueError('%s does not support format %s'%(self.__class__.__name__, hex(data_format)))
         self._width      = width
         self._height     = height
         self._index      = index
-        self._buffer_len = data_len
-        self._raw_data   = raw_data
+        self._buffer_len = np.min([len(zmq_frame.buffer),data_len])
+        self._raw_data   = zmq_frame
         self.timestamp   = (<double>timestamp)/1000000
-        self._jpeg_buffer = np.fromstring(raw_data,dtype=np.uint8)
+        self._jpeg_buffer = zmq_frame.buffer
         self.owns_ndsi_frame = False
 
     def __dealloc__(self):
@@ -269,7 +269,7 @@ cdef class JEPGFrame(object):
         buf_size = turbojpeg.tjBufSizeYUV(j_height, j_width, jpegSubsamp)
         self._yuv_buffer = np.empty(buf_size, dtype=np.uint8)
         if result != -1:
-            result =  turbojpeg.tjDecompressToYUV(
+            result = turbojpeg.tjDecompressToYUV(
                 self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
                 &self._yuv_buffer[0], 0)
         if result == -1:
