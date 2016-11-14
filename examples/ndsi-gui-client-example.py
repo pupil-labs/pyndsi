@@ -114,7 +114,9 @@ class SensorUIWrapper(object):
             logger.debug('SET %s'%event['changes'])
             if event['changes'].get('value') is None:
                 logger.warning('Control value for %s is None. This is not compliant with v2.12'%event['control_id'])
-            if event['control_id'] not in self.control_id_ui_mapping:
+            ctrl_dtype = event.get('changes',{}).get('dtype')
+            if (event['control_id'] not in self.control_id_ui_mapping or
+                ctrl_dtype == "selector" or ctrl_dtype == "bitmap"):
                 self.update_control_menu()
 
     def update_control_menu(self):
@@ -157,18 +159,15 @@ class SensorUIWrapper(object):
                         off_val=ctrl_dict.get('min',False),
                         setter=make_value_change_fn(ctrl_id))
                 elif dtype == "selector":
-                    def make_selection_getter(ctrl_dict):
-                        desc_list = ctrl_dict['selector']
-                        def getter():
-                            labels    = [desc['caption'] for desc in desc_list]
-                            selection = [desc['value']   for desc in desc_list]
-                            return selection, labels
-                        return getter
+                    desc_list = ctrl_dict['selector']
+                    labels    = [desc['caption'] for desc in desc_list]
+                    selection = [desc['value']   for desc in desc_list]
                     ctrl_ui = ui.Selector(
                         'value',
                         ctrl_dict,
                         label=ctrl_dict['caption'],
-                        selection_getter=make_selection_getter(ctrl_dict),
+                        labels=labels,
+                        selection=selection,
                         setter=make_value_change_fn(ctrl_id))
                 if ctrl_ui:
                     ctrl_ui.read_only = ctrl_dict.get('readonly',False)
