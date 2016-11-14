@@ -136,14 +136,14 @@ class SensorUIWrapper(object):
                     ctrl_ui = ui.Text_Input(
                         'value',
                         ctrl_dict,
-                        label=unicode(ctrl_dict['caption']),
+                        label=ctrl_dict['caption'],
                         setter=make_value_change_fn(ctrl_id))
                 elif dtype == "integer" or dtype == "float":
                     convert_fn = int if dtype == "integer" else float
                     ctrl_ui = ui.Slider(
                         'value',
                         ctrl_dict,
-                        label=unicode(ctrl_dict['caption']),
+                        label=ctrl_dict['caption'],
                         min =convert_fn(ctrl_dict.get('min', 0)),
                         max =convert_fn(ctrl_dict.get('max', 100)),
                         step=convert_fn(ctrl_dict.get('res', 0.)),
@@ -152,20 +152,23 @@ class SensorUIWrapper(object):
                     ctrl_ui = ui.Switch(
                         'value',
                         ctrl_dict,
-                        label=unicode(ctrl_dict['caption']),
+                        label=ctrl_dict['caption'],
                         on_val=ctrl_dict.get('max',True),
                         off_val=ctrl_dict.get('min',False),
                         setter=make_value_change_fn(ctrl_id))
                 elif dtype == "selector":
-                    desc_list = ctrl_dict['selector']
-                    labels    = [unicode(desc['caption']) for desc in desc_list]
-                    selection = [desc['value']        for desc in desc_list]
+                    def make_selection_getter(ctrl_dict):
+                        desc_list = ctrl_dict['selector']
+                        def getter():
+                            labels    = [desc['caption'] for desc in desc_list]
+                            selection = [desc['value']   for desc in desc_list]
+                            return selection, labels
+                        return getter
                     ctrl_ui = ui.Selector(
                         'value',
                         ctrl_dict,
-                        label=unicode(ctrl_dict['caption']),
-                        selection=selection,
-                        labels=labels,
+                        label=ctrl_dict['caption'],
+                        selection_getter=make_selection_getter(ctrl_dict),
                         setter=make_value_change_fn(ctrl_id))
                 if ctrl_ui:
                     ctrl_ui.read_only = ctrl_dict.get('readonly',False)
