@@ -98,6 +98,7 @@ class SensorUIWrapper(object):
         y = int(y*(height-menu_height))
 
         self.menu = ui.Scrolling_Menu(unicode(self.sensor),size=(menu_width,menu_height),pos=(x,y))
+        self.uvc_menu = ui.Growing_Menu("UVC Controls")
         self.gui.append(self.menu)
         self.update_control_menu()
 
@@ -105,6 +106,8 @@ class SensorUIWrapper(object):
         if self.menu:
             self.gui.remove(self.menu)
             self.menu = None
+            self.uvc_menu = None
+            self.control_id_ui_mapping = None
 
     def on_notification(self, sensor, event):
         if event['subject'] == 'error':
@@ -112,6 +115,7 @@ class SensorUIWrapper(object):
         else:
             logger.info('%s [%s] %s %s'%(sensor, event['seq'], event['subject'], event['control_id']))
             logger.debug('SET %s'%event['changes'])
+            ctrl_id = event['control_id']
             if event['changes'].get('value') is None:
                 logger.warning('Control value for %s is None. This is not compliant with v2.12'%event['control_id'])
             ctrl_dtype = event.get('changes',{}).get('dtype')
@@ -119,10 +123,7 @@ class SensorUIWrapper(object):
                 ctrl_dtype == "selector" or ctrl_dtype == "bitmap"):
                 self.update_control_menu()
 
-    def update_control_menu(self):
-        del self.menu[:]
-        self.control_id_ui_mapping = {}
-
+    def add_controls_to_menu(self,menu,controls):
         # closure factory
         def make_value_change_fn(ctrl_id):
             def initiate_value_change(val):
@@ -130,7 +131,7 @@ class SensorUIWrapper(object):
                 self.sensor.set_control_value(ctrl_id, val)
             return initiate_value_change
 
-        for ctrl_id, ctrl_dict in self.sensor.controls.iteritems():
+        for ctrl_id, ctrl_dict in controls:
             try:
                 dtype    = ctrl_dict['dtype']
                 ctrl_ui  = None
@@ -172,11 +173,31 @@ class SensorUIWrapper(object):
                 if ctrl_ui:
                     ctrl_ui.read_only = ctrl_dict.get('readonly',False)
                     self.control_id_ui_mapping[ctrl_id] = ctrl_ui
-                    self.menu.append(ctrl_ui)
+                    menu.append(ctrl_ui)
             except:
                 logger.error('Exception for control:\n%s'%pprint.pformat(ctrl_dict))
                 import traceback as tb
                 tb.print_exc()
+        if len(menu) == 0:
+            menu.append(ui.Info_Text("No %s settings found"%menu.label))
+        return menu
+
+    def update_control_menu(self):
+        del self.menu[:]
+        del self.uvc_menu[:]
+        self.control_id_ui_mapping = {}
+
+        uvc_controls = []
+        other_controls = []
+        for entry in self.sensor.controls.iteritems():
+            if entry[0].startswith("UVC"):
+                uvc_controls.append(entry)
+            else: other_controls.append(entry)
+
+        self.add_controls_to_menu(self.menu, other_controls)
+        self.add_controls_to_menu(self.uvc_menu, uvc_controls)
+        self.menu.append(self.uvc_menu)
+
         self.menu.append(ui.Button("Reset to default values",self.sensor.reset_all_control_values))
 
 def runNDSIClient():
