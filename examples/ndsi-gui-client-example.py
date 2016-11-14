@@ -158,11 +158,23 @@ class SensorUIWrapper(object):
                         setter=make_value_change_fn(ctrl_id))
                 elif dtype == "selector":
                     def make_selection_getter(ctrl_dict):
-                        desc_list = ctrl_dict['selector']
                         def getter():
-                            labels    = [desc['caption'] for desc in desc_list]
-                            selection = [desc['value']   for desc in desc_list]
-                            return selection, labels
+                            values = ctrl_dict['map']
+                            return values, values
+                        return getter
+                    ctrl_ui = ui.Selector(
+                        'value',
+                        ctrl_dict,
+                        label=ctrl_dict['caption'],
+                        selection_getter=make_selection_getter(ctrl_dict),
+                        setter=make_value_change_fn(ctrl_id))
+                elif dtype == "bitmap":
+                    def make_selection_getter(ctrl_dict):
+                        def getter():
+                            mapping = ctrl_dict['map']
+                            labels = [entry['caption'] for entry in mapping]
+                            values = [entry['value']   for entry in mapping]
+                            return values, labels
                         return getter
                     ctrl_ui = ui.Selector(
                         'value',
