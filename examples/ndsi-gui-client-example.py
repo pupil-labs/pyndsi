@@ -130,8 +130,8 @@ class SensorUIWrapper(object):
 
         for ctrl_id, ctrl_dict in self.sensor.controls.iteritems():
             try:
-                dtype = ctrl_dict['dtype']
-                ctrl_ui = None
+                dtype    = ctrl_dict['dtype']
+                ctrl_ui  = None
                 if dtype == "string":
                     ctrl_ui = ui.Text_Input(
                         'value',
@@ -168,6 +168,7 @@ class SensorUIWrapper(object):
                         labels=labels,
                         setter=make_value_change_fn(ctrl_id))
                 if ctrl_ui:
+                    ctrl_ui.read_only = ctrl_dict.get('readonly',False)
                     self.control_id_ui_mapping[ctrl_id] = ctrl_ui
                     self.menu.append(ctrl_ui)
             except:
