@@ -22,4 +22,4 @@ class StreamError(CaptureError):
 
 from . network import Network
 from . sensor  import Sensor
-import frame
+from . import frame
