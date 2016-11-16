@@ -274,6 +274,7 @@ cdef class JEPGFrame(object):
         cdef int jpegSubsamp, j_width,j_height
         cdef int result
         cdef long unsigned int buf_size
+        cdef char* error_c
         result = turbojpeg.tjDecompressHeader2(
             self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
             &j_width, &j_height, &jpegSubsamp)
@@ -290,7 +291,9 @@ cdef class JEPGFrame(object):
                 self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
                 &self._yuv_buffer[0], 0)
         if result == -1:
-            logger.warning('Turbojpeg jpeg2yuv: %s'%turbojpeg.tjGetErrorStr() )
+            error_c = turbojpeg.tjGetErrorStr()
+            if str(error_c) != "No error":
+                logger.warning('Turbojpeg jpeg2yuv: %s'%error_c)
         self.yuv_subsampling = jpegSubsamp
         self._yuv_converted = True
 
