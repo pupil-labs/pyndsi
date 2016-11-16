@@ -85,6 +85,7 @@ class SensorUIWrapper(object):
         self.init_gui()
 
     def cleanup(self):
+        print 'Cleaning up', self.sensor.uuid
         self.deinit_gui()
         self.sensor.unlink()
         self.sensor = None
@@ -374,6 +375,9 @@ def runNDSIClient():
             global quit
             quit = True
 
+    for sensor in sensors.values():
+        sensor.cleanup()
+    sensors = None
     n.stop()
     gui.terminate()
     glfwTerminate()

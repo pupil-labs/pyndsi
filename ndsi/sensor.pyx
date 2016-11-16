@@ -73,6 +73,7 @@ cdef class Sensor(object):
         self.notify_sub.close()
         self.command_push.close()
         if self.supports_data_subscription:
+            self.data_sub.setsockopt(zmq.UNSUBSCRIBE, str(self.uuid))
             self.data_sub.close()
 
     def __del__(self):
@@ -148,7 +149,7 @@ cdef class Sensor(object):
             while self.has_data:
             # skip to newest frame
                 data_msg = self.get_data(copy=False)
-            meta_data = struct.unpack("<LLLLQL", data_msg[1])
+            meta_data = struct.unpack("<LLLLQLL", data_msg[1])
             if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
                 frame = JEPGFrame(*meta_data, data_msg[2])
                 frame.tj_context = self.tj_context

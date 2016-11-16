@@ -98,7 +98,7 @@ cdef class JEPGFrame(object):
         self._bgr_converted = False
         self.tj_context = NULL
 
-    def __init__(self, data_format, width, height, index, timestamp, data_len, object zmq_frame):
+    def __init__(self, data_format, width, height, index, timestamp, data_len, reserved, object zmq_frame):
         #if data_format != VIDEO_FRAME_FORMAT_MJPEG:
         #    raise ValueError('%s does not support format %s'%(self.__class__.__name__, hex(data_format)))
         self._width      = width
