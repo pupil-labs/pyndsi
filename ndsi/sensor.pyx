@@ -152,7 +152,7 @@ cdef class Sensor(object):
             meta_data = struct.unpack("<LLLLQLL", data_msg[1])
             if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
                 frame = JEPGFrame(*meta_data, data_msg[2])
-                frame.tj_context = self.tj_context
+                frame.attach_tj_context(self.tj_context)
             else:
                 raise StreamError('Frame was not of format MJPEG')
             return frame

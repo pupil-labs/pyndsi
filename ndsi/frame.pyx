@@ -13,6 +13,7 @@ cimport cturbojpeg as turbojpeg
 cimport numpy as np
 import numpy as np
 
+import hashlib
 import struct
 
 IF UNAME_SYSNAME == "Windows":
@@ -98,17 +99,33 @@ cdef class JEPGFrame(object):
         self._bgr_converted = False
         self.tj_context = NULL
 
-    def __init__(self, data_format, width, height, index, timestamp, data_len, reserved, object zmq_frame):
+    def __init__(self, data_format, width, height, index, timestamp, data_len, reserved, object zmq_frame, check_hash=False):
         #if data_format != VIDEO_FRAME_FORMAT_MJPEG:
         #    raise ValueError('%s does not support format %s'%(self.__class__.__name__, hex(data_format)))
         self._width      = width
         self._height     = height
         self._index      = index
-        self._buffer_len = np.min([len(zmq_frame.buffer),data_len])
+        self._buffer_len = min([len(zmq_frame.buffer),data_len])
         self._raw_data   = zmq_frame
         self.timestamp   = (<double>timestamp)/1000000
         self._jpeg_buffer = zmq_frame.buffer
         self.owns_ndsi_frame = False
+
+        if check_hash:
+            m = hashlib.md5(zmq_frame.bytes)
+            lower_end = int(m.hexdigest(), 16)%0x100000000
+            if lower_end != reserved:
+                raise ValueError('Payload corrupted')
+
+    cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
+        self.tj_context = ctx
+        cdef int jpegSubsamp, j_width, j_height,result
+        result = turbojpeg.tjDecompressHeader2(
+            self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
+            &j_width, &j_height, &jpegSubsamp)
+        if result != -1:
+            self._width  = j_width
+            self._height = j_height
 
     def __dealloc__(self):
         pass

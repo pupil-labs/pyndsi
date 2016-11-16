@@ -23,3 +23,5 @@ cdef class JEPGFrame(object):
 
     cdef yuv2bgr(self)
     cdef jpeg2yuv(self)
+
+    cdef attach_tj_context(self, turbojpeg.tjhandle ctx)
