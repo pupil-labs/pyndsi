@@ -33,7 +33,10 @@ elif platform.system() == 'Linux':
     extra_link_args = []#['-Wl,-R/usr/local/lib/']
     include_dirs = ['/opt/libjpeg-turbo/include']
 elif platform.system() == 'Windows':
-    raise NotImplementedError("please fix me.")
+    #raise NotImplementedError("please fix me.")
+    tj_dir = 'C:\\work\\libjpeg-turbo-VC64'
+    tj_lib = tj_dir + '\\lib\\turbojpeg.lib'
+    include_dirs = [tj_dir + '\\include']
 
 
 extensions = [
