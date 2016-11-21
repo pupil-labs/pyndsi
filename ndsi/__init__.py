@@ -8,7 +8,7 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-NDS_PROTOCOL_VERSION = '0.2.12'
+NDS_PROTOCOL_VERSION = '0.2.13'
 
 class CaptureError(Exception):
     def __init__(self, message):

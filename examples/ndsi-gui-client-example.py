@@ -11,6 +11,7 @@ pyglui code taken from:
 https://github.com/pupil-labs/pyglui/blob/master/example/example.py
 '''
 
+quit = False
 import logging, time, signal, sys
 logging.basicConfig(
     format='%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s',
@@ -79,13 +80,13 @@ def clear_gl_screen():
 
 class SensorUIWrapper(object):
     def __init__(self, gui, network, sensor_uuid):
+        self._initial_refresh = True
         self.control_id_ui_mapping = {}
         self.gui = gui
         self.sensor = network.sensor(sensor_uuid, callbacks=(self.on_notification,))
         self.init_gui()
 
     def cleanup(self):
-        print 'Cleaning up', self.sensor.uuid
         self.deinit_gui()
         self.sensor.unlink()
         self.sensor = None
@@ -111,6 +112,9 @@ class SensorUIWrapper(object):
             self.control_id_ui_mapping = None
 
     def on_notification(self, sensor, event):
+        if self._initial_refresh:
+            self.sensor.refresh_controls()
+            self._initial_refresh = False
         if event['subject'] == 'error':
             logger.error('Received error %i: %s'%(event['error_no'],event['error_str']))
         else:
@@ -121,7 +125,7 @@ class SensorUIWrapper(object):
                 logger.warning('Control value for %s is None. This is not compliant with v2.12'%event['control_id'])
             ctrl_dtype = event.get('changes',{}).get('dtype')
             if (event['control_id'] not in self.control_id_ui_mapping or
-                ctrl_dtype == "selector" or ctrl_dtype == "bitmap"):
+                ctrl_dtype == "strmapping" or ctrl_dtype == "intmapping"):
                 self.update_control_menu()
 
     def add_controls_to_menu(self,menu,controls):
@@ -178,6 +182,8 @@ class SensorUIWrapper(object):
                         labels=labels,
                         selection=selection,
                         setter=make_value_change_fn(ctrl_id))
+                else:
+                    logger.warning('Unknown control type "%s"'%dtype)
                 if ctrl_ui:
                     ctrl_ui.read_only = ctrl_dict.get('readonly',False)
                     self.control_id_ui_mapping[ctrl_id] = ctrl_ui
@@ -197,7 +203,7 @@ class SensorUIWrapper(object):
 
         uvc_controls = []
         other_controls = []
-        for entry in self.sensor.controls.iteritems():
+        for entry in iter(sorted(self.sensor.controls.iteritems())):
             if entry[0].startswith("UVC"):
                 uvc_controls.append(entry)
             else: other_controls.append(entry)
@@ -390,7 +396,6 @@ def runNDSIClient():
     glfwTerminate()
     logger.debug("Process done")
 
-quit = False
 if __name__ == '__main__':
     runNDSIClient()
 
