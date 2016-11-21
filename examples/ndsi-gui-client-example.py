@@ -160,10 +160,17 @@ class SensorUIWrapper(object):
                         on_val=ctrl_dict.get('max',True),
                         off_val=ctrl_dict.get('min',False),
                         setter=make_value_change_fn(ctrl_id))
-                elif dtype == "selector":
-                    desc_list = ctrl_dict['selector']
+                elif dtype == "strmapping" or dtype == "intmapping":
+                    desc_list = ctrl_dict['map']
                     labels    = [desc['caption'] for desc in desc_list]
                     selection = [desc['value']   for desc in desc_list]
+                    def make_selection_getter(ctrl_dict):
+                        def getter():
+                            mapping = ctrl_dict['map']
+                            labels = [entry['caption'] for entry in mapping]
+                            values = [entry['value']   for entry in mapping]
+                            return values, labels
+                        return getter
                     ctrl_ui = ui.Selector(
                         'value',
                         ctrl_dict,
