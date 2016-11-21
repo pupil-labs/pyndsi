@@ -176,6 +176,8 @@ cdef class Sensor(object):
         elif dtype == 'string' : value = unicode(value)
         elif dtype == 'integer': value = int(value)
         elif dtype == 'float'  : value = float(value)
+        elif dtype == 'intmapping'  : value = int(value)
+        elif dtype == 'strmapping'  : value = str(value)
         cmd = serial.dumps({
             'action'    : 'set_control_value',
             "control_id": control_id,
