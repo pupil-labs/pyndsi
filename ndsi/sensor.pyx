@@ -167,8 +167,14 @@ cdef class Sensor(object):
             self.reset_control_value(control_id)
 
     def reset_control_value(self, control_id):
-        value = self.controls[control_id]['def']
-        self.set_control_value(control_id, value)
+        if control_id in self.controls:
+            if 'def' in self.controls[control_id]:
+                value = self.controls[control_id]['def']
+                self.set_control_value(control_id, value)
+            else:
+                logger.error('Could not reset control `%s` because it'+
+                    'does not have a default value.'%control_id)
+        else: logger.error('Could not reset unknown control `%s`'%control_id)
 
     def set_control_value(self, control_id, value):
         dtype = self.controls[control_id]['dtype']
