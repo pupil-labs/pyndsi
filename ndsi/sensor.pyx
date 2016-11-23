@@ -73,6 +73,7 @@ cdef class Sensor(object):
         self.notify_sub.close()
         self.command_push.close()
         if self.supports_data_subscription:
+            self.data_sub.setsockopt(zmq.UNSUBSCRIBE, str(self.uuid))
             self.data_sub.close()
 
     def __del__(self):
@@ -115,8 +116,10 @@ cdef class Sensor(object):
             callback(self, event)
 
     def on_notification(self, caller, notification):
-        if   notification['subject'] == 'update':
+        if notification['subject'] == 'update':
             class UnsettableDict(dict):
+                def __getitem__(self, key):
+                    return self.get(key)
                 def __setitem__(self, key, value):
                     raise ValueError('Dictionary is read-only. Use Sensor.set_control_value instead.')
 
@@ -137,15 +140,21 @@ cdef class Sensor(object):
             raise NotDataSubSupportedError()
 
     def get_newest_data_frame(self, timeout=None):
+        if not self.supports_data_subscription:
+            raise NotDataSubSupportedError()
+
         # blocks until new frame arrives or times out
         cdef JEPGFrame frame
         if self.data_sub.poll(timeout=timeout):
             while self.has_data:
             # skip to newest frame
                 data_msg = self.get_data(copy=False)
-            meta_data = struct.unpack("<LLLLQL", data_msg[1].bytes)
-            frame = JEPGFrame(*meta_data, data_msg[2].buffer, copy=False)
-            frame.tj_context = self.tj_context
+            meta_data = struct.unpack("<LLLLQLL", data_msg[1])
+            if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
+                frame = JEPGFrame(*meta_data, data_msg[2])
+                frame.attach_tj_context(self.tj_context)
+            else:
+                raise StreamError('Frame was not of format MJPEG')
             return frame
         else: raise StreamError('Operation timed out.')
 
@@ -158,29 +167,26 @@ cdef class Sensor(object):
             self.reset_control_value(control_id)
 
     def reset_control_value(self, control_id):
-        value = self.controls[control_id]['def']
-        self.set_control_value(control_id, value)
+        if control_id in self.controls:
+            if 'def' in self.controls[control_id]:
+                value = self.controls[control_id]['def']
+                self.set_control_value(control_id, value)
+            else:
+                logger.error('Could not reset control `%s` because it'+
+                    'does not have a default value.'%control_id)
+        else: logger.error('Could not reset unknown control `%s`'%control_id)
 
     def set_control_value(self, control_id, value):
+        dtype = self.controls[control_id]['dtype']
+        if   dtype == 'bool'   : value = bool(value)
+        elif dtype == 'string' : value = unicode(value)
+        elif dtype == 'integer': value = int(value)
+        elif dtype == 'float'  : value = float(value)
+        elif dtype == 'intmapping'  : value = int(value)
+        elif dtype == 'strmapping'  : value = str(value)
         cmd = serial.dumps({
             'action'    : 'set_control_value',
             "control_id": control_id,
             "value"     : value
         })
-        self.command_push.send_multipart([str(self.uuid), cmd])
-
-    def stream_on(self):
-        cmd = serial.dumps({'action': 'stream_on'})
-        self.command_push.send_multipart([str(self.uuid), cmd])
-
-    def stream_off(self):
-        cmd = serial.dumps({'action': 'stream_off'})
-        self.command_push.send_multipart([str(self.uuid), cmd])
-
-    def record_on(self):
-        cmd = serial.dumps({'action': 'record_on'})
-        self.command_push.send_multipart([str(self.uuid), cmd])
-
-    def record_off(self):
-        cmd = serial.dumps({'action': 'record_off'})
         self.command_push.send_multipart([str(self.uuid), cmd])
