@@ -105,7 +105,7 @@ cdef class JEPGFrame(object):
         self._width      = width
         self._height     = height
         self._index      = index
-        self._buffer_len = min([len(zmq_frame.buffer),data_len])
+        self._buffer_len = len(zmq_frame.buffer)
         self._raw_data   = zmq_frame
         self.timestamp   = (<double>timestamp)/1000000
         self._jpeg_buffer = zmq_frame.buffer
