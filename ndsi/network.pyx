@@ -54,6 +54,7 @@ cdef class Network(object):
             try:
                 msg = serial.loads(event.msg.pop(0))
                 msg['subject']
+                msg['sensor_uuid']
                 msg['host_uuid'] = unicode(event.peer_uuid.hex)
                 msg['host_name'] = event.peer_name
             except (ValueError, KeyError):

@@ -1,4 +1,4 @@
-# Network Device Sensor Interface Protocol Specification v2.10
+# Network Device Sensor Interface Protocol Specification v2.13
 
 Status: draft
 
@@ -76,6 +76,8 @@ All sensor related messages MUST be zeromq multi-part messages with at least
 two frames. The first frame MUST include the `sensor`'s unique identifier and
 the second the content of a notification or a command. The unique identfier MUST be formatted as an unicode string.
 
+Note: The corresponding value of missing message keys SHALL be handled as `null`.
+
 ### Notifications
 
 #### Sequence numbers
@@ -106,7 +108,7 @@ attach = {
     "sensor_type"     : <sensor_type>,
     "notify_endpoint" : <String>,
     "command_endpoint": <String>,
-    "data_endpoint"   : <String> // optional
+    "data_endpoint"   : <String> // required for sensors that stream data
 }
 
 detach = {
@@ -157,28 +159,59 @@ control_info = {
     "def"             : <value>,          // default value
     "caption"         : <String>,
     "readonly"        : <Bool>,
-    "selector"        : [<selector_desc>,...] XOR [<bitmap_desc>,...] XOR null
+    "map"             : [<str_map>,...]  if <dtype> == "strmapping" XOR
+                        [<int_map>,...]  if <dtype> == "intmapping"  XOR
+                        null             else
 }
 
-selector_desc = {
-    "id"              : <String>
+str_map = {
     "value"           : <String>
     "caption"         : <String>
 }
 
-bitmap_desc = {
-    "id"              : <String>
+int_map = {
     "value"           : <Integer>
     "caption"         : <String>
 }
 
 sequence_no = <Unsigned Short> // Cycling sequence number
-dtype  = "string" XOR "integer" XOR "float" XOR "bool" XOR "selector"
-value  = <String> XOR <Bool> XOR <number> XOR null
+dtype  = "string" XOR "integer" XOR "float" XOR "bool" XOR "strmapping" XOR "intmapping"
+value  = <String> XOR <Bool> XOR <number>
 number = <Integer> XOR <Float>
 ```
 
-#### Recommended controls:
+#### Required controls:
+
+Required controls are pre-defined controls which sensors need to implement in case they support the according action.
+
+###### Streaming
+
+Sensors that support data streaming need to specify an `data_endpoint` in
+`<attach>`. It must be specified at anytime -- including when streaming is
+turned off. Although, the `data_endpoint` only needs to be reachable when
+streaming is turned on.
+
+Additionally, these sensors need to implement the following control:
+
+```javascript
+streaming_control_id = "streaming"
+streaming_control = {
+    "value"           : false,
+    "dtype"           : "bool",
+    "min"             : null, // minimal value
+    "max"             : null, // maximal value
+    "res"             : null, // resolution or step size
+    "def"             : false,// default value
+    "caption"         : "Streaming",
+    "readonly"        : false,
+    "selector"        : null
+}
+```
+
+###### Recording
+
+Sensors that support local capture need to implement the following two
+controls:
 
 ```javascript
 local_capture_control_id = "local_capture"
@@ -194,21 +227,8 @@ local_capture_control = {
     "selector"        : null
 }
 
-streaming_control_id = "streaming"
-streaming_control = {
-    "value"           : false,
-    "dtype"           : "bool",
-    "min"             : null, // minimal value
-    "max"             : null, // maximal value
-    "res"             : null, // resolution or step size
-    "def"             : false,// default value
-    "caption"         : "Streaming",
-    "readonly"        : false,
-    "selector"        : null
-}
-
-session_recording_name_control_id = "session_recording_name"
-session_recording_name_control = {
+capture_name_control_id = "capture_session_name"
+capture_name_control = {
     "value"           : "Unnamed recording",
     "dtype"           : "string",
     "min"             : null, // minimal value
@@ -260,6 +280,7 @@ typedef struct publish_header {
     uint32_t sequence_le;
     int64_t presentation_time_us_le;
     uint32_t data_bytes_le;
+    uint32_t reserved_le;
 } __attribute__ ((packed)) publish_header_t;
 
  VIDEO_FRAME_FORMAT_UNKNOWN     = 0     // supported, unknown
