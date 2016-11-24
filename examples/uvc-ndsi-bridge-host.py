@@ -39,7 +39,7 @@ class Bridge(object):
         generic_url = 'tcp://*:*'
         public_ep   = self.network.endpoint()
         self.note, self.note_url = self.bind(ctx, zmq.PUB , generic_url, public_ep)
-        self.data, self.data_url = self.bind(ctx, zmq.PUB , generic_url, public_ep,set_hwm=10)
+        self.data, self.data_url = self.bind(ctx, zmq.PUB , generic_url, public_ep,set_hwm=1)
         self.cmd , self.cmd_url  = self.bind(ctx, zmq.PULL, generic_url, public_ep)
 
     def loop(self):
