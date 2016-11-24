@@ -41,6 +41,7 @@ class Bridge(object):
         self.note, self.note_url = self.bind(ctx, zmq.PUB , generic_url, public_ep)
         self.data, self.data_url = self.bind(ctx, zmq.PUB , generic_url, public_ep)
         self.cmd , self.cmd_url  = self.bind(ctx, zmq.PULL, generic_url, public_ep)
+        self.data.set_hwm(10)
 
     def loop(self):
         logger.info('Entering bridging loop...')
