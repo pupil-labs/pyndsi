@@ -102,20 +102,19 @@ cdef class JEPGFrame(object):
     def __init__(self, data_format, width, height, index, timestamp, data_len, reserved, object zmq_frame, check_hash=False):
         #if data_format != VIDEO_FRAME_FORMAT_MJPEG:
         #    raise ValueError('%s does not support format %s'%(self.__class__.__name__, hex(data_format)))
-        self._width      = width
-        self._height     = height
-        self._index      = index
-        self._buffer_len = len(zmq_frame.buffer)
-        self._raw_data   = zmq_frame
-        self.timestamp   = (<double>timestamp)/1000000
+        self._width       = width
+        self._height      = height
+        self._index       = index
+        self._buffer_len  = len(zmq_frame.buffer)
+        self._raw_data    = zmq_frame
+        self.timestamp    = (<double>timestamp)/1000000
         self._jpeg_buffer = zmq_frame.buffer
-        self.owns_ndsi_frame = False
+        self.valid_hash   = self._buffer_len == data_len
 
         if check_hash:
             m = hashlib.md5(zmq_frame.bytes)
             lower_end = int(m.hexdigest(), 16)%0x100000000
-            if lower_end != reserved:
-                raise ValueError('Payload corrupted')
+            self.valid_hash = lower_end == reserved
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
         self.tj_context = ctx
