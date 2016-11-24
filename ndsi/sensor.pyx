@@ -62,6 +62,7 @@ cdef class Sensor(object):
 
         if self.data_endpoint:
             self.data_sub = context.socket(zmq.SUB)
+            self.data_sub.set_hwm(10)
             self.data_sub.connect(self.data_endpoint)
             self.data_sub.setsockopt(zmq.SUBSCRIBE, str(self.uuid))
         else:
@@ -149,12 +150,14 @@ cdef class Sensor(object):
             while self.has_data:
             # skip to newest frame
                 data_msg = self.get_data(copy=False)
-            meta_data = struct.unpack("<LLLLQLL", data_msg[1])
-            if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                frame = JEPGFrame(*meta_data, data_msg[2])
-                frame.attach_tj_context(self.tj_context)
-            else:
-                raise StreamError('Frame was not of format MJPEG')
+                meta_data = struct.unpack("<LLLLQLL", data_msg[1])
+                if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
+                    frame = JEPGFrame(*meta_data, data_msg[2])
+                    if frame.valid_hash:
+                        break
+                else:
+                    raise StreamError('Frame was not of format MJPEG')
+            frame.attach_tj_context(self.tj_context)
             return frame
         else: raise StreamError('Operation timed out.')
 
