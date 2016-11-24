@@ -175,8 +175,8 @@ cdef class Sensor(object):
                 value = self.controls[control_id]['def']
                 self.set_control_value(control_id, value)
             else:
-                logger.error('Could not reset control `%s` because it'+
-                    'does not have a default value.'%control_id)
+                logger.error(('Could not reset control `%s` because it'+
+                    'does not have a default value.')%control_id)
         else: logger.error('Could not reset unknown control `%s`'%control_id)
 
     def set_control_value(self, control_id, value):
