@@ -60,7 +60,7 @@ cdef class Network(object):
             except (ValueError, KeyError):
                 logger.warning('Malformatted message: %s'%msg)
             except Exception:
-                tb.print_exc()
+                logger.debug(tb.format_exc())
             else:
                 if msg['subject'] == 'attach':
                     if self.sensors.get(msg['sensor_uuid']):
