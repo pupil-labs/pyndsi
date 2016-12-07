@@ -108,9 +108,12 @@ cdef class Sensor(object):
             notification = serial.loads(msg[1])
             notification['subject']
         except Exception:
-            tb.print_exc()
+            logger.debug(tb.format_exc())
         else:
-            self.execute_callbacks(notification)
+            try:
+                self.execute_callbacks(notification)
+            except:
+                logger.debug(tb.format_exc())
 
     def execute_callbacks(self, event):
         for callback in self.callbacks:
@@ -180,13 +183,16 @@ cdef class Sensor(object):
         else: logger.error('Could not reset unknown control `%s`'%control_id)
 
     def set_control_value(self, control_id, value):
-        dtype = self.controls[control_id]['dtype']
-        if   dtype == 'bool'   : value = bool(value)
-        elif dtype == 'string' : value = unicode(value)
-        elif dtype == 'integer': value = int(value)
-        elif dtype == 'float'  : value = float(value)
-        elif dtype == 'intmapping'  : value = int(value)
-        elif dtype == 'strmapping'  : value = str(value)
+        try:
+            dtype = self.controls[control_id]['dtype']
+            if   dtype == 'bool'   : value = bool(value)
+            elif dtype == 'string' : value = unicode(value)
+            elif dtype == 'integer': value = int(value)
+            elif dtype == 'float'  : value = float(value)
+            elif dtype == 'intmapping'  : value = int(value)
+            elif dtype == 'strmapping'  : value = str(value)
+        except KeyError:
+            pass
         cmd = serial.dumps({
             'action'    : 'set_control_value',
             "control_id": control_id,
