@@ -41,6 +41,18 @@ cdef class Network(object):
         self.pyre_node.join(self.group)
         self.pyre_node.start()
 
+    def rejoin(self):
+        for sensor_uuid, sensor in self.sensors.items():
+            self.execute_callbacks({
+                'subject'    : 'detach',
+                'sensor_uuid'  : sensor_uuid,
+                'sensor_name': sensor['sensor_name'],
+                'host_uuid'  : sensor['host_uuid'],
+                'host_name'  : sensor['host_name']
+            })
+        self.pyre_node.leave(self.group)
+        self.pyre_node.join(self.group)
+
     def stop(self):
         logger.debug('Stopping network...')
         self.pyre_node.leave(self.group)
@@ -99,7 +111,7 @@ cdef class Network(object):
             sensor = Sensor(context=self.context, callbacks=callbacks, **self.sensors[sensor_uuid])
             return sensor
         except KeyError:
-            raise ValueError('"%s" is not a available sensor id.'%sensor_uuid)
+            raise ValueError('"%s" is not an available sensor id.'%sensor_uuid)
 
     def on_event(self, caller, event):
         if   event['subject'] == 'attach':
