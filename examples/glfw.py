@@ -35,9 +35,12 @@
 
 import sys,os
 import ctypes
-from ctypes import c_int,c_ushort,c_char_p,c_double,c_uint, c_char,Structure,CFUNCTYPE,byref,POINTER
+from ctypes import c_int,c_ushort,c_char_p,c_double,c_uint, c_char,c_float,Structure,CFUNCTYPE,byref,POINTER
 import platform
 from ctypes.util import find_library
+
+import logging
+logger = logging.getLogger(__name__)
 
 os_name = platform.system()
 del platform
@@ -63,15 +66,12 @@ else:
     elif os_name == "Darwin":
         dll_path = find_library('glfw3')
     elif os_name == "Windows":
-        dll_path = os.path.join(os.path.dirname(os.path.abspath(os.path.curdir)), 'shared_modules', 'external', 'glfw3')
-    # otherwise make sure that 'glfw3.dll' (http://www.glfw.org) is in Win-PATH-Variable (e.g. "C:\Windows\system32\glfw3.dll")
-    # precompiled glfw3.dll needs to fit MSC Version and x86/x86_64 architecture (e.g MSC v. 1500 - 64bit == VS2008 + x86_64)
+        dll_path = find_library('glfw3') #os.path.join(os.path.dirname(os.path.abspath(os.path.curdir)), 'shared_modules', 'external', 'glfw3')
     else:
         dll_path = find_library('glfw')
     if not dll_path:
-        raise RuntimeError, 'GLFW library not found'
+        raise RuntimeError('GLFW library not found')
 
-# if ctypes.CDLL('glfw3.dll') fails with "[Error 193] %1 is not a valid Win32 application", then a wrong compiled lib was possibly used
 _glfw = ctypes.CDLL(dll_path)
 
 # --- Version -----------------------------------------------------------------
@@ -481,47 +481,52 @@ def glfwInit():
     # glfw changes the directory,so we change it back.
     cwd = os.getcwd()
     # Initialize
-    _glfw.glfwInit()
+    res = _glfw.glfwInit()
     # Restore the old cwd.
     os.chdir(cwd)
     del os
+    if res < 0:
+        raise Exception("GLFW could not be initialized")
 
 
 def glfwCreateWindow(width=640, height=480, title="GLFW Window", monitor=None, share=None):
     _glfw.glfwCreateWindow.restype = POINTER(GLFWwindow)
-    window = _glfw.glfwCreateWindow(width,height,title,monitor,share)
-    __windows__.append(window)
-    index = __windows__.index(window)
-    __c_callbacks__[index] = {}
-    __py_callbacks__[index] = { 'errorfun'           : None,
-                                'monitorfun'         : None,
-                                'windowposfun'       : None,
-                                'windowsizefun'      : None,
-                                'windowclosefun'     : None,
-                                'windowrefreshfun'   : None,
-                                'windowfocusfun'     : None,
-                                'windowiconifyfun'   : None,
-                                'framebuffersizefun' : None,
-                                'keyfun'             : None,
-                                'charfun'            : None,
-                                'mousebuttonfun'     : None,
-                                'cursorposfun'       : None,
-                                'cursorenterfun'     : None,
-                                'scrollfun'          : None,
-                                'dropfun'            : None,}
-    return window
-
+    window = _glfw.glfwCreateWindow(width,height,title.encode('utf-8'),monitor,share)
+    if window:
+        __windows__.append(window)
+        index = __windows__.index(window)
+        __c_callbacks__[index] = {}
+        __py_callbacks__[index] = { 'errorfun'           : None,
+                                    'monitorfun'         : None,
+                                    'windowposfun'       : None,
+                                    'windowsizefun'      : None,
+                                    'windowclosefun'     : None,
+                                    'windowrefreshfun'   : None,
+                                    'windowfocusfun'     : None,
+                                    'windowiconifyfun'   : None,
+                                    'framebuffersizefun' : None,
+                                    'keyfun'             : None,
+                                    'charfun'            : None,
+                                    'mousebuttonfun'     : None,
+                                    'cursorposfun'       : None,
+                                    'cursorenterfun'     : None,
+                                    'scrollfun'          : None,
+                                    'dropfun'            : None,}
+        return window
+    else:
+        raise Exception("GLFW window failed to create.")
 def glfwDestroyWindow(window):
     index = __windows__.index(window)
-    #glfw 3.1 appears to require to the context to be destroyed to be current.
-    current = glfwGetCurrentContext()
-    glfwMakeContextCurrent(window)
-    _glfw.glfwDestroyWindow(window)
-    glfwMakeContextCurrent(current)
-    # We do not delete window from the list (or it would impact windows numbering)
-    # del __windows__[index]
-    del __c_callbacks__[index]
-    del __py_callbacks__[index]
+    try:
+        __c_callbacks__[index]
+    except KeyError:
+        logger.error('Window already destroyed.')
+    else:
+        _glfw.glfwDestroyWindow(window)
+        # We do not delete window from the list (or it would impact windows numbering)
+        # del __windows__[index]
+        del __c_callbacks__[index]
+        del __py_callbacks__[index]
 
 def glfwGetVersion():
     major, minor, rev = c_int(0), c_int(0), c_int(0)
@@ -621,31 +626,31 @@ def glfwGetJoystickButtons(joy):
 # --- Callbacks ---------------------------------------------------------------
 
 def __callback__(name):
-    callback = 'glfwSet%sCallback' % name
-    fun      = '%sfun' % name.lower()
+    callback = 'glfwSet{}Callback'.format(name)
+    fun      = '{}fun'.format(name.lower())
     code = """
-def %(callback)s(window, callback = None):
+def {callback}(window, callback = None):
     index = __windows__.index(window)
-    old_callback = __py_callbacks__[index]['%(fun)s']
-    __py_callbacks__[index]['%(fun)s'] = callback
-    if callback: callback = %(fun)s(callback)
-    __c_callbacks__[index]['%(fun)s'] = callback
-    _glfw.%(callback)s(window, callback)
-    return old_callback"""  % {'callback': callback, 'fun': fun}
+    old_callback = __py_callbacks__[index]['{fun}']
+    __py_callbacks__[index]['{fun}'] = callback
+    if callback: callback = {fun}(callback)
+    __c_callbacks__[index]['{fun}'] = callback
+    _glfw.{callback}(window, callback)
+    return old_callback""".format(callback=callback, fun=fun)
     return code
 
-exec __callback__('Error')
-exec __callback__('Monitor')
-exec __callback__('WindowPos')
-exec __callback__('WindowSize')
-exec __callback__('WindowClose')
-exec __callback__('WindowRefresh')
-exec __callback__('WindowFocus')
-exec __callback__('WindowIconify')
-exec __callback__('FramebufferSize')
-exec __callback__('Key')
-exec __callback__('Char')
-exec __callback__('MouseButton')
-exec __callback__('CursorPos')
-exec __callback__('Scroll')
-exec __callback__('Drop')
+exec(__callback__('Error'))
+exec(__callback__('Monitor'))
+exec(__callback__('WindowPos'))
+exec(__callback__('WindowSize'))
+exec(__callback__('WindowClose'))
+exec(__callback__('WindowRefresh'))
+exec(__callback__('WindowFocus'))
+exec(__callback__('WindowIconify'))
+exec(__callback__('FramebufferSize'))
+exec(__callback__('Key'))
+exec(__callback__('Char'))
+exec(__callback__('MouseButton'))
+exec(__callback__('CursorPos'))
+exec(__callback__('Scroll'))
+exec(__callback__('Drop'))
