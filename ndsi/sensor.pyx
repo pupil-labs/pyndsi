@@ -10,13 +10,20 @@
 
 cimport cturbojpeg as turbojpeg
 
-import zmq, traceback as tb, json as serial, logging, numpy as np, struct
+import struct
+import json as serial
+import traceback as tb
+import numpy as np
+import zmq
+
+import logging
 logger = logging.getLogger(__name__)
 
 from . import StreamError
 
-from frame cimport JEPGFrame
-from frame import VIDEO_FRAME_HEADER_FMT, VIDEO_FRAME_FORMAT_MJPEG
+from .frame cimport JEPGFrame
+from .frame import VIDEO_FRAME_HEADER_FMT, VIDEO_FRAME_FORMAT_MJPEG
+
 
 class NotDataSubSupportedError(Exception):
     def __init__(self, value=None):
@@ -55,7 +62,7 @@ cdef class Sensor(object):
 
         self.notify_sub = context.socket(zmq.SUB)
         self.notify_sub.connect(self.notify_endpoint)
-        self.notify_sub.setsockopt(zmq.SUBSCRIBE, str(self.uuid))
+        self.notify_sub.subscribe(self.uuid)
 
         self.command_push = context.socket(zmq.PUSH)
         self.command_push.connect(self.command_endpoint)
@@ -64,21 +71,22 @@ cdef class Sensor(object):
             self.data_sub = context.socket(zmq.SUB)
             self.data_sub.set_hwm(10)
             self.data_sub.connect(self.data_endpoint)
-            self.data_sub.setsockopt(zmq.SUBSCRIBE, str(self.uuid))
+            self.data_sub.subscribe(self.uuid)
         else:
             self.data_sub = None
 
         self.refresh_controls()
 
     def unlink(self):
+        self.notify_sub.unsubscribe(self.uuid)
         self.notify_sub.close()
         self.command_push.close()
         if self.supports_data_subscription:
-            self.data_sub.setsockopt(zmq.UNSUBSCRIBE, str(self.uuid))
+            self.data_sub.unsubscribe(self.uuid)
             self.data_sub.close()
 
     def __del__(self):
-        logger.debug('Sensor deleted: %s',self)
+        logger.debug('Sensor deleted: {}'.format(self))
         self.unlink()
 
     property supports_data_subscription:
@@ -98,14 +106,15 @@ cdef class Sensor(object):
                 raise NotDataSubSupportedError()
 
     def __str__(self):
-        return '<%s %s@%s [%s]>'%(__name__, self.name, self.host_name, self.type)
+        return '<{} {}@{} [{}]>'.format(__name__, self.name, self.host_name, self.type)
 
     def handle_notification(self):
-        msg = self.notify_sub.recv_multipart()
+        sender_id = self.notify_sub.recv_string()
+        notification_payload = self.notify_sub.recv_string()
         try:
-            if msg[0] != self.uuid:
-                raise ValueError('Message was destined for %s but was recieved by %s'%(msg[0],self.uuid))
-            notification = serial.loads(msg[1])
+            if sender_id != self.uuid:
+                raise ValueError('Message was destined for {} but was recieved by {}'.format(sender_id, self.uuid))
+            notification = serial.loads(notification_payload)
             notification['subject']
         except Exception:
             logger.debug(tb.format_exc())
@@ -155,7 +164,7 @@ cdef class Sensor(object):
                 data_msg = self.get_data(copy=False)
                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])
                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                    frame = JEPGFrame(*meta_data, data_msg[2])
+                    frame = JEPGFrame(*meta_data, zmq_frame=data_msg[2])
                     if frame.valid_hash:
                         break
                 else:
@@ -166,7 +175,8 @@ cdef class Sensor(object):
 
     def refresh_controls(self):
         cmd = serial.dumps({'action': 'refresh_controls'})
-        self.command_push.send_multipart([str(self.uuid), cmd])
+        self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
+        self.command_push.send_string(cmd)
 
     def reset_all_control_values(self):
         for control_id in self.controls:
@@ -178,24 +188,23 @@ cdef class Sensor(object):
                 value = self.controls[control_id]['def']
                 self.set_control_value(control_id, value)
             else:
-                logger.error(('Could not reset control `%s` because it'+
-                    'does not have a default value.')%control_id)
-        else: logger.error('Could not reset unknown control `%s`'%control_id)
+                logger.error(('Could not reset control `{}` because it does not have a default value.').format(control_id))
+        else: logger.error('Could not reset unknown control `{}`'.format(control_id))
 
     def set_control_value(self, control_id, value):
         try:
             dtype = self.controls[control_id]['dtype']
-            if   dtype == 'bool'   : value = bool(value)
-            elif dtype == 'string' : value = unicode(value)
+            if dtype == 'bool': value = bool(value)
+            elif dtype == 'string': value = str(value)
             elif dtype == 'integer': value = int(value)
-            elif dtype == 'float'  : value = float(value)
-            elif dtype == 'intmapping'  : value = int(value)
-            elif dtype == 'strmapping'  : value = str(value)
+            elif dtype == 'float': value = float(value)
+            elif dtype == 'intmapping': value = int(value)
+            elif dtype == 'strmapping': value = str(value)
         except KeyError:
             pass
         cmd = serial.dumps({
-            'action'    : 'set_control_value',
+            "action": "set_control_value",
             "control_id": control_id,
-            "value"     : value
-        })
-        self.command_push.send_multipart([str(self.uuid), cmd])
+            "value": value})
+        self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
+        self.command_push.send_string(cmd)

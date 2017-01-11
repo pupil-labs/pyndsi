@@ -11,7 +11,6 @@ pyglui code taken from:
 https://github.com/pupil-labs/pyglui/blob/master/example/example.py
 '''
 
-quit = False
 import logging, time, signal, sys
 logging.basicConfig(
     format='%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s',
@@ -43,7 +42,9 @@ from pyglui.pyfontstash import fontstash as fs
 from pyglui.cygl.shader import Shader
 
 
-width, height = (1280,720)
+quit = False
+width, height = (1280, 720)
+
 
 def basic_gl_setup():
     glEnable(GL_POINT_SPRITE )
@@ -63,8 +64,7 @@ def adjust_gl_view(w,h,window):
     """
     adjust view onto our scene.
     """
-
-    glViewport(0, 0, w, h)
+    glViewport(0, 0, int(w), int(h))
     glMatrixMode(GL_PROJECTION)
     glLoadIdentity()
     glOrtho(0, w, h, 0, -1, 1)
@@ -189,9 +189,9 @@ class SensorUIWrapper(object):
                     self.control_id_ui_mapping[ctrl_id] = ctrl_ui
                     menu.append(ctrl_ui)
             except:
-                logger.error('Exception for control:\n%s'%pprint.pformat(ctrl_dict))
+                logger.error('Exception for control:\n{}'.format(pprint.pformat(ctrl_dict)))
                 import traceback as tb
-                tb.print_exc()
+                tb.logger.debug_exc()
         if len(menu) == 0:
             menu.append(ui.Info_Text("No %s settings found"%menu.label))
         return menu
@@ -203,7 +203,7 @@ class SensorUIWrapper(object):
 
         uvc_controls = []
         other_controls = []
-        for entry in iter(sorted(self.sensor.controls.iteritems())):
+        for entry in iter(sorted(self.sensor.controls.items())):
             if entry[0].startswith("UVC"):
                 uvc_controls.append(entry)
             else: other_controls.append(entry)
@@ -248,19 +248,19 @@ def runNDSIClient():
                     # ideally copy what is in our text input area
                     test_val = "copied text input"
                     glfwSetClipboardString(window,test_val)
-                    print "set clipboard to: %s" %(test_val)
+                    logger.debug("set clipboard to: {}".format(test_val))
                 if key == 86:
                     # copy from system clipboard
                     clipboard = glfwGetClipboardString(window)
-                    print "pasting from clipboard: %s" %(clipboard)
+                    logger.debug("pasting from clipboard: {}".format(clipboard))
 
 
     def on_char(window,char):
         gui.update_char(char)
 
     def on_button(window,button, action, mods):
-        # print "button: ", button
-        # print "action: ", action
+        # logger.debug "button: ", button
+        # logger.debug "action: ", action
         gui.update_button(button,action,mods)
         # pos = normalize(pos,glfwGetWindowSize(window))
         # pos = denormalize(pos,(frame.img.shape[1],frame.img.shape[0]) ) # Position in img pixels
@@ -301,8 +301,7 @@ def runNDSIClient():
     init()
     basic_gl_setup()
 
-    print glGetString(GL_VERSION)
-
+    logger.debug(glGetString(GL_VERSION))
 
     class Temp(object):
         """Temp class to make objects"""
@@ -313,28 +312,25 @@ def runNDSIClient():
     foo.bar = 34
     foo.mytext = "some text"
 
-
     def set_text_val(val):
         foo.mytext = val
-        # print 'setting to :',val
+        # logger.debug 'setting to :',val
 
-
-    print "pyglui version: %s" %(ui.__version__)
+    logger.debug("pyglui version: {}".format(ui.__version__))
 
     gui = ui.UI()
     gui.scale = 1.0
 
-
     sensors = {}
 
     def on_network_event(network, event):
-        if event['subject'] == 'attach':# and event['sensor_type'] == 'video':
-            wrapper = SensorUIWrapper(gui,n,event['sensor_uuid'])
+        if event['subject'] == 'attach':  # and event['sensor_type'] == 'video':
+            wrapper = SensorUIWrapper(gui, n, event['sensor_uuid'])
             sensors[event['sensor_uuid']] = wrapper
-            logger.info('Linking sensor %s...'%wrapper.sensor)
-            logger.debug('%s'%pprint.pformat(event))
-        if event['subject'] == 'detach':# and event['sensor_type'] == 'video':
-            logger.info('Unlinking sensor %s...'%event['sensor_uuid'])
+            logger.info('Linking sensor {}...'.format(wrapper.sensor))
+            logger.debug(pprint.pformat(event))
+        if event['subject'] == 'detach':  # and event['sensor_type'] == 'video':
+            logger.info('Unlinking sensor {}...'.format(event['sensor_uuid']))
             sensors[event['sensor_uuid']].cleanup()
             del sensors[event['sensor_uuid']]
 
@@ -348,7 +344,7 @@ def runNDSIClient():
     ts = time.time()
 
     from pyglui import graph
-    print graph.__version__
+    logger.debug(graph.__version__)
     cpu_g = graph.Line_Graph()
     cpu_g.pos = (50,100)
     cpu_g.update_fn = ps.cpu_percent
@@ -385,7 +381,6 @@ def runNDSIClient():
                 while s.sensor.has_notifications:
                     s.sensor.handle_notification()
         except (KeyboardInterrupt, SystemExit):
-            global quit
             quit = True
 
     for sensor in sensors.values():
@@ -397,5 +392,5 @@ def runNDSIClient():
     logger.debug("Process done")
 
 if __name__ == '__main__':
+    logging.basicConfig()
     runNDSIClient()
-

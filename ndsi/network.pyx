@@ -8,12 +8,20 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-import zmq, time, logging, sys, traceback as tb, json as serial
+import time
+import sys
+import json as serial
+import traceback  as tb
+
+import zmq
 from pyre import Pyre, PyreEvent, zhelper
-logger = logging.getLogger(__name__)
 
 from . import NDS_PROTOCOL_VERSION
-from sensor cimport Sensor
+from .sensor cimport Sensor
+
+import logging
+logger = logging.getLogger(__name__)
+
 
 cdef class Network(object):
     ''' Communication node
@@ -42,14 +50,13 @@ cdef class Network(object):
         self.pyre_node.start()
 
     def rejoin(self):
-        for sensor_uuid, sensor in self.sensors.items():
+        for sensor_uuid, sensor in list(self.sensors.items()):
             self.execute_callbacks({
-                'subject'    : 'detach',
-                'sensor_uuid'  : sensor_uuid,
+                'subject': 'detach',
+                'sensor_uuid': sensor_uuid,
                 'sensor_name': sensor['sensor_name'],
-                'host_uuid'  : sensor['host_uuid'],
-                'host_name'  : sensor['host_name']
-            })
+                'host_uuid': sensor['host_uuid'],
+                'host_name': sensor['host_name']})
         self.pyre_node.leave(self.group)
         self.pyre_node.join(self.group)
 
@@ -67,10 +74,10 @@ cdef class Network(object):
                 msg = serial.loads(event.msg.pop(0))
                 msg['subject']
                 msg['sensor_uuid']
-                msg['host_uuid'] = unicode(event.peer_uuid.hex)
+                msg['host_uuid'] = event.peer_uuid.hex
                 msg['host_name'] = event.peer_name
             except (ValueError, KeyError):
-                logger.warning('Malformatted message: %s'%msg)
+                logger.warning('Malformatted message: {}'.format(msg))
             except Exception:
                 logger.debug(tb.format_exc())
             else:
@@ -84,23 +91,22 @@ cdef class Network(object):
                     if not sensor_entry: return
                     msg.update(sensor_entry)
                 else:
-                    logger.debug('Unknown host message: %s'%msg)
+                    logger.debug('Unknown host message: {}'.format(msg))
                     return
                 self.execute_callbacks(msg)
         elif event.type == 'EXIT':
             gone_peer = event.peer_uuid.hex
-            for sensor_uuid in self.sensors.keys():
+            for sensor_uuid in list(self.sensors.keys()):
                 host = self.sensors[sensor_uuid]['host_uuid']
                 if host == gone_peer:
                     self.execute_callbacks({
-                        'subject'    : 'detach',
-                        'sensor_uuid'  : sensor_uuid,
+                        'subject': 'detach',
+                        'sensor_uuid': sensor_uuid,
                         'sensor_name': self.sensors[sensor_uuid]['sensor_name'],
-                        'host_uuid'  : host,
-                        'host_name'  : self.sensors[sensor_uuid]['host_name']
-                    })
+                        'host_uuid': host,
+                        'host_name': self.sensors[sensor_uuid]['host_name']})
         else:
-            logger.debug('Dropping %s'%event)
+            logger.debug('Dropping {}'.format(event))
 
     def execute_callbacks(self, event):
         for callback in self.callbacks:
@@ -111,13 +117,13 @@ cdef class Network(object):
             sensor = Sensor(context=self.context, callbacks=callbacks, **self.sensors[sensor_uuid])
             return sensor
         except KeyError:
-            raise ValueError('"%s" is not an available sensor id.'%sensor_uuid)
+            raise ValueError('"{}" is not an available sensor id.'.format(sensor_uuid))
 
     def on_event(self, caller, event):
-        if   event['subject'] == 'attach':
+        if event['subject'] == 'attach':
             subject_less = event.copy()
             del subject_less['subject']
-            self.sensors.update({ event['sensor_uuid']: subject_less })
+            self.sensors.update({event['sensor_uuid']: subject_less})
         elif event['subject'] == 'detach':
             try:
                 del self.sensors[event['sensor_uuid']]
@@ -125,7 +131,7 @@ cdef class Network(object):
                 pass
 
     def __str__(self):
-        return '<%s %s [%s]>'%(__name__, self.name, self.pyre_node.uuid().hex)
+        return '<{} {} [{}]>'.format(__name__, self.name, self.pyre_node.uuid().hex)
 
     property has_events:
         def __get__(self):

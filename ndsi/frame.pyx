@@ -16,6 +16,10 @@ import numpy as np
 import hashlib
 import struct
 
+# logging
+import logging
+logger = logging.getLogger(__name__)
+
 IF UNAME_SYSNAME == "Windows":
     include "windows_time.pxi"
 ELIF UNAME_SYSNAME == "Darwin":
@@ -65,12 +69,6 @@ class InitError(CaptureError):
         super(InitError, self).__init__(message)
         self.message = message
 
-#logging
-import logging
-logger = logging.getLogger(__name__)
-
-__version__ = '0.0.1' #make sure this is the same in setup.py
-
 @staticmethod
 def unpack_metadata(packed_metadata):
     return struct.unpack("<LLLLQL", packed_metadata)
@@ -108,12 +106,12 @@ cdef class JEPGFrame(object):
         self._buffer_len  = len(zmq_frame.buffer)
         self._raw_data    = zmq_frame
         self.timestamp    = (<double>timestamp)/1000000
-        self._jpeg_buffer = zmq_frame.buffer
+        self._jpeg_buffer = bytearray(zmq_frame.buffer)
         self.valid_hash   = self._buffer_len == data_len
 
         if check_hash:
             m = hashlib.md5(zmq_frame.bytes)
-            lower_end = int(m.hexdigest(), 16)%0x100000000
+            lower_end = int(m.hexdigest(), 16) % 0x100000000
             self.valid_hash = lower_end == reserved
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
@@ -263,7 +261,7 @@ cdef class JEPGFrame(object):
             &self._bgr_buffer[0], self.width, 0,
             self.height, turbojpeg.TJPF_BGR, 0)
         if result == -1:
-            logger.error('Turbojpeg yuv2bgr: %s'%turbojpeg.tjGetErrorStr() )
+            logger.error('Turbojpeg yuv2bgr: {}'.format(turbojpeg.tjGetErrorStr()))
         self._bgr_converted = True
 
 
@@ -279,7 +277,7 @@ cdef class JEPGFrame(object):
             &j_width, &j_height, &jpegSubsamp)
 
         if result == -1:
-            logger.error('Turbojpeg could not read jpeg header: %s'%turbojpeg.tjGetErrorStr() )
+            logger.error('Turbojpeg could not read jpeg header: {}'.format(turbojpeg.tjGetErrorStr()))
             # hacky creation of dummy data, this will break if capture does work with different subsampling:
             j_width, j_height, jpegSubsamp = self.width, self.height, turbojpeg.TJSAMP_422
 
@@ -292,7 +290,7 @@ cdef class JEPGFrame(object):
         if result == -1:
             error_c = turbojpeg.tjGetErrorStr()
             if str(error_c) != "No error":
-                logger.warning('Turbojpeg jpeg2yuv: %s'%error_c)
+                logger.warning('Turbojpeg jpeg2yuv: {}'.format(error_c))
         self.yuv_subsampling = jpegSubsamp
         self._yuv_converted = True
 
