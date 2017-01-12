@@ -103,19 +103,24 @@ cdef class JEPGFrame(object):
         self._width       = width
         self._height      = height
         self._index       = index
-        self._buffer_len  = len(zmq_frame.buffer)
+        self._buffer_len  = data_len
         self._raw_data    = zmq_frame
         self.timestamp    = (<double>timestamp)/1000000
-        self._jpeg_buffer = bytearray(zmq_frame.buffer)
-        self.valid_hash   = self._buffer_len == data_len
-
+        self._jpeg_buffer = bytearray(zmq_frame[:data_len])
+        self.valid_hash   = True
+        # print(index,len(zmq_frame),data_len)
         if check_hash:
-            m = hashlib.md5(zmq_frame.bytes)
+            m = hashlib.md5(self._jpeg_buffer)
             lower_end = int(m.hexdigest(), 16) % 0x100000000
             self.valid_hash = lower_end == reserved
 
+        if not self.valid_hash:
+            logger.warning('Received corrupted frame')
+
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
         self.tj_context = ctx
+
+        # encode header to check integrety and frame properties
         cdef int jpegSubsamp, j_width, j_height,result
         result = turbojpeg.tjDecompressHeader2(
             self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
@@ -123,6 +128,8 @@ cdef class JEPGFrame(object):
         if result != -1:
             self._width  = j_width
             self._height = j_height
+        else:
+            logger.warning('Received corrupted frame')
 
     def __dealloc__(self):
         pass

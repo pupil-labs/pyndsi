@@ -167,17 +167,16 @@ cdef class Sensor(object):
         if self.data_sub.poll(timeout=timeout):
             #while self.has_data:
             # skip to newest frame
-            data_msg = self.get_data(copy=False)
+            data_msg = self.get_data(copy=True)
             meta_data = struct.unpack("<LLLLQLL", data_msg[1])
             if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
                 frame = JEPGFrame(*meta_data, zmq_frame=data_msg[2], check_hash=True)
-                if frame.valid_hash:
-                    logger.warning('Received corrupted frame')
+                frame.attach_tj_context(self.tj_context)
             else:
                 raise StreamError('Frame was not of format MJPEG')
-            frame.attach_tj_context(self.tj_context)
             return frame
-        else: raise StreamError('Operation timed out.')
+        else:
+            raise StreamError('Operation timed out.')
 
     def refresh_controls(self):
         cmd = serial.dumps({'action': 'refresh_controls'})
