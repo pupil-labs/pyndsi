@@ -109,13 +109,19 @@ cdef class Sensor(object):
         return '<{} {}@{} [{}]>'.format(__name__, self.name, self.host_name, self.type)
 
     def handle_notification(self):
-        sender_id = self.notify_sub.recv_string()
-        notification_payload = self.notify_sub.recv_string()
+        raw_notification = self.notify_sub.recv_multipart()
+        if len(raw_notification) != 2:
+            logger.debug('Message for sensor {} has not correct amount of frames: {}'.format(self.uuid,raw_notification))
+            return
+        sender_id = raw_notification[0].decode()
+        notification_payload = raw_notification[1]
         try:
             if sender_id != self.uuid:
                 raise ValueError('Message was destined for {} but was recieved by {}'.format(sender_id, self.uuid))
             notification = serial.loads(notification_payload)
             notification['subject']
+        except serial.decoder.JSONDecodeError:
+            logger.debug('JSONDecodeError for payload: `{}`'.format(notification_payload))
         except Exception:
             logger.debug(tb.format_exc())
         else:
@@ -159,16 +165,16 @@ cdef class Sensor(object):
         # blocks until new frame arrives or times out
         cdef JEPGFrame frame
         if self.data_sub.poll(timeout=timeout):
-            while self.has_data:
+            #while self.has_data:
             # skip to newest frame
-                data_msg = self.get_data(copy=False)
-                meta_data = struct.unpack("<LLLLQLL", data_msg[1])
-                if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                    frame = JEPGFrame(*meta_data, zmq_frame=data_msg[2])
-                    if frame.valid_hash:
-                        break
-                else:
-                    raise StreamError('Frame was not of format MJPEG')
+            data_msg = self.get_data(copy=False)
+            meta_data = struct.unpack("<LLLLQLL", data_msg[1])
+            if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
+                frame = JEPGFrame(*meta_data, zmq_frame=data_msg[2], check_hash=True)
+                if frame.valid_hash:
+                    logger.warning('Received corrupted frame')
+            else:
+                raise StreamError('Frame was not of format MJPEG')
             frame.attach_tj_context(self.tj_context)
             return frame
         else: raise StreamError('Operation timed out.')

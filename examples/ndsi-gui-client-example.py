@@ -19,8 +19,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
-logging.getLogger('ndsi').setLevel(logging.DEBUG)
+logging.getLogger('ndsi').setLevel(logging.INFO)
 logging.getLogger('pyre').setLevel(logging.WARNING)
+logging.getLogger('glfw').setLevel(logging.WARNING)
 
 import ndsi
 import pprint, random
