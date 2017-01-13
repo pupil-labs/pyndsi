@@ -104,18 +104,19 @@ cdef class JEPGFrame(object):
         self._height      = height
         self._index       = index
         self._buffer_len  = data_len
-        self._raw_data    = zmq_frame
+        self._raw_data    = zmq_frame[:data_len]
         self.timestamp    = (<double>timestamp)/1000000
         self._jpeg_buffer = bytearray(zmq_frame[:data_len])
         self.valid_hash   = True
         # print(index,len(zmq_frame),data_len)
         if check_hash:
-            m = hashlib.md5(self._jpeg_buffer)
+            m = hashlib.md5(zmq_frame[:data_len])
             lower_end = int(m.hexdigest(), 16) % 0x100000000
             self.valid_hash = lower_end == reserved
 
         if not self.valid_hash:
             logger.warning('Received corrupted frame')
+
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
         self.tj_context = ctx
@@ -123,13 +124,13 @@ cdef class JEPGFrame(object):
         # encode header to check integrety and frame properties
         cdef int jpegSubsamp, j_width, j_height,result
         result = turbojpeg.tjDecompressHeader2(
-            self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
+            self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
             &j_width, &j_height, &jpegSubsamp)
         if result != -1:
             self._width  = j_width
             self._height = j_height
         else:
-            logger.warning('Received corrupted frame')
+            logger.warning('Received corrupt frame')
 
     def __dealloc__(self):
         pass
@@ -148,7 +149,8 @@ cdef class JEPGFrame(object):
 
     property jpeg_buffer:
         def __get__(self):
-            return self._jpeg_buffer
+            return bytearray(self._raw_data)
+            # return self._jpeg_buffer
 
     property yuv_buffer:
         def __get__(self):
@@ -280,7 +282,7 @@ cdef class JEPGFrame(object):
         cdef long unsigned int buf_size
         cdef char* error_c
         result = turbojpeg.tjDecompressHeader2(
-            self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
+            self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
             &j_width, &j_height, &jpegSubsamp)
 
         if result == -1:
@@ -292,7 +294,7 @@ cdef class JEPGFrame(object):
         self._yuv_buffer = np.empty(buf_size, dtype=np.uint8)
         if result != -1:
             result = turbojpeg.tjDecompressToYUV(
-                self.tj_context, &self._jpeg_buffer[0], self._buffer_len,
+                self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
                 &self._yuv_buffer[0], 0)
         if result == -1:
             error_c = turbojpeg.tjGetErrorStr()
