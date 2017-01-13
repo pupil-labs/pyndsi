@@ -286,20 +286,19 @@ cdef class JEPGFrame(object):
             &j_width, &j_height, &jpegSubsamp)
 
         if result == -1:
-            logger.error('Turbojpeg could not read jpeg header: {}'.format(turbojpeg.tjGetErrorStr()))
+            error_c = turbojpeg.tjGetErrorStr()
+            logger.error('Turbojpeg could not read jpeg header: {}'.format(error_c))
             # hacky creation of dummy data, this will break if capture does work with different subsampling:
             j_width, j_height, jpegSubsamp = self.width, self.height, turbojpeg.TJSAMP_422
 
         buf_size = turbojpeg.tjBufSizeYUV(j_height, j_width, jpegSubsamp)
         self._yuv_buffer = np.empty(buf_size, dtype=np.uint8)
-        if result != -1:
-            result = turbojpeg.tjDecompressToYUV(
-                self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
-                &self._yuv_buffer[0], 0)
+        result = turbojpeg.tjDecompressToYUV(
+            self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
+            &self._yuv_buffer[0], 0)
         if result == -1:
             error_c = turbojpeg.tjGetErrorStr()
-            if str(error_c) != "No error":
-                logger.warning('Turbojpeg jpeg2yuv: {}'.format(error_c))
+            logger.warning('Turbojpeg jpeg2yuv: {}'.format(error_c))
         self.yuv_subsampling = jpegSubsamp
         self._yuv_converted = True
 
