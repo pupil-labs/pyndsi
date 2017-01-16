@@ -11,6 +11,7 @@ logging.getLogger('uvc').setLevel(logging.WARNING)
 
 from pyre import Pyre, zhelper, PyreEvent
 import uvc
+import hashlib
 
 sequence_limit = 2**32-1
 
@@ -71,7 +72,9 @@ class Bridge(object):
         self.data_seq %= sequence_limit
 
         jpeg_buffer = frame.jpeg_buffer
-        meta_data = struct.pack('<LLLLQLL', 0x10, frame.width, frame.height, index, now, jpeg_buffer.size, 0)
+        m = hashlib.md5(jpeg_buffer)
+        lower_end = int(m.hexdigest(), 16) % 0x100000000
+        meta_data = struct.pack('<LLLLQLL', 0x10, frame.width, frame.height, index, now, jpeg_buffer.size, lower_end)
         self.data.send_multipart([self.network.uuid().hex, meta_data, jpeg_buffer])
 
     def poll_network(self):
