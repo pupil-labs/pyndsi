@@ -104,13 +104,13 @@ cdef class JEPGFrame(object):
         self._height      = height
         self._index       = index
         self._buffer_len  = data_len
-        self._raw_data    = zmq_frame[:data_len]
+        self._raw_data    = zmq_frame
         self.timestamp    = (<double>timestamp)/1000000
         self._jpeg_buffer = bytearray(zmq_frame[:data_len])
         self.valid_hash   = True
         # print(index,len(zmq_frame),data_len)
         if check_hash:
-            m = hashlib.md5(zmq_frame[:data_len])
+            m = hashlib.md5(zmq_frame)
             lower_end = int(m.hexdigest(), 16) % 0x100000000
             self.valid_hash = lower_end == reserved
 
@@ -130,7 +130,7 @@ cdef class JEPGFrame(object):
             self._width  = j_width
             self._height = j_height
         else:
-            logger.warning('Received corrupt frame')
+            logger.warning('Received corrupted frame. Could not decompress header.')
 
     def __dealloc__(self):
         pass
@@ -150,7 +150,6 @@ cdef class JEPGFrame(object):
     property jpeg_buffer:
         def __get__(self):
             return bytearray(self._raw_data)
-            # return self._jpeg_buffer
 
     property yuv_buffer:
         def __get__(self):
@@ -286,19 +285,20 @@ cdef class JEPGFrame(object):
             &j_width, &j_height, &jpegSubsamp)
 
         if result == -1:
-            error_c = turbojpeg.tjGetErrorStr()
-            logger.error('Turbojpeg could not read jpeg header: {}'.format(error_c))
+            logger.error('Turbojpeg could not read jpeg header: {0}'.format(turbojpeg.tjGetErrorStr().decode()))
             # hacky creation of dummy data, this will break if capture does work with different subsampling:
             j_width, j_height, jpegSubsamp = self.width, self.height, turbojpeg.TJSAMP_422
 
         buf_size = turbojpeg.tjBufSizeYUV(j_height, j_width, jpegSubsamp)
         self._yuv_buffer = np.empty(buf_size, dtype=np.uint8)
-        result = turbojpeg.tjDecompressToYUV(
-            self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
-            &self._yuv_buffer[0], 0)
+        if result != -1:
+            result = turbojpeg.tjDecompressToYUV(
+                self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
+                &self._yuv_buffer[0], 0)
         if result == -1:
             error_c = turbojpeg.tjGetErrorStr()
-            logger.warning('Turbojpeg jpeg2yuv: {}'.format(error_c))
+            if error_c != b"No error":
+                logger.warning('Turbojpeg jpeg2yuv: {}'.format(error_c.decode()))
         self.yuv_subsampling = jpegSubsamp
         self._yuv_converted = True
 
