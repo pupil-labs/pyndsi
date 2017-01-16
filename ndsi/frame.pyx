@@ -106,9 +106,8 @@ cdef class JEPGFrame(object):
         self._buffer_len  = data_len
         self._raw_data    = zmq_frame
         self.timestamp    = (<double>timestamp)/1000000
-        self._jpeg_buffer = bytearray(zmq_frame[:data_len])
         self.valid_hash   = True
-        # print(index,len(zmq_frame),data_len)
+
         if check_hash:
             m = hashlib.md5(zmq_frame)
             lower_end = int(m.hexdigest(), 16) % 0x100000000
@@ -124,7 +123,7 @@ cdef class JEPGFrame(object):
         # encode header to check integrety and frame properties
         cdef int jpegSubsamp, j_width, j_height,result
         result = turbojpeg.tjDecompressHeader2(
-            self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
+            self.tj_context,self._raw_data, self._buffer_len,
             &j_width, &j_height, &jpegSubsamp)
         if result != -1:
             self._width  = j_width
@@ -281,7 +280,7 @@ cdef class JEPGFrame(object):
         cdef long unsigned int buf_size
         cdef char* error_c
         result = turbojpeg.tjDecompressHeader2(
-            self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
+            self.tj_context, self._raw_data, self._buffer_len,
             &j_width, &j_height, &jpegSubsamp)
 
         if result == -1:
@@ -293,7 +292,7 @@ cdef class JEPGFrame(object):
         self._yuv_buffer = np.empty(buf_size, dtype=np.uint8)
         if result != -1:
             result = turbojpeg.tjDecompressToYUV(
-                self.tj_context, <unsigned char*>self._raw_data, self._buffer_len,
+                self.tj_context, self._raw_data, self._buffer_len,
                 &self._yuv_buffer[0], 0)
         if result == -1:
             error_c = turbojpeg.tjGetErrorStr()
