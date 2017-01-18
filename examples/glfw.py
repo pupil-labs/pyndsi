@@ -61,12 +61,8 @@ if getattr(sys, 'frozen', False):
 
 else:
     # we are running in a normal Python environment
-    if os_name == "Linux":
-        dll_path = find_library('glfw')
-    elif os_name == "Darwin":
+    if os_name == "Windows":
         dll_path = find_library('glfw3')
-    elif os_name == "Windows":
-        dll_path = find_library('glfw3') #os.path.join(os.path.dirname(os.path.abspath(os.path.curdir)), 'shared_modules', 'external', 'glfw3')
     else:
         dll_path = find_library('glfw')
     if not dll_path:
