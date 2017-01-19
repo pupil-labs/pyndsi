@@ -18,6 +18,7 @@ import glob
 libs = []
 library_dirs = []
 extra_link_args = []
+extra_objects = []
 if platform.system() == 'Darwin':
     try:
         tj_lib = glob.glob('/usr/local/opt/jpeg-turbo/lib/libturbojpeg.dylib')[0]
@@ -35,12 +36,13 @@ elif platform.system() == 'Linux':
     libs = ['rt']
     extra_link_args = []  # ['-Wl,-R/usr/local/lib/']
     include_dirs = ['/opt/libjpeg-turbo/include']
+    extra_objects += [tj_lib]
 elif platform.system() == 'Windows':
     # raise NotImplementedError("please fix me.")
     tj_dir = 'C:\\work\\libjpeg-turbo-VC64'
     tj_lib = tj_dir + '\\lib\\turbojpeg.lib'
     include_dirs = [tj_dir + '\\include']
-
+    extra_objects += [tj_lib]
 
 extensions = [
     Extension(name="*",
@@ -48,8 +50,8 @@ extensions = [
               include_dirs=[numpy.get_include()]+include_dirs,
               library_dirs=library_dirs,
               libraries=libs,
-              extra_link_args=extra_link_args)
-]
+              extra_link_args=extra_link_args,
+              extra_objects=extra_objects)]
 
 setup(name="ndsi",
       version="0.2.14",  # make sure this is the same as in ndsi/__init__.py
