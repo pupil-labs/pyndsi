@@ -39,6 +39,7 @@ elif platform.system() == 'Linux':
     extra_objects += [tj_lib]
 elif platform.system() == 'Windows':
     # raise NotImplementedError("please fix me.")
+    libs = ['winmm']
     tj_dir = 'C:\\work\\libjpeg-turbo-VC64'
     tj_lib = tj_dir + '\\lib\\turbojpeg.lib'
     include_dirs = [tj_dir + '\\include']
