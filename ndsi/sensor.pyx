@@ -79,11 +79,11 @@ cdef class Sensor(object):
 
     def unlink(self):
         self.notify_sub.unsubscribe(self.uuid)
-        self.notify_sub.close()
-        self.command_push.close()
+        self.notify_sub.close(linger=0)
+        self.command_push.close(linger=0)
         if self.supports_data_subscription:
             self.data_sub.unsubscribe(self.uuid)
-            self.data_sub.close()
+            self.data_sub.close(linger=0)
 
     def __del__(self):
         logger.debug('Sensor deleted: {}'.format(self))
