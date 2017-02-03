@@ -71,7 +71,8 @@ cdef class Network(object):
         uuid = event.peer_uuid
         if event.type == 'SHOUT' or event.type == 'WHISPER':
             try:
-                msg = serial.loads(event.msg.pop(0))
+                payload = event.msg.pop(0).decode()
+                msg = serial.loads(payload)
                 msg['subject']
                 msg['sensor_uuid']
                 msg['host_uuid'] = event.peer_uuid.hex
