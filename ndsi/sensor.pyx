@@ -114,7 +114,7 @@ cdef class Sensor(object):
             logger.debug('Message for sensor {} has not correct amount of frames: {}'.format(self.uuid,raw_notification))
             return
         sender_id = raw_notification[0].decode()
-        notification_payload = raw_notification[1]
+        notification_payload = raw_notification[1].decode()
         try:
             if sender_id != self.uuid:
                 raise ValueError('Message was destined for {} but was recieved by {}'.format(sender_id, self.uuid))
