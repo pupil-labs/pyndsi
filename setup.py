@@ -45,17 +45,36 @@ elif platform.system() == 'Windows':
     include_dirs = [tj_dir + '\\include']
     extra_objects += [tj_lib]
 
+libs += ['avformat', 'avcodec', 'swscale']
+
 extensions = [
-    Extension(name="*",
-              sources=['ndsi/*.pyx'],
+    Extension(name="ndsi.frame",
+              sources=['ndsi/frame.pyx'],
               include_dirs=[numpy.get_include()]+include_dirs,
               library_dirs=library_dirs,
               libraries=libs,
               extra_link_args=extra_link_args,
-              extra_objects=extra_objects)]
+              extra_objects=extra_objects,
+              language='c++'),
+    Extension(name="ndsi.sensor",
+              sources=['ndsi/h264/h264_decoder.cpp', 'ndsi/sensor.pyx'],
+              include_dirs=[numpy.get_include()]+include_dirs,
+              library_dirs=library_dirs,
+              libraries=libs,
+              extra_link_args=extra_link_args,
+              extra_objects=extra_objects,
+              language='c++'),
+    Extension(name="ndsi.network",
+              sources=['ndsi/network.pyx'],
+              include_dirs=[numpy.get_include()]+include_dirs,
+              library_dirs=library_dirs,
+              libraries=libs,
+              extra_link_args=extra_link_args,
+              extra_objects=extra_objects,
+              language='c++')]
 
 setup(name="ndsi",
-      version="0.2.14",  # make sure this is the same as in ndsi/__init__.py
+      version="0.2.15",  # make sure this is the same as in ndsi/__init__.py
       description="Remote Device Sensor Interface",
       packages=['ndsi'],
       ext_modules=cythonize(extensions))

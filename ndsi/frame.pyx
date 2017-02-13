@@ -73,7 +73,7 @@ class InitError(CaptureError):
 def unpack_metadata(packed_metadata):
     return struct.unpack("<LLLLQL", packed_metadata)
 
-cdef class JEPGFrame(object):
+cdef class YUVFrame(object):
     '''
     The Frame Object holds image data and image metadata.
 
@@ -240,7 +240,6 @@ cdef class JEPGFrame(object):
             Y = np.asarray(self._yuv_buffer[:self.width*self.height]).reshape(self.height,self.width)
             return Y
 
-
     property bgr:
         def __get__(self):
             if self._bgr_converted is False:
@@ -251,7 +250,6 @@ cdef class JEPGFrame(object):
             cdef np.ndarray[np.uint8_t, ndim=3] BGR
             BGR = np.asarray(self._bgr_buffer).reshape(self.height,self.width,3)
             return BGR
-
 
     #for legacy reasons.
     property img:
@@ -271,7 +269,12 @@ cdef class JEPGFrame(object):
             logger.error('Turbojpeg yuv2bgr: {}'.format(turbojpeg.tjGetErrorStr()))
         self._bgr_converted = True
 
+    def clear_caches(self):
+        self._bgr_converted = False
+        self._yuv_converted = False
 
+
+cdef class JEPGFrame(YUVFrame):
     cdef jpeg2yuv(self):
         # 7.55 ms on 1080p
         cdef int channels = 1
@@ -300,11 +303,6 @@ cdef class JEPGFrame(object):
                 logger.warning('Turbojpeg jpeg2yuv: {}'.format(error_c.decode()))
         self.yuv_subsampling = jpegSubsamp
         self._yuv_converted = True
-
-
-    def clear_caches(self):
-        self._bgr_converted = False
-        self._yuv_converted = False
 
 
 cdef inline int interval_to_fps(int interval):

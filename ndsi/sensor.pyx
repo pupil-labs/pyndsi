@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 from . import StreamError
 
 from .frame cimport JEPGFrame
-from .frame import VIDEO_FRAME_HEADER_FMT, VIDEO_FRAME_FORMAT_MJPEG
+from .frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
 
 
 class NotDataSubSupportedError(Exception):
@@ -164,17 +164,29 @@ cdef class Sensor(object):
 
         # blocks until new frame arrives or times out
         cdef JEPGFrame frame
+        cdef size_t out_size
+        cdef np.uint8_t* out_buffer
+        pkt_pts = 0
         if self.data_sub.poll(timeout=timeout):
-            #while self.has_data:
+            while self.has_data:
             # skip to newest frame
-            data_msg = self.get_data(copy=True)
-            meta_data = struct.unpack("<LLLLQLL", data_msg[1])
-            if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                frame = JEPGFrame(*meta_data, zmq_frame=data_msg[2], check_hash=True)
-                frame.attach_tj_context(self.tj_context)
-            else:
-                raise StreamError('Frame was not of format MJPEG')
-            return frame
+                data_msg = self.get_data(copy=True)
+                meta_data = struct.unpack("<LLLLQLL", data_msg[1])
+                if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
+                    frame = JEPGFrame(*meta_data, zmq_frame=data_msg[2], check_hash=True)
+                    frame.attach_tj_context(self.tj_context)
+                    return frame
+                elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
+                    out = self.decoder.set_input_buffer(data_msg[2], meta_data[5], meta_data[4])
+                    if out > 0 or self.decoder.is_frame_ready():
+                        out_size = self.decoder.get_output_bytes()
+                        print('Should read: {}'.format(out_size))
+                        out_buffer = np.zeros(out_buffer)
+                        out_size = self.decoder.get_output_buffer(out_buffer, out_size, pkt_pts)
+                        print('Did read: {}'.format(out_size))
+                    return
+                else:
+                    raise StreamError('Frame was not of format MJPEG or H264')
         else:
             raise StreamError('Operation timed out.')
 
