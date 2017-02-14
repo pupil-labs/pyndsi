@@ -18,15 +18,14 @@ libs = []
 library_dirs = []
 extra_link_args = []
 extra_objects = []
+include_dirs=[numpy.get_include()]
 if platform.system() == 'Darwin':
-    include_dirs = ['/usr/local/opt/jpeg-turbo/include/']
+    include_dirs += ['/usr/local/opt/jpeg-turbo/include/']
     libs += ['turbojpeg']
     library_dirs += ['/usr/local/opt/jpeg-turbo/lib/']
 elif platform.system() == 'Linux':
     libs = ['rt','turbojpeg']
-    include_dirs = ['/opt/libjpeg-turbo/include']
 elif platform.system() == 'Windows':
-    # raise NotImplementedError("please fix me.")
     libs = ['winmm']
     tj_dir = 'C:\\work\\libjpeg-turbo-VC64'
     tj_lib = tj_dir + '\\lib\\turbojpeg.lib'
@@ -36,7 +35,7 @@ elif platform.system() == 'Windows':
 extensions = [
     Extension(name="*",
               sources=['ndsi/*.pyx'],
-              include_dirs=[numpy.get_include()]+include_dirs,
+              include_dirs=include_dirs,
               library_dirs=library_dirs,
               libraries=libs,
               extra_link_args=extra_link_args,
