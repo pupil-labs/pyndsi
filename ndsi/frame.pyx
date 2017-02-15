@@ -328,6 +328,10 @@ cdef class H264Frame(object):
         def __get__(self):
             return self._height
 
+    property size:
+        def __get__(self):
+            return (self.width, self.height)
+
     property index:
         def __get__(self):
             return self._index

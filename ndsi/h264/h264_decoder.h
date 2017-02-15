@@ -49,6 +49,7 @@ public:
 	inline const size_t get_output_bytes() { return avpicture_get_size(color_format, width(), height()); };
 	int set_input_buffer(uint8_t *nal_units, const size_t &bytes, const int64_t &presentation_time_us);
 	int get_output_buffer(uint8_t *buf, const size_t &capacity, int64_t &result_pts);
+	void reinitialize_scaling_context();
 };
 
 }	// namespace media

@@ -27,6 +27,7 @@ cdef extern from "h264/h264_decoder.h" namespace "serenegiant::media":
         const int get_output_bytes()
         int set_input_buffer(np.uint8_t *nal_units, const size_t &bytes, const np.int64_t &presentation_time_us)
         int get_output_buffer(np.uint8_t *buf, const size_t &capacity, np.int64_t &result_pts)
+        void reinitialize_scaling_context()
 
 cdef class Sensor(object):
 
@@ -35,6 +36,7 @@ cdef class Sensor(object):
     cdef list callbacks
     cdef object context
     cdef object command_push
+    cdef object _recent_frame
     cdef turbojpeg.tjhandle tj_context
     cdef readonly object notify_sub
     cdef readonly object data_sub

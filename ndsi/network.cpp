@@ -954,8 +954,8 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 
-/* "sensor.pxd":31
- *         int get_output_buffer(np.uint8_t *buf, const size_t &capacity, np.int64_t &result_pts)
+/* "sensor.pxd":32
+ *         void reinitialize_scaling_context()
  * 
  * cdef class Sensor(object):             # <<<<<<<<<<<<<<
  * 
@@ -967,6 +967,7 @@ struct __pyx_obj_4ndsi_6sensor_Sensor {
   PyObject *callbacks;
   PyObject *context;
   PyObject *command_push;
+  PyObject *_recent_frame;
   tjhandle tj_context;
   PyObject *notify_sub;
   PyObject *data_sub;
@@ -8668,7 +8669,7 @@ PyMODINIT_FUNC PyInit_network(void)
   __pyx_ptype_5numpy_broadcast = __Pyx_ImportType("numpy", "broadcast", sizeof(PyArrayMultiIterObject), 0); if (unlikely(!__pyx_ptype_5numpy_broadcast)) __PYX_ERR(1, 172, __pyx_L1_error)
   __pyx_ptype_5numpy_ndarray = __Pyx_ImportType("numpy", "ndarray", sizeof(PyArrayObject), 0); if (unlikely(!__pyx_ptype_5numpy_ndarray)) __PYX_ERR(1, 181, __pyx_L1_error)
   __pyx_ptype_5numpy_ufunc = __Pyx_ImportType("numpy", "ufunc", sizeof(PyUFuncObject), 0); if (unlikely(!__pyx_ptype_5numpy_ufunc)) __PYX_ERR(1, 861, __pyx_L1_error)
-  __pyx_ptype_4ndsi_6sensor_Sensor = __Pyx_ImportType("ndsi.sensor", "Sensor", sizeof(struct __pyx_obj_4ndsi_6sensor_Sensor), 1); if (unlikely(!__pyx_ptype_4ndsi_6sensor_Sensor)) __PYX_ERR(3, 31, __pyx_L1_error)
+  __pyx_ptype_4ndsi_6sensor_Sensor = __Pyx_ImportType("ndsi.sensor", "Sensor", sizeof(struct __pyx_obj_4ndsi_6sensor_Sensor), 1); if (unlikely(!__pyx_ptype_4ndsi_6sensor_Sensor)) __PYX_ERR(3, 32, __pyx_L1_error)
   /*--- Variable import code ---*/
   /*--- Function import code ---*/
   /*--- Execution code ---*/

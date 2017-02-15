@@ -62,6 +62,7 @@ cdef class Sensor(object):
         self.command_endpoint = command_endpoint
         self.data_endpoint = data_endpoint
         self.controls = {}
+        self._recent_frame = None
 
         self.notify_sub = context.socket(zmq.SUB)
         self.notify_sub.connect(self.notify_endpoint)
@@ -187,14 +188,19 @@ cdef class Sensor(object):
 
         if self.data_sub.poll(timeout=timeout):
             while self.has_data:
-            # skip to newest frame
                 data_msg = self.get_data(copy=True)
                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])
                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                    return create_jpeg_frame(data_msg[2], meta_data)
+                    frame = create_jpeg_frame(data_msg[2], meta_data)
+                    self._recent_frame = frame
+                    return frame
                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
+                    if isinstance(self._recent_frame, H264Frame) and self._recent_frame.size != (meta_data[1], meta_data[2]):
+                        self.decoder.reinitialize_scaling_context()
+
                     frame = create_h264_frame(data_msg[2], meta_data)
                     if frame is not None:
+                        self._recent_frame = frame
                         return frame
                 else:
                     raise StreamError('Frame was not of format MJPEG or H264')

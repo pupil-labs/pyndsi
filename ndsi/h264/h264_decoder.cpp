@@ -68,6 +68,21 @@ H264Decoder::~H264Decoder() {
 		av_free(dst);
 		dst = NULL;
 	}
+	if (sws_context) {
+		sws_freeContext(sws_context);
+		sws_context = NULL;
+	}
+
+	EXIT();
+}
+
+void H264Decoder::reinitialize_scaling_context() {
+	ENTER();
+
+	if (sws_context) {
+		sws_freeContext(sws_context);
+		sws_context = NULL;
+	}
 
 	EXIT();
 }
