@@ -8,6 +8,9 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
+import faulthandler
+faulthandler.enable(all_threads=False)
+
 cimport cturbojpeg as turbojpeg
 
 import struct
@@ -21,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 from . import StreamError
 
-from .frame cimport JEPGFrame
+from .frame cimport JPEGFrame, H264Frame
 from .frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
 
 
@@ -162,29 +165,37 @@ cdef class Sensor(object):
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
-        # blocks until new frame arrives or times out
-        cdef JEPGFrame frame
-        cdef size_t out_size
-        cdef np.uint8_t* out_buffer
-        pkt_pts = 0
+        def create_jpeg_frame(buffer_, meta_data):
+            cdef JPEGFrame frame = JPEGFrame(*meta_data,
+                                             zmq_frame=buffer_,
+                                             check_hash=True)
+            frame.attach_tj_context(self.tj_context)
+            return frame
+
+        def create_h264_frame(buffer_, meta_data):
+            cdef H264Frame frame = None
+            cdef unsigned char[:] out_buffer
+            pkt_pts = 0
+            out = self.decoder.set_input_buffer(buffer_, meta_data[5], meta_data[4])
+            if self.decoder.is_frame_ready():
+                out_size = self.decoder.get_output_bytes()
+                out_buffer = np.empty(out_size, dtype=np.uint8)
+                out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
+                frame = H264Frame(*meta_data[:5], data_len=out_size, yuv_buffer=out_buffer)
+                frame.attach_tj_context(self.tj_context)
+            return frame
+
         if self.data_sub.poll(timeout=timeout):
             while self.has_data:
             # skip to newest frame
                 data_msg = self.get_data(copy=True)
                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])
                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                    frame = JEPGFrame(*meta_data, zmq_frame=data_msg[2], check_hash=True)
-                    frame.attach_tj_context(self.tj_context)
-                    return frame
+                    return create_jpeg_frame(data_msg[2], meta_data)
                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
-                    out = self.decoder.set_input_buffer(data_msg[2], meta_data[5], meta_data[4])
-                    if out > 0 or self.decoder.is_frame_ready():
-                        out_size = self.decoder.get_output_bytes()
-                        print('Should read: {}'.format(out_size))
-                        out_buffer = np.zeros(out_buffer)
-                        out_size = self.decoder.get_output_buffer(out_buffer, out_size, pkt_pts)
-                        print('Did read: {}'.format(out_size))
-                    return
+                    frame = create_h264_frame(data_msg[2], meta_data)
+                    if frame is not None:
+                        return frame
                 else:
                     raise StreamError('Frame was not of format MJPEG or H264')
         else:

@@ -21,9 +21,11 @@ H264Decoder::H264Decoder(const color_format_t &_color_format)
 {
 	ENTER();
 
+	av_log_set_level(AV_LOG_VERBOSE);
+
 	switch (_color_format) {
-	case COLOR_FORMAT_YUV420:
-		color_format = AV_PIX_FMT_YUV410P;
+	case COLOR_FORMAT_YUV422:
+		color_format = AV_PIX_FMT_YUV422P;
 		break;
 	case COLOR_FORMAT_RGB565LE:
 		color_format = AV_PIX_FMT_RGB565LE;
@@ -32,7 +34,7 @@ H264Decoder::H264Decoder(const color_format_t &_color_format)
 		color_format = AV_PIX_FMT_BGR32;
 		break;
 	default:
-		color_format = AV_PIX_FMT_YUV420P;
+		color_format = AV_PIX_FMT_YUV422P;
 		break;
 	}
 
@@ -103,6 +105,7 @@ int H264Decoder::get_output_buffer(uint8_t *buf, const size_t &capacity, int64_t
 
 	if (LIKELY(capacity >= result)) {
 		if (color_format == codec_context->pix_fmt) {
+			LOGW("memcopy");
 			memcpy(src->data, buf, result);
 		} else {
 			const int width = this->width();

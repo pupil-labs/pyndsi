@@ -73,7 +73,8 @@ class InitError(CaptureError):
 def unpack_metadata(packed_metadata):
     return struct.unpack("<LLLLQL", packed_metadata)
 
-cdef class YUVFrame(object):
+
+cdef class JPEGFrame(object):
     '''
     The Frame Object holds image data and image metadata.
 
@@ -273,8 +274,6 @@ cdef class YUVFrame(object):
         self._bgr_converted = False
         self._yuv_converted = False
 
-
-cdef class JEPGFrame(YUVFrame):
     cdef jpeg2yuv(self):
         # 7.55 ms on 1080p
         cdef int channels = 1
@@ -303,6 +302,75 @@ cdef class JEPGFrame(YUVFrame):
                 logger.warning('Turbojpeg jpeg2yuv: {}'.format(error_c.decode()))
         self.yuv_subsampling = jpegSubsamp
         self._yuv_converted = True
+
+
+cdef class H264Frame(object):
+    def __cinit__(self,*args,**kwargs):
+        self._bgr_converted = False
+        self.tj_context = NULL
+
+    def __init__(self, data_format, width, height, index, timestamp, data_len, yuv_buffer):
+        self._width       = width
+        self._height      = height
+        self._index       = index
+        self._buffer_len  = data_len
+        self._yuv_buffer  = yuv_buffer
+        self.timestamp    = (<double>timestamp)/1000000
+
+    cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
+        self.tj_context = ctx
+
+    property width:
+        def __get__(self):
+            return self._width
+
+    property height:
+        def __get__(self):
+            return self._height
+
+    property index:
+        def __get__(self):
+            return self._index
+
+    property yuv_buffer:
+        def __get__(self):
+            return self._yuv_buffer
+
+    property gray:
+        def __get__(self):
+            # return gray aka luminace plane of YUV image.
+            cdef np.ndarray[np.uint8_t, ndim=2] Y
+            Y = np.asarray(self._yuv_buffer[:self.width*self.height]).reshape(self.height,self.width)
+            return Y
+
+    property bgr:
+        def __get__(self):
+            if self._bgr_converted is False:
+                self.yuv2bgr()
+            cdef np.ndarray[np.uint8_t, ndim=3] BGR
+            BGR = np.asarray(self._bgr_buffer).reshape(self.height,self.width,3)
+            return BGR
+
+    #for legacy reasons.
+    property img:
+        def __get__(self):
+            return self.bgr
+
+    cdef yuv2bgr(self):
+        #2.75 ms at 1080p
+        cdef int channels = 3
+        cdef int result
+        self._bgr_buffer = np.empty(self.width*self.height*channels, dtype=np.uint8)
+        result = turbojpeg.tjDecodeYUV(
+            self.tj_context, &self._yuv_buffer[0], 4, turbojpeg.TJSAMP_420,
+            &self._bgr_buffer[0], self.width, 0,
+            self.height, turbojpeg.TJPF_BGR, 0)
+        if result == -1:
+            logger.error('Turbojpeg yuv2bgr: {}'.format(turbojpeg.tjGetErrorStr()))
+        self._bgr_converted = True
+
+    def clear_caches(self):
+        self._bgr_converted = False
 
 
 cdef inline int interval_to_fps(int interval):

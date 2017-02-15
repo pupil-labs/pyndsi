@@ -24,7 +24,7 @@ namespace serenegiant {
 namespace media {
 
 typedef enum COLOR_FORMAT {
-	COLOR_FORMAT_YUV420 = 0,
+	COLOR_FORMAT_YUV422 = 0,
 	COLOR_FORMAT_RGB565LE,
 	COLOR_FORMAT_BGR32,
 } color_format_t;
@@ -40,7 +40,7 @@ private:
 	volatile bool frame_ready;
 protected:
 public:
-	H264Decoder(const color_format_t &color_format = COLOR_FORMAT_YUV420);
+	H264Decoder(const color_format_t &color_format = COLOR_FORMAT_YUV422);
 	virtual ~H264Decoder();
 
 	inline const bool is_frame_ready() const { return frame_ready; };
