@@ -29,7 +29,7 @@ elif platform.system() == 'Windows':
     libs = ['winmm']
     tj_dir = 'C:\\work\\libjpeg-turbo-VC64'
     tj_lib = tj_dir + '\\lib\\turbojpeg.lib'
-    include_dirs = [tj_dir + '\\include']
+    include_dirs += [tj_dir + '\\include']
     extra_objects += [tj_lib]
 
 extensions = [
