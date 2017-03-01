@@ -167,9 +167,7 @@ cdef class Sensor(object):
             raise NotDataSubSupportedError()
 
         def create_jpeg_frame(buffer_, meta_data):
-            cdef JPEGFrame frame = JPEGFrame(*meta_data,
-                                             zmq_frame=buffer_,
-                                             check_hash=True)
+            cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
             frame.attach_tj_context(self.tj_context)
             return frame
 
@@ -182,7 +180,7 @@ cdef class Sensor(object):
                 out_size = self.decoder.get_output_bytes()
                 out_buffer = np.empty(out_size, dtype=np.uint8)
                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
-                frame = H264Frame(*meta_data[:5], data_len=out_size, yuv_buffer=out_buffer)
+                frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)
                 frame.attach_tj_context(self.tj_context)
             return frame
 
@@ -191,16 +189,10 @@ cdef class Sensor(object):
                 data_msg = self.get_data(copy=True)
                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])
                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                    frame = create_jpeg_frame(data_msg[2], meta_data)
-                    self._recent_frame = frame
-                    return frame
+                    return create_jpeg_frame(data_msg[2], meta_data)
                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
-                    if isinstance(self._recent_frame, H264Frame) and self._recent_frame.size != (meta_data[1], meta_data[2]):
-                        self.decoder.reinitialize_scaling_context()
-
                     frame = create_h264_frame(data_msg[2], meta_data)
                     if frame is not None:
-                        self._recent_frame = frame
                         return frame
                 else:
                     raise StreamError('Frame was not of format MJPEG or H264')

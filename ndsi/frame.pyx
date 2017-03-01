@@ -98,7 +98,7 @@ cdef class JPEGFrame(object):
         self._bgr_converted = False
         self.tj_context = NULL
 
-    def __init__(self, data_format, width, height, index, timestamp, data_len, reserved, object zmq_frame, check_hash=False):
+    def __init__(self, data_format, width, height, index, timestamp, data_len, reserved, object zmq_frame):
         #if data_format != VIDEO_FRAME_FORMAT_MJPEG:
         #    raise ValueError('%s does not support format %s'%(self.__class__.__name__, hex(data_format)))
         self._width       = width
@@ -107,16 +107,6 @@ cdef class JPEGFrame(object):
         self._buffer_len  = data_len
         self._raw_data    = zmq_frame
         self.timestamp    = (<double>timestamp)/1000000
-        self.valid_hash   = True
-
-        if check_hash:
-            m = hashlib.md5(zmq_frame)
-            lower_end = int(m.hexdigest(), 16) % 0x100000000
-            self.valid_hash = lower_end == reserved
-
-        if not self.valid_hash:
-            logger.warning('Received corrupted frame')
-
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
         self.tj_context = ctx

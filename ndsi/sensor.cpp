@@ -1082,11 +1082,10 @@ struct __pyx_obj_4ndsi_5frame_JPEGFrame {
   int _bgr_converted;
   double timestamp;
   PyObject *yuv_subsampling;
-  int valid_hash;
 };
 
 
-/* "frame.pxd":29
+/* "frame.pxd":28
  *     cdef attach_tj_context(self, turbojpeg.tjhandle ctx)
  * 
  * cdef class H264Frame(object):             # <<<<<<<<<<<<<<
@@ -1110,7 +1109,7 @@ struct __pyx_obj_4ndsi_5frame_H264Frame {
 
 
 /* "ndsi/sensor.pxd":32
- *         void reinitialize_scaling_context()
+ *         int get_output_buffer(np.uint8_t *buf, const size_t &capacity, np.int64_t &result_pts)
  * 
  * cdef class Sensor(object):             # <<<<<<<<<<<<<<
  * 
@@ -1246,7 +1245,7 @@ struct __pyx_vtabstruct_4ndsi_5frame_JPEGFrame {
 static struct __pyx_vtabstruct_4ndsi_5frame_JPEGFrame *__pyx_vtabptr_4ndsi_5frame_JPEGFrame;
 
 
-/* "frame.pxd":29
+/* "frame.pxd":28
  *     cdef attach_tj_context(self, turbojpeg.tjhandle ctx)
  * 
  * cdef class H264Frame(object):             # <<<<<<<<<<<<<<
@@ -2308,11 +2307,11 @@ static const char __pyx_k_host_uuid[] = "host_uuid";
 static const char __pyx_k_meta_data[] = "meta_data";
 static const char __pyx_k_metaclass[] = "__metaclass__";
 static const char __pyx_k_subscribe[] = "subscribe";
+static const char __pyx_k_timestamp[] = "timestamp";
 static const char __pyx_k_traceback[] = "traceback";
 static const char __pyx_k_zmq_frame[] = "zmq_frame";
 static const char __pyx_k_IndexError[] = "IndexError";
 static const char __pyx_k_ValueError[] = "ValueError";
-static const char __pyx_k_check_hash[] = "check_hash";
 static const char __pyx_k_control_id[] = "control_id";
 static const char __pyx_k_format_exc[] = "format_exc";
 static const char __pyx_k_intmapping[] = "intmapping";
@@ -2464,7 +2463,6 @@ static PyObject *__pyx_n_u_c;
 static PyObject *__pyx_n_s_callbacks;
 static PyObject *__pyx_n_s_caller;
 static PyObject *__pyx_n_s_changes;
-static PyObject *__pyx_n_s_check_hash;
 static PyObject *__pyx_n_s_class;
 static PyObject *__pyx_n_s_close;
 static PyObject *__pyx_n_s_command_endpoint;
@@ -2590,6 +2588,7 @@ static PyObject *__pyx_n_s_supports_data_subscription;
 static PyObject *__pyx_n_s_tb;
 static PyObject *__pyx_n_s_test;
 static PyObject *__pyx_n_s_timeout;
+static PyObject *__pyx_n_s_timestamp;
 static PyObject *__pyx_n_s_traceback;
 static PyObject *__pyx_n_s_uint8;
 static PyObject *__pyx_kp_s_unable_to_allocate_array_data;
@@ -2681,7 +2680,7 @@ static PyObject *__pyx_tp_new__memoryviewslice(PyTypeObject *t, PyObject *a, PyO
 static PyObject *__pyx_int_0;
 static PyObject *__pyx_int_1;
 static PyObject *__pyx_int_3;
-static PyObject *__pyx_int_5;
+static PyObject *__pyx_int_4;
 static PyObject *__pyx_int_neg_1;
 static PyObject *__pyx_tuple_;
 static PyObject *__pyx_slice__8;
@@ -7079,8 +7078,8 @@ static PyObject *__pyx_pw_4ndsi_6sensor_6Sensor_19get_newest_data_frame(PyObject
  *             raise NotDataSubSupportedError()
  * 
  *         def create_jpeg_frame(buffer_, meta_data):             # <<<<<<<<<<<<<<
- *             cdef JPEGFrame frame = JPEGFrame(*meta_data,
- *                                              zmq_frame=buffer_,
+ *             cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
+ *             frame.attach_tj_context(self.tj_context)
  */
 
 /* Python wrapper */
@@ -7158,40 +7157,15 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_create_j
   /* "ndsi/sensor.pyx":170
  * 
  *         def create_jpeg_frame(buffer_, meta_data):
- *             cdef JPEGFrame frame = JPEGFrame(*meta_data,             # <<<<<<<<<<<<<<
- *                                              zmq_frame=buffer_,
- *                                              check_hash=True)
- */
-  __pyx_t_1 = PySequence_Tuple(__pyx_v_meta_data); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_1);
-
-  /* "ndsi/sensor.pyx":171
- *         def create_jpeg_frame(buffer_, meta_data):
- *             cdef JPEGFrame frame = JPEGFrame(*meta_data,
- *                                              zmq_frame=buffer_,             # <<<<<<<<<<<<<<
- *                                              check_hash=True)
- *             frame.attach_tj_context(self.tj_context)
- */
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 171, __pyx_L1_error)
-  __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_zmq_frame, __pyx_v_buffer_) < 0) __PYX_ERR(0, 171, __pyx_L1_error)
-
-  /* "ndsi/sensor.pyx":172
- *             cdef JPEGFrame frame = JPEGFrame(*meta_data,
- *                                              zmq_frame=buffer_,
- *                                              check_hash=True)             # <<<<<<<<<<<<<<
+ *             cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)             # <<<<<<<<<<<<<<
  *             frame.attach_tj_context(self.tj_context)
  *             return frame
  */
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_check_hash, Py_True) < 0) __PYX_ERR(0, 171, __pyx_L1_error)
-
-  /* "ndsi/sensor.pyx":170
- * 
- *         def create_jpeg_frame(buffer_, meta_data):
- *             cdef JPEGFrame frame = JPEGFrame(*meta_data,             # <<<<<<<<<<<<<<
- *                                              zmq_frame=buffer_,
- *                                              check_hash=True)
- */
+  __pyx_t_1 = PySequence_Tuple(__pyx_v_meta_data); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 170, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_1);
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 170, __pyx_L1_error)
+  __Pyx_GOTREF(__pyx_t_2);
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_zmq_frame, __pyx_v_buffer_) < 0) __PYX_ERR(0, 170, __pyx_L1_error)
   __pyx_t_3 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_4ndsi_5frame_JPEGFrame), __pyx_t_1, __pyx_t_2); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 170, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
@@ -7199,20 +7173,20 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_create_j
   __pyx_v_frame = ((struct __pyx_obj_4ndsi_5frame_JPEGFrame *)__pyx_t_3);
   __pyx_t_3 = 0;
 
-  /* "ndsi/sensor.pyx":173
- *                                              zmq_frame=buffer_,
- *                                              check_hash=True)
+  /* "ndsi/sensor.pyx":171
+ *         def create_jpeg_frame(buffer_, meta_data):
+ *             cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
  *             frame.attach_tj_context(self.tj_context)             # <<<<<<<<<<<<<<
  *             return frame
  * 
  */
-  if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 173, __pyx_L1_error) }
-  __pyx_t_3 = ((struct __pyx_vtabstruct_4ndsi_5frame_JPEGFrame *)__pyx_v_frame->__pyx_vtab)->attach_tj_context(__pyx_v_frame, __pyx_cur_scope->__pyx_v_self->tj_context); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 173, __pyx_L1_error)
+  if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 171, __pyx_L1_error) }
+  __pyx_t_3 = ((struct __pyx_vtabstruct_4ndsi_5frame_JPEGFrame *)__pyx_v_frame->__pyx_vtab)->attach_tj_context(__pyx_v_frame, __pyx_cur_scope->__pyx_v_self->tj_context); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 171, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
 
-  /* "ndsi/sensor.pyx":174
- *                                              check_hash=True)
+  /* "ndsi/sensor.pyx":172
+ *             cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
  *             frame.attach_tj_context(self.tj_context)
  *             return frame             # <<<<<<<<<<<<<<
  * 
@@ -7227,8 +7201,8 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_create_j
  *             raise NotDataSubSupportedError()
  * 
  *         def create_jpeg_frame(buffer_, meta_data):             # <<<<<<<<<<<<<<
- *             cdef JPEGFrame frame = JPEGFrame(*meta_data,
- *                                              zmq_frame=buffer_,
+ *             cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
+ *             frame.attach_tj_context(self.tj_context)
  */
 
   /* function exit code */
@@ -7245,7 +7219,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_create_j
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pyx":176
+/* "ndsi/sensor.pyx":174
  *             return frame
  * 
  *         def create_h264_frame(buffer_, meta_data):             # <<<<<<<<<<<<<<
@@ -7282,11 +7256,11 @@ static PyObject *__pyx_pw_4ndsi_6sensor_6Sensor_21get_newest_data_frame_3create_
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_meta_data)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("create_h264_frame", 1, 2, 2, 1); __PYX_ERR(0, 176, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("create_h264_frame", 1, 2, 2, 1); __PYX_ERR(0, 174, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "create_h264_frame") < 0)) __PYX_ERR(0, 176, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "create_h264_frame") < 0)) __PYX_ERR(0, 174, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -7299,7 +7273,7 @@ static PyObject *__pyx_pw_4ndsi_6sensor_6Sensor_21get_newest_data_frame_3create_
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("create_h264_frame", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 176, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("create_h264_frame", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 174, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("ndsi.sensor.Sensor.get_newest_data_frame.create_h264_frame", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -7338,7 +7312,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
   __pyx_outer_scope = (struct __pyx_obj_4ndsi_6sensor___pyx_scope_struct__get_newest_data_frame *) __Pyx_CyFunction_GetClosure(__pyx_self);
   __pyx_cur_scope = __pyx_outer_scope;
 
-  /* "ndsi/sensor.pyx":177
+  /* "ndsi/sensor.pyx":175
  * 
  *         def create_h264_frame(buffer_, meta_data):
  *             cdef H264Frame frame = None             # <<<<<<<<<<<<<<
@@ -7348,7 +7322,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
   __Pyx_INCREF(Py_None);
   __pyx_v_frame = ((struct __pyx_obj_4ndsi_5frame_H264Frame *)Py_None);
 
-  /* "ndsi/sensor.pyx":179
+  /* "ndsi/sensor.pyx":177
  *             cdef H264Frame frame = None
  *             cdef unsigned char[:] out_buffer
  *             pkt_pts = 0             # <<<<<<<<<<<<<<
@@ -7357,94 +7331,94 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
  */
   __pyx_v_pkt_pts = 0;
 
-  /* "ndsi/sensor.pyx":180
+  /* "ndsi/sensor.pyx":178
  *             cdef unsigned char[:] out_buffer
  *             pkt_pts = 0
  *             out = self.decoder.set_input_buffer(buffer_, meta_data[5], meta_data[4])             # <<<<<<<<<<<<<<
  *             if self.decoder.is_frame_ready():
  *                 out_size = self.decoder.get_output_bytes()
  */
-  if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 180, __pyx_L1_error) }
-  __pyx_t_1 = __Pyx_PyObject_AsUString(__pyx_v_buffer_); if (unlikely((!__pyx_t_1) && PyErr_Occurred())) __PYX_ERR(0, 180, __pyx_L1_error)
-  __pyx_t_2 = __Pyx_GetItemInt(__pyx_v_meta_data, 5, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
+  if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 178, __pyx_L1_error) }
+  __pyx_t_1 = __Pyx_PyObject_AsUString(__pyx_v_buffer_); if (unlikely((!__pyx_t_1) && PyErr_Occurred())) __PYX_ERR(0, 178, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetItemInt(__pyx_v_meta_data, 5, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 178, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyInt_As_size_t(__pyx_t_2); if (unlikely((__pyx_t_3 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 180, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyInt_As_size_t(__pyx_t_2); if (unlikely((__pyx_t_3 == (size_t)-1) && PyErr_Occurred())) __PYX_ERR(0, 178, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = __Pyx_GetItemInt(__pyx_v_meta_data, 4, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 180, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetItemInt(__pyx_v_meta_data, 4, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 178, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyInt_As_npy_int64(__pyx_t_2); if (unlikely((__pyx_t_4 == ((npy_int64)-1)) && PyErr_Occurred())) __PYX_ERR(0, 180, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyInt_As_npy_int64(__pyx_t_2); if (unlikely((__pyx_t_4 == ((npy_int64)-1)) && PyErr_Occurred())) __PYX_ERR(0, 178, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
   __pyx_v_out = __pyx_cur_scope->__pyx_v_self->decoder.set_input_buffer(__pyx_t_1, __pyx_t_3, __pyx_t_4);
 
-  /* "ndsi/sensor.pyx":181
+  /* "ndsi/sensor.pyx":179
  *             pkt_pts = 0
  *             out = self.decoder.set_input_buffer(buffer_, meta_data[5], meta_data[4])
  *             if self.decoder.is_frame_ready():             # <<<<<<<<<<<<<<
  *                 out_size = self.decoder.get_output_bytes()
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)
  */
-  if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 181, __pyx_L1_error) }
+  if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 179, __pyx_L1_error) }
   __pyx_t_5 = (__pyx_cur_scope->__pyx_v_self->decoder.is_frame_ready() != 0);
   if (__pyx_t_5) {
 
-    /* "ndsi/sensor.pyx":182
+    /* "ndsi/sensor.pyx":180
  *             out = self.decoder.set_input_buffer(buffer_, meta_data[5], meta_data[4])
  *             if self.decoder.is_frame_ready():
  *                 out_size = self.decoder.get_output_bytes()             # <<<<<<<<<<<<<<
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
  */
-    if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 182, __pyx_L1_error) }
+    if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 180, __pyx_L1_error) }
     __pyx_v_out_size = __pyx_cur_scope->__pyx_v_self->decoder.get_output_bytes();
 
-    /* "ndsi/sensor.pyx":183
+    /* "ndsi/sensor.pyx":181
  *             if self.decoder.is_frame_ready():
  *                 out_size = self.decoder.get_output_bytes()
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)             # <<<<<<<<<<<<<<
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
- *                 frame = H264Frame(*meta_data[:5], data_len=out_size, yuv_buffer=out_buffer)
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)
  */
-    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_6 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_empty); if (unlikely(!__pyx_t_6)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_6);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_out_size); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_2 = __Pyx_PyInt_From_int(__pyx_v_out_size); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_7 = PyTuple_New(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_7 = PyTuple_New(1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_GIVEREF(__pyx_t_2);
     PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_2);
     __pyx_t_2 = 0;
-    __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
-    __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_8);
-    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_uint8); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_8, __pyx_n_s_uint8); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_9) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_dtype, __pyx_t_9) < 0) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_7, __pyx_t_2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_6, __pyx_t_7, __pyx_t_2); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_6); __pyx_t_6 = 0;
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __pyx_t_10 = __Pyx_PyObject_to_MemoryviewSlice_ds_unsigned_char(__pyx_t_9);
-    if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 183, __pyx_L1_error)
+    if (unlikely(!__pyx_t_10.memview)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     __pyx_v_out_buffer = __pyx_t_10;
     __pyx_t_10.memview = NULL;
     __pyx_t_10.data = NULL;
 
-    /* "ndsi/sensor.pyx":184
+    /* "ndsi/sensor.pyx":182
  *                 out_size = self.decoder.get_output_bytes()
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)             # <<<<<<<<<<<<<<
- *                 frame = H264Frame(*meta_data[:5], data_len=out_size, yuv_buffer=out_buffer)
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)
  *                 frame.attach_tj_context(self.tj_context)
  */
-    if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 184, __pyx_L1_error) }
+    if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 182, __pyx_L1_error) }
     __pyx_t_11 = 0;
     __pyx_t_12 = -1;
     if (__pyx_t_11 < 0) {
@@ -7453,52 +7427,56 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
     } else if (unlikely(__pyx_t_11 >= __pyx_v_out_buffer.shape[0])) __pyx_t_12 = 0;
     if (unlikely(__pyx_t_12 != -1)) {
       __Pyx_RaiseBufferIndexError(__pyx_t_12);
-      __PYX_ERR(0, 184, __pyx_L1_error)
+      __PYX_ERR(0, 182, __pyx_L1_error)
     }
     __pyx_v_out_size = __pyx_cur_scope->__pyx_v_self->decoder.get_output_buffer((&(*((unsigned char *) ( /* dim=0 */ (__pyx_v_out_buffer.data + __pyx_t_11 * __pyx_v_out_buffer.strides[0]) )))), __pyx_v_out_size, __pyx_v_pkt_pts);
 
-    /* "ndsi/sensor.pyx":185
+    /* "ndsi/sensor.pyx":183
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
- *                 frame = H264Frame(*meta_data[:5], data_len=out_size, yuv_buffer=out_buffer)             # <<<<<<<<<<<<<<
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)             # <<<<<<<<<<<<<<
  *                 frame.attach_tj_context(self.tj_context)
  *             return frame
  */
-    __pyx_t_9 = __Pyx_PyObject_GetSlice(__pyx_v_meta_data, 0, 5, NULL, NULL, &__pyx_slice__8, 0, 1, 1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 185, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_GetSlice(__pyx_v_meta_data, 0, 4, NULL, NULL, &__pyx_slice__8, 0, 1, 1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
-    __pyx_t_2 = PySequence_Tuple(__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 185, __pyx_L1_error)
+    __pyx_t_2 = PySequence_Tuple(__pyx_t_9); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-    __pyx_t_9 = PyDict_New(); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 185, __pyx_L1_error)
+    __pyx_t_9 = PyDict_New(); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
-    __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_out_size); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 185, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyInt_From_long(__pyx_v_pkt_pts); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    if (PyDict_SetItem(__pyx_t_9, __pyx_n_s_data_len, __pyx_t_7) < 0) __PYX_ERR(0, 185, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_9, __pyx_n_s_timestamp, __pyx_t_7) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_7 = __pyx_memoryview_fromslice(__pyx_v_out_buffer, 1, (PyObject *(*)(char *)) __pyx_memview_get_unsigned_char, (int (*)(char *, PyObject *)) __pyx_memview_set_unsigned_char, 0);; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 185, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyInt_From_int(__pyx_v_out_size); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    if (PyDict_SetItem(__pyx_t_9, __pyx_n_s_yuv_buffer, __pyx_t_7) < 0) __PYX_ERR(0, 185, __pyx_L1_error)
+    if (PyDict_SetItem(__pyx_t_9, __pyx_n_s_data_len, __pyx_t_7) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_4ndsi_5frame_H264Frame), __pyx_t_2, __pyx_t_9); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 185, __pyx_L1_error)
+    __pyx_t_7 = __pyx_memoryview_fromslice(__pyx_v_out_buffer, 1, (PyObject *(*)(char *)) __pyx_memview_get_unsigned_char, (int (*)(char *, PyObject *)) __pyx_memview_set_unsigned_char, 0);; if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_7);
+    if (PyDict_SetItem(__pyx_t_9, __pyx_n_s_yuv_buffer, __pyx_t_7) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
+    __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_4ndsi_5frame_H264Frame), __pyx_t_2, __pyx_t_9); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
     __Pyx_DECREF_SET(__pyx_v_frame, ((struct __pyx_obj_4ndsi_5frame_H264Frame *)__pyx_t_7));
     __pyx_t_7 = 0;
 
-    /* "ndsi/sensor.pyx":186
+    /* "ndsi/sensor.pyx":184
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
- *                 frame = H264Frame(*meta_data[:5], data_len=out_size, yuv_buffer=out_buffer)
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)
  *                 frame.attach_tj_context(self.tj_context)             # <<<<<<<<<<<<<<
  *             return frame
  * 
  */
-    if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 186, __pyx_L1_error) }
-    __pyx_t_7 = ((struct __pyx_vtabstruct_4ndsi_5frame_H264Frame *)__pyx_v_frame->__pyx_vtab)->attach_tj_context(__pyx_v_frame, __pyx_cur_scope->__pyx_v_self->tj_context); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 186, __pyx_L1_error)
+    if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 184, __pyx_L1_error) }
+    __pyx_t_7 = ((struct __pyx_vtabstruct_4ndsi_5frame_H264Frame *)__pyx_v_frame->__pyx_vtab)->attach_tj_context(__pyx_v_frame, __pyx_cur_scope->__pyx_v_self->tj_context); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 184, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
 
-    /* "ndsi/sensor.pyx":181
+    /* "ndsi/sensor.pyx":179
  *             pkt_pts = 0
  *             out = self.decoder.set_input_buffer(buffer_, meta_data[5], meta_data[4])
  *             if self.decoder.is_frame_ready():             # <<<<<<<<<<<<<<
@@ -7507,8 +7485,8 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
  */
   }
 
-  /* "ndsi/sensor.pyx":187
- *                 frame = H264Frame(*meta_data[:5], data_len=out_size, yuv_buffer=out_buffer)
+  /* "ndsi/sensor.pyx":185
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)
  *                 frame.attach_tj_context(self.tj_context)
  *             return frame             # <<<<<<<<<<<<<<
  * 
@@ -7519,7 +7497,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
   __pyx_r = ((PyObject *)__pyx_v_frame);
   goto __pyx_L0;
 
-  /* "ndsi/sensor.pyx":176
+  /* "ndsi/sensor.pyx":174
  *             return frame
  * 
  *         def create_h264_frame(buffer_, meta_data):             # <<<<<<<<<<<<<<
@@ -7570,7 +7548,6 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
   PyObject *__pyx_t_6 = NULL;
   int __pyx_t_7;
   PyObject *__pyx_t_8 = NULL;
-  int __pyx_t_9;
   __Pyx_RefNannySetupContext("get_newest_data_frame", 0);
   __pyx_cur_scope = (struct __pyx_obj_4ndsi_6sensor___pyx_scope_struct__get_newest_data_frame *)__pyx_tp_new_4ndsi_6sensor___pyx_scope_struct__get_newest_data_frame(__pyx_ptype_4ndsi_6sensor___pyx_scope_struct__get_newest_data_frame, __pyx_empty_tuple, NULL);
   if (unlikely(!__pyx_cur_scope)) {
@@ -7642,47 +7619,47 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
  *             raise NotDataSubSupportedError()
  * 
  *         def create_jpeg_frame(buffer_, meta_data):             # <<<<<<<<<<<<<<
- *             cdef JPEGFrame frame = JPEGFrame(*meta_data,
- *                                              zmq_frame=buffer_,
+ *             cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
+ *             frame.attach_tj_context(self.tj_context)
  */
   __pyx_t_1 = __Pyx_CyFunction_NewEx(&__pyx_mdef_4ndsi_6sensor_6Sensor_21get_newest_data_frame_1create_jpeg_frame, 0, __pyx_n_s_get_newest_data_frame_locals_cre, ((PyObject*)__pyx_cur_scope), __pyx_n_s_ndsi_sensor, __pyx_d, ((PyObject *)__pyx_codeobj__10)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_create_jpeg_frame = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "ndsi/sensor.pyx":176
+  /* "ndsi/sensor.pyx":174
  *             return frame
  * 
  *         def create_h264_frame(buffer_, meta_data):             # <<<<<<<<<<<<<<
  *             cdef H264Frame frame = None
  *             cdef unsigned char[:] out_buffer
  */
-  __pyx_t_1 = __Pyx_CyFunction_NewEx(&__pyx_mdef_4ndsi_6sensor_6Sensor_21get_newest_data_frame_3create_h264_frame, 0, __pyx_n_s_get_newest_data_frame_locals_cre_2, ((PyObject*)__pyx_cur_scope), __pyx_n_s_ndsi_sensor, __pyx_d, ((PyObject *)__pyx_codeobj__12)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 176, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_CyFunction_NewEx(&__pyx_mdef_4ndsi_6sensor_6Sensor_21get_newest_data_frame_3create_h264_frame, 0, __pyx_n_s_get_newest_data_frame_locals_cre_2, ((PyObject*)__pyx_cur_scope), __pyx_n_s_ndsi_sensor, __pyx_d, ((PyObject *)__pyx_codeobj__12)); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 174, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_v_create_h264_frame = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "ndsi/sensor.pyx":189
+  /* "ndsi/sensor.pyx":187
  *             return frame
  * 
  *         if self.data_sub.poll(timeout=timeout):             # <<<<<<<<<<<<<<
  *             while self.has_data:
  *                 data_msg = self.get_data(copy=True)
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_self->data_sub, __pyx_n_s_poll); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 189, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_self->data_sub, __pyx_n_s_poll); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 187, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 189, __pyx_L1_error)
+  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 187, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_timeout, __pyx_v_timeout) < 0) __PYX_ERR(0, 189, __pyx_L1_error)
-  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 189, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_timeout, __pyx_v_timeout) < 0) __PYX_ERR(0, 187, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 187, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 189, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 187, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   if (__pyx_t_3) {
 
-    /* "ndsi/sensor.pyx":190
+    /* "ndsi/sensor.pyx":188
  * 
  *         if self.data_sub.poll(timeout=timeout):
  *             while self.has_data:             # <<<<<<<<<<<<<<
@@ -7690,44 +7667,44 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
  *                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])
  */
     while (1) {
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_cur_scope->__pyx_v_self), __pyx_n_s_has_data); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 190, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_cur_scope->__pyx_v_self), __pyx_n_s_has_data); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 188, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 190, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 188, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       if (!__pyx_t_3) break;
 
-      /* "ndsi/sensor.pyx":191
+      /* "ndsi/sensor.pyx":189
  *         if self.data_sub.poll(timeout=timeout):
  *             while self.has_data:
  *                 data_msg = self.get_data(copy=True)             # <<<<<<<<<<<<<<
  *                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])
  *                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
  */
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_cur_scope->__pyx_v_self), __pyx_n_s_get_data); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 191, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_cur_scope->__pyx_v_self), __pyx_n_s_get_data); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 189, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 191, __pyx_L1_error)
+      __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 189, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_copy, Py_True) < 0) __PYX_ERR(0, 191, __pyx_L1_error)
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 191, __pyx_L1_error)
+      if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_copy, Py_True) < 0) __PYX_ERR(0, 189, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_empty_tuple, __pyx_t_4); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 189, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_XDECREF_SET(__pyx_v_data_msg, __pyx_t_1);
       __pyx_t_1 = 0;
 
-      /* "ndsi/sensor.pyx":192
+      /* "ndsi/sensor.pyx":190
  *             while self.has_data:
  *                 data_msg = self.get_data(copy=True)
  *                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])             # <<<<<<<<<<<<<<
  *                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
- *                     frame = create_jpeg_frame(data_msg[2], meta_data)
+ *                     return create_jpeg_frame(data_msg[2], meta_data)
  */
-      __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_struct); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 192, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_struct); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 190, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_unpack); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 192, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_unpack); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 190, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-      __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_data_msg, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 192, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_GetItemInt(__pyx_v_data_msg, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 190, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __pyx_t_6 = NULL;
       __pyx_t_7 = 0;
@@ -7744,7 +7721,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_5)) {
         PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_kp_s_LLLLQLL, __pyx_t_4};
-        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 192, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 190, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -7753,14 +7730,14 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
         PyObject *__pyx_temp[3] = {__pyx_t_6, __pyx_kp_s_LLLLQLL, __pyx_t_4};
-        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 192, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-__pyx_t_7, 2+__pyx_t_7); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 190, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_6); __pyx_t_6 = 0;
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       } else
       #endif
       {
-        __pyx_t_8 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 192, __pyx_L1_error)
+        __pyx_t_8 = PyTuple_New(2+__pyx_t_7); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 190, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         if (__pyx_t_6) {
           __Pyx_GIVEREF(__pyx_t_6); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_6); __pyx_t_6 = NULL;
@@ -7771,7 +7748,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
         __Pyx_GIVEREF(__pyx_t_4);
         PyTuple_SET_ITEM(__pyx_t_8, 1+__pyx_t_7, __pyx_t_4);
         __pyx_t_4 = 0;
-        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 192, __pyx_L1_error)
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 190, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_1);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
@@ -7779,191 +7756,97 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
       __Pyx_XDECREF_SET(__pyx_v_meta_data, __pyx_t_1);
       __pyx_t_1 = 0;
 
-      /* "ndsi/sensor.pyx":193
+      /* "ndsi/sensor.pyx":191
  *                 data_msg = self.get_data(copy=True)
  *                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])
  *                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:             # <<<<<<<<<<<<<<
- *                     frame = create_jpeg_frame(data_msg[2], meta_data)
- *                     self._recent_frame = frame
+ *                     return create_jpeg_frame(data_msg[2], meta_data)
+ *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
  */
-      __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_meta_data, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 193, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_meta_data, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 191, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
-      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_VIDEO_FRAME_FORMAT_MJPEG); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 193, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_VIDEO_FRAME_FORMAT_MJPEG); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 191, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_8 = PyObject_RichCompare(__pyx_t_1, __pyx_t_5, Py_EQ); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 193, __pyx_L1_error)
+      __pyx_t_8 = PyObject_RichCompare(__pyx_t_1, __pyx_t_5, Py_EQ); __Pyx_XGOTREF(__pyx_t_8); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 191, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 193, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_8); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 191, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       if (__pyx_t_3) {
 
-        /* "ndsi/sensor.pyx":194
+        /* "ndsi/sensor.pyx":192
  *                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])
  *                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
- *                     frame = create_jpeg_frame(data_msg[2], meta_data)             # <<<<<<<<<<<<<<
- *                     self._recent_frame = frame
- *                     return frame
- */
-        __pyx_t_8 = __Pyx_GetItemInt(__pyx_v_data_msg, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 194, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_8);
-        __pyx_t_5 = __pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_create_jpeg_frame(__pyx_v_create_jpeg_frame, __pyx_t_8, __pyx_v_meta_data); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 194, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-        __Pyx_XDECREF_SET(__pyx_v_frame, __pyx_t_5);
-        __pyx_t_5 = 0;
-
-        /* "ndsi/sensor.pyx":195
- *                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
- *                     frame = create_jpeg_frame(data_msg[2], meta_data)
- *                     self._recent_frame = frame             # <<<<<<<<<<<<<<
- *                     return frame
+ *                     return create_jpeg_frame(data_msg[2], meta_data)             # <<<<<<<<<<<<<<
  *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
- */
-        __Pyx_INCREF(__pyx_v_frame);
-        __Pyx_GIVEREF(__pyx_v_frame);
-        __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_self->_recent_frame);
-        __Pyx_DECREF(__pyx_cur_scope->__pyx_v_self->_recent_frame);
-        __pyx_cur_scope->__pyx_v_self->_recent_frame = __pyx_v_frame;
-
-        /* "ndsi/sensor.pyx":196
- *                     frame = create_jpeg_frame(data_msg[2], meta_data)
- *                     self._recent_frame = frame
- *                     return frame             # <<<<<<<<<<<<<<
- *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
- *                     if isinstance(self._recent_frame, H264Frame) and self._recent_frame.size != (meta_data[1], meta_data[2]):
+ *                     frame = create_h264_frame(data_msg[2], meta_data)
  */
         __Pyx_XDECREF(__pyx_r);
-        __Pyx_INCREF(__pyx_v_frame);
-        __pyx_r = __pyx_v_frame;
+        __pyx_t_8 = __Pyx_GetItemInt(__pyx_v_data_msg, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 192, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        __pyx_t_5 = __pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_create_jpeg_frame(__pyx_v_create_jpeg_frame, __pyx_t_8, __pyx_v_meta_data); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 192, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_5);
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+        __pyx_r = __pyx_t_5;
+        __pyx_t_5 = 0;
         goto __pyx_L0;
 
-        /* "ndsi/sensor.pyx":193
+        /* "ndsi/sensor.pyx":191
  *                 data_msg = self.get_data(copy=True)
  *                 meta_data = struct.unpack("<LLLLQLL", data_msg[1])
  *                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:             # <<<<<<<<<<<<<<
- *                     frame = create_jpeg_frame(data_msg[2], meta_data)
- *                     self._recent_frame = frame
+ *                     return create_jpeg_frame(data_msg[2], meta_data)
+ *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
  */
       }
 
-      /* "ndsi/sensor.pyx":197
- *                     self._recent_frame = frame
- *                     return frame
+      /* "ndsi/sensor.pyx":193
+ *                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
+ *                     return create_jpeg_frame(data_msg[2], meta_data)
  *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:             # <<<<<<<<<<<<<<
- *                     if isinstance(self._recent_frame, H264Frame) and self._recent_frame.size != (meta_data[1], meta_data[2]):
- *                         self.decoder.reinitialize_scaling_context()
+ *                     frame = create_h264_frame(data_msg[2], meta_data)
+ *                     if frame is not None:
  */
-      __pyx_t_5 = __Pyx_GetItemInt(__pyx_v_meta_data, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 197, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_GetItemInt(__pyx_v_meta_data, 0, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 193, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
-      __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_VIDEO_FRAME_FORMAT_H264); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 197, __pyx_L1_error)
+      __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_VIDEO_FRAME_FORMAT_H264); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 193, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_8);
-      __pyx_t_1 = PyObject_RichCompare(__pyx_t_5, __pyx_t_8, Py_EQ); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 197, __pyx_L1_error)
+      __pyx_t_1 = PyObject_RichCompare(__pyx_t_5, __pyx_t_8, Py_EQ); __Pyx_XGOTREF(__pyx_t_1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 193, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
       __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
-      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 197, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_IsTrue(__pyx_t_1); if (unlikely(__pyx_t_3 < 0)) __PYX_ERR(0, 193, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
       if (__pyx_t_3) {
 
-        /* "ndsi/sensor.pyx":198
- *                     return frame
+        /* "ndsi/sensor.pyx":194
+ *                     return create_jpeg_frame(data_msg[2], meta_data)
  *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
- *                     if isinstance(self._recent_frame, H264Frame) and self._recent_frame.size != (meta_data[1], meta_data[2]):             # <<<<<<<<<<<<<<
- *                         self.decoder.reinitialize_scaling_context()
- * 
- */
-        __pyx_t_1 = __pyx_cur_scope->__pyx_v_self->_recent_frame;
-        __Pyx_INCREF(__pyx_t_1);
-        __pyx_t_2 = __Pyx_TypeCheck(__pyx_t_1, __pyx_ptype_4ndsi_5frame_H264Frame); 
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __pyx_t_9 = (__pyx_t_2 != 0);
-        if (__pyx_t_9) {
-        } else {
-          __pyx_t_3 = __pyx_t_9;
-          goto __pyx_L9_bool_binop_done;
-        }
-        __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_cur_scope->__pyx_v_self->_recent_frame, __pyx_n_s_size); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 198, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_1);
-        __pyx_t_8 = __Pyx_GetItemInt(__pyx_v_meta_data, 1, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 198, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_8);
-        __pyx_t_5 = __Pyx_GetItemInt(__pyx_v_meta_data, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 198, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_4 = PyTuple_New(2); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 198, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_GIVEREF(__pyx_t_8);
-        PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_t_8);
-        __Pyx_GIVEREF(__pyx_t_5);
-        PyTuple_SET_ITEM(__pyx_t_4, 1, __pyx_t_5);
-        __pyx_t_8 = 0;
-        __pyx_t_5 = 0;
-        __pyx_t_5 = PyObject_RichCompare(__pyx_t_1, __pyx_t_4, Py_NE); __Pyx_XGOTREF(__pyx_t_5); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 198, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __pyx_t_9 = __Pyx_PyObject_IsTrue(__pyx_t_5); if (unlikely(__pyx_t_9 < 0)) __PYX_ERR(0, 198, __pyx_L1_error)
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __pyx_t_3 = __pyx_t_9;
-        __pyx_L9_bool_binop_done:;
-        if (__pyx_t_3) {
-
-          /* "ndsi/sensor.pyx":199
- *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
- *                     if isinstance(self._recent_frame, H264Frame) and self._recent_frame.size != (meta_data[1], meta_data[2]):
- *                         self.decoder.reinitialize_scaling_context()             # <<<<<<<<<<<<<<
- * 
- *                     frame = create_h264_frame(data_msg[2], meta_data)
- */
-          __pyx_cur_scope->__pyx_v_self->decoder.reinitialize_scaling_context();
-
-          /* "ndsi/sensor.pyx":198
- *                     return frame
- *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
- *                     if isinstance(self._recent_frame, H264Frame) and self._recent_frame.size != (meta_data[1], meta_data[2]):             # <<<<<<<<<<<<<<
- *                         self.decoder.reinitialize_scaling_context()
- * 
- */
-        }
-
-        /* "ndsi/sensor.pyx":201
- *                         self.decoder.reinitialize_scaling_context()
- * 
  *                     frame = create_h264_frame(data_msg[2], meta_data)             # <<<<<<<<<<<<<<
  *                     if frame is not None:
- *                         self._recent_frame = frame
- */
-        __pyx_t_5 = __Pyx_GetItemInt(__pyx_v_data_msg, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 201, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __pyx_t_4 = __pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_h264_frame(__pyx_v_create_h264_frame, __pyx_t_5, __pyx_v_meta_data); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 201, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __Pyx_XDECREF_SET(__pyx_v_frame, __pyx_t_4);
-        __pyx_t_4 = 0;
-
-        /* "ndsi/sensor.pyx":202
- * 
- *                     frame = create_h264_frame(data_msg[2], meta_data)
- *                     if frame is not None:             # <<<<<<<<<<<<<<
- *                         self._recent_frame = frame
  *                         return frame
  */
-        __pyx_t_3 = (__pyx_v_frame != Py_None);
-        __pyx_t_9 = (__pyx_t_3 != 0);
-        if (__pyx_t_9) {
+        __pyx_t_1 = __Pyx_GetItemInt(__pyx_v_data_msg, 2, long, 1, __Pyx_PyInt_From_long, 0, 0, 1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 194, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_1);
+        __pyx_t_8 = __pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_h264_frame(__pyx_v_create_h264_frame, __pyx_t_1, __pyx_v_meta_data); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 194, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        __Pyx_XDECREF_SET(__pyx_v_frame, __pyx_t_8);
+        __pyx_t_8 = 0;
 
-          /* "ndsi/sensor.pyx":203
+        /* "ndsi/sensor.pyx":195
+ *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
  *                     frame = create_h264_frame(data_msg[2], meta_data)
- *                     if frame is not None:
- *                         self._recent_frame = frame             # <<<<<<<<<<<<<<
+ *                     if frame is not None:             # <<<<<<<<<<<<<<
  *                         return frame
  *                 else:
  */
-          __Pyx_INCREF(__pyx_v_frame);
-          __Pyx_GIVEREF(__pyx_v_frame);
-          __Pyx_GOTREF(__pyx_cur_scope->__pyx_v_self->_recent_frame);
-          __Pyx_DECREF(__pyx_cur_scope->__pyx_v_self->_recent_frame);
-          __pyx_cur_scope->__pyx_v_self->_recent_frame = __pyx_v_frame;
+        __pyx_t_3 = (__pyx_v_frame != Py_None);
+        __pyx_t_2 = (__pyx_t_3 != 0);
+        if (__pyx_t_2) {
 
-          /* "ndsi/sensor.pyx":204
+          /* "ndsi/sensor.pyx":196
+ *                     frame = create_h264_frame(data_msg[2], meta_data)
  *                     if frame is not None:
- *                         self._recent_frame = frame
  *                         return frame             # <<<<<<<<<<<<<<
  *                 else:
  *                     raise StreamError('Frame was not of format MJPEG or H264')
@@ -7973,26 +7856,26 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
           __pyx_r = __pyx_v_frame;
           goto __pyx_L0;
 
-          /* "ndsi/sensor.pyx":202
- * 
+          /* "ndsi/sensor.pyx":195
+ *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
  *                     frame = create_h264_frame(data_msg[2], meta_data)
  *                     if frame is not None:             # <<<<<<<<<<<<<<
- *                         self._recent_frame = frame
  *                         return frame
+ *                 else:
  */
         }
 
-        /* "ndsi/sensor.pyx":197
- *                     self._recent_frame = frame
- *                     return frame
+        /* "ndsi/sensor.pyx":193
+ *                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
+ *                     return create_jpeg_frame(data_msg[2], meta_data)
  *                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:             # <<<<<<<<<<<<<<
- *                     if isinstance(self._recent_frame, H264Frame) and self._recent_frame.size != (meta_data[1], meta_data[2]):
- *                         self.decoder.reinitialize_scaling_context()
+ *                     frame = create_h264_frame(data_msg[2], meta_data)
+ *                     if frame is not None:
  */
         goto __pyx_L7;
       }
 
-      /* "ndsi/sensor.pyx":206
+      /* "ndsi/sensor.pyx":198
  *                         return frame
  *                 else:
  *                     raise StreamError('Frame was not of format MJPEG or H264')             # <<<<<<<<<<<<<<
@@ -8000,19 +7883,19 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
  *             raise StreamError('Operation timed out.')
  */
       /*else*/ {
-        __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_StreamError); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 206, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_4);
-        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_4, __pyx_tuple__13, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 206, __pyx_L1_error)
-        __Pyx_GOTREF(__pyx_t_5);
-        __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-        __Pyx_Raise(__pyx_t_5, 0, 0, 0);
-        __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-        __PYX_ERR(0, 206, __pyx_L1_error)
+        __pyx_t_8 = __Pyx_GetModuleGlobalName(__pyx_n_s_StreamError); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 198, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_8);
+        __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_tuple__13, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 198, __pyx_L1_error)
+        __Pyx_GOTREF(__pyx_t_1);
+        __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+        __Pyx_Raise(__pyx_t_1, 0, 0, 0);
+        __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+        __PYX_ERR(0, 198, __pyx_L1_error)
       }
       __pyx_L7:;
     }
 
-    /* "ndsi/sensor.pyx":189
+    /* "ndsi/sensor.pyx":187
  *             return frame
  * 
  *         if self.data_sub.poll(timeout=timeout):             # <<<<<<<<<<<<<<
@@ -8022,7 +7905,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
     goto __pyx_L4;
   }
 
-  /* "ndsi/sensor.pyx":208
+  /* "ndsi/sensor.pyx":200
  *                     raise StreamError('Frame was not of format MJPEG or H264')
  *         else:
  *             raise StreamError('Operation timed out.')             # <<<<<<<<<<<<<<
@@ -8030,14 +7913,14 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
  *     def refresh_controls(self):
  */
   /*else*/ {
-    __pyx_t_5 = __Pyx_GetModuleGlobalName(__pyx_n_s_StreamError); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 208, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_5);
-    __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_tuple__14, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 208, __pyx_L1_error)
-    __Pyx_GOTREF(__pyx_t_4);
-    __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
-    __Pyx_Raise(__pyx_t_4, 0, 0, 0);
-    __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-    __PYX_ERR(0, 208, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_GetModuleGlobalName(__pyx_n_s_StreamError); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 200, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_1);
+    __pyx_t_8 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_tuple__14, NULL); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 200, __pyx_L1_error)
+    __Pyx_GOTREF(__pyx_t_8);
+    __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
+    __Pyx_Raise(__pyx_t_8, 0, 0, 0);
+    __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
+    __PYX_ERR(0, 200, __pyx_L1_error)
   }
   __pyx_L4:;
 
@@ -8072,7 +7955,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_18get_newest_data_frame(struct _
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pyx":210
+/* "ndsi/sensor.pyx":202
  *             raise StreamError('Operation timed out.')
  * 
  *     def refresh_controls(self):             # <<<<<<<<<<<<<<
@@ -8104,21 +7987,21 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_20refresh_controls(struct __pyx_
   PyObject *__pyx_t_5 = NULL;
   __Pyx_RefNannySetupContext("refresh_controls", 0);
 
-  /* "ndsi/sensor.pyx":211
+  /* "ndsi/sensor.pyx":203
  * 
  *     def refresh_controls(self):
  *         cmd = serial.dumps({'action': 'refresh_controls'})             # <<<<<<<<<<<<<<
  *         self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
  *         self.command_push.send_string(cmd)
  */
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_serial); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 211, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_serial); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 203, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_dumps); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 211, __pyx_L1_error)
+  __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_dumps); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 203, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 211, __pyx_L1_error)
+  __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 203, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_action, __pyx_n_s_refresh_controls) < 0) __PYX_ERR(0, 211, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_2, __pyx_n_s_action, __pyx_n_s_refresh_controls) < 0) __PYX_ERR(0, 203, __pyx_L1_error)
   __pyx_t_4 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_3))) {
     __pyx_t_4 = PyMethod_GET_SELF(__pyx_t_3);
@@ -8130,14 +8013,14 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_20refresh_controls(struct __pyx_
     }
   }
   if (!__pyx_t_4) {
-    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 211, __pyx_L1_error)
+    __pyx_t_1 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_t_2); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 203, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     __Pyx_GOTREF(__pyx_t_1);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_2};
-      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 211, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 203, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -8146,20 +8029,20 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_20refresh_controls(struct __pyx_
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
       PyObject *__pyx_temp[2] = {__pyx_t_4, __pyx_t_2};
-      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 211, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 203, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
     } else
     #endif
     {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 211, __pyx_L1_error)
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 203, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_4); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_4); __pyx_t_4 = NULL;
       __Pyx_GIVEREF(__pyx_t_2);
       PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_t_2);
       __pyx_t_2 = 0;
-      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 211, __pyx_L1_error)
+      __pyx_t_1 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_5, NULL); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 203, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
@@ -8168,44 +8051,44 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_20refresh_controls(struct __pyx_
   __pyx_v_cmd = __pyx_t_1;
   __pyx_t_1 = 0;
 
-  /* "ndsi/sensor.pyx":212
+  /* "ndsi/sensor.pyx":204
  *     def refresh_controls(self):
  *         cmd = serial.dumps({'action': 'refresh_controls'})
  *         self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)             # <<<<<<<<<<<<<<
  *         self.command_push.send_string(cmd)
  * 
  */
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->command_push, __pyx_n_s_send_string); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 212, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->command_push, __pyx_n_s_send_string); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 204, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
-  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 212, __pyx_L1_error)
+  __pyx_t_3 = PyTuple_New(1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 204, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_3);
   __Pyx_INCREF(__pyx_v_self->uuid);
   __Pyx_GIVEREF(__pyx_v_self->uuid);
   PyTuple_SET_ITEM(__pyx_t_3, 0, __pyx_v_self->uuid);
-  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 212, __pyx_L1_error)
+  __pyx_t_5 = PyDict_New(); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 204, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_zmq); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 212, __pyx_L1_error)
+  __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_zmq); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 204, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_2);
-  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_SNDMORE); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 212, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_GetAttrStr(__pyx_t_2, __pyx_n_s_SNDMORE); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 204, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
-  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_flags, __pyx_t_4) < 0) __PYX_ERR(0, 212, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_5, __pyx_n_s_flags, __pyx_t_4) < 0) __PYX_ERR(0, 204, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 212, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_1, __pyx_t_3, __pyx_t_5); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 204, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
   __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "ndsi/sensor.pyx":213
+  /* "ndsi/sensor.pyx":205
  *         cmd = serial.dumps({'action': 'refresh_controls'})
  *         self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
  *         self.command_push.send_string(cmd)             # <<<<<<<<<<<<<<
  * 
  *     def reset_all_control_values(self):
  */
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->command_push, __pyx_n_s_send_string); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 213, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->command_push, __pyx_n_s_send_string); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 205, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __pyx_t_3 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
@@ -8218,13 +8101,13 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_20refresh_controls(struct __pyx_
     }
   }
   if (!__pyx_t_3) {
-    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_cmd); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 213, __pyx_L1_error)
+    __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_cmd); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 205, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_4);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_cmd};
-      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 213, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 205, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
@@ -8232,19 +8115,19 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_20refresh_controls(struct __pyx_
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
       PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_v_cmd};
-      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 213, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 205, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else
     #endif
     {
-      __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 213, __pyx_L1_error)
+      __pyx_t_1 = PyTuple_New(1+1); if (unlikely(!__pyx_t_1)) __PYX_ERR(0, 205, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_1);
       __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_1, 0, __pyx_t_3); __pyx_t_3 = NULL;
       __Pyx_INCREF(__pyx_v_cmd);
       __Pyx_GIVEREF(__pyx_v_cmd);
       PyTuple_SET_ITEM(__pyx_t_1, 0+1, __pyx_v_cmd);
-      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_1, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 213, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_1, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 205, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
     }
@@ -8252,7 +8135,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_20refresh_controls(struct __pyx_
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "ndsi/sensor.pyx":210
+  /* "ndsi/sensor.pyx":202
  *             raise StreamError('Operation timed out.')
  * 
  *     def refresh_controls(self):             # <<<<<<<<<<<<<<
@@ -8278,7 +8161,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_20refresh_controls(struct __pyx_
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pyx":215
+/* "ndsi/sensor.pyx":207
  *         self.command_push.send_string(cmd)
  * 
  *     def reset_all_control_values(self):             # <<<<<<<<<<<<<<
@@ -8314,7 +8197,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_22reset_all_control_values(struc
   PyObject *__pyx_t_9 = NULL;
   __Pyx_RefNannySetupContext("reset_all_control_values", 0);
 
-  /* "ndsi/sensor.pyx":216
+  /* "ndsi/sensor.pyx":208
  * 
  *     def reset_all_control_values(self):
  *         for control_id in self.controls:             # <<<<<<<<<<<<<<
@@ -8324,9 +8207,9 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_22reset_all_control_values(struc
   __pyx_t_2 = 0;
   if (unlikely(__pyx_v_self->controls == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 216, __pyx_L1_error)
+    __PYX_ERR(0, 208, __pyx_L1_error)
   }
-  __pyx_t_5 = __Pyx_dict_iterator(__pyx_v_self->controls, 1, ((PyObject *)NULL), (&__pyx_t_3), (&__pyx_t_4)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 216, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_dict_iterator(__pyx_v_self->controls, 1, ((PyObject *)NULL), (&__pyx_t_3), (&__pyx_t_4)); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 208, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
   __Pyx_XDECREF(__pyx_t_1);
   __pyx_t_1 = __pyx_t_5;
@@ -8334,19 +8217,19 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_22reset_all_control_values(struc
   while (1) {
     __pyx_t_6 = __Pyx_dict_iter_next(__pyx_t_1, __pyx_t_3, &__pyx_t_2, &__pyx_t_5, NULL, NULL, __pyx_t_4);
     if (unlikely(__pyx_t_6 == 0)) break;
-    if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 216, __pyx_L1_error)
+    if (unlikely(__pyx_t_6 == -1)) __PYX_ERR(0, 208, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_5);
     __Pyx_XDECREF_SET(__pyx_v_control_id, __pyx_t_5);
     __pyx_t_5 = 0;
 
-    /* "ndsi/sensor.pyx":217
+    /* "ndsi/sensor.pyx":209
  *     def reset_all_control_values(self):
  *         for control_id in self.controls:
  *             self.reset_control_value(control_id)             # <<<<<<<<<<<<<<
  * 
  *     def reset_control_value(self, control_id):
  */
-    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_reset_control_value); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 217, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_reset_control_value); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 209, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __pyx_t_8 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_7))) {
@@ -8359,13 +8242,13 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_22reset_all_control_values(struc
       }
     }
     if (!__pyx_t_8) {
-      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_v_control_id); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 217, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_v_control_id); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 209, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_7)) {
         PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_v_control_id};
-        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 217, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 209, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_5);
       } else
@@ -8373,19 +8256,19 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_22reset_all_control_values(struc
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
         PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_v_control_id};
-        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 217, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 209, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
         __Pyx_GOTREF(__pyx_t_5);
       } else
       #endif
       {
-        __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 217, __pyx_L1_error)
+        __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 209, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_9);
         __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
         __Pyx_INCREF(__pyx_v_control_id);
         __Pyx_GIVEREF(__pyx_v_control_id);
         PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_v_control_id);
-        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 217, __pyx_L1_error)
+        __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_9, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 209, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
       }
@@ -8395,7 +8278,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_22reset_all_control_values(struc
   }
   __Pyx_DECREF(__pyx_t_1); __pyx_t_1 = 0;
 
-  /* "ndsi/sensor.pyx":215
+  /* "ndsi/sensor.pyx":207
  *         self.command_push.send_string(cmd)
  * 
  *     def reset_all_control_values(self):             # <<<<<<<<<<<<<<
@@ -8421,7 +8304,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_22reset_all_control_values(struc
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pyx":219
+/* "ndsi/sensor.pyx":211
  *             self.reset_control_value(control_id)
  * 
  *     def reset_control_value(self, control_id):             # <<<<<<<<<<<<<<
@@ -8457,7 +8340,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
   PyObject *__pyx_t_9 = NULL;
   __Pyx_RefNannySetupContext("reset_control_value", 0);
 
-  /* "ndsi/sensor.pyx":220
+  /* "ndsi/sensor.pyx":212
  * 
  *     def reset_control_value(self, control_id):
  *         if control_id in self.controls:             # <<<<<<<<<<<<<<
@@ -8466,13 +8349,13 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
  */
   if (unlikely(__pyx_v_self->controls == Py_None)) {
     PyErr_SetString(PyExc_TypeError, "'NoneType' object is not iterable");
-    __PYX_ERR(0, 220, __pyx_L1_error)
+    __PYX_ERR(0, 212, __pyx_L1_error)
   }
-  __pyx_t_1 = (__Pyx_PyDict_ContainsTF(__pyx_v_control_id, __pyx_v_self->controls, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 220, __pyx_L1_error)
+  __pyx_t_1 = (__Pyx_PyDict_ContainsTF(__pyx_v_control_id, __pyx_v_self->controls, Py_EQ)); if (unlikely(__pyx_t_1 < 0)) __PYX_ERR(0, 212, __pyx_L1_error)
   __pyx_t_2 = (__pyx_t_1 != 0);
   if (__pyx_t_2) {
 
-    /* "ndsi/sensor.pyx":221
+    /* "ndsi/sensor.pyx":213
  *     def reset_control_value(self, control_id):
  *         if control_id in self.controls:
  *             if 'def' in self.controls[control_id]:             # <<<<<<<<<<<<<<
@@ -8481,16 +8364,16 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
  */
     if (unlikely(__pyx_v_self->controls == Py_None)) {
       PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-      __PYX_ERR(0, 221, __pyx_L1_error)
+      __PYX_ERR(0, 213, __pyx_L1_error)
     }
-    __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_self->controls, __pyx_v_control_id); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 221, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_self->controls, __pyx_v_control_id); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 213, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
-    __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_n_s_def, __pyx_t_3, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 221, __pyx_L1_error)
+    __pyx_t_2 = (__Pyx_PySequence_ContainsTF(__pyx_n_s_def, __pyx_t_3, Py_EQ)); if (unlikely(__pyx_t_2 < 0)) __PYX_ERR(0, 213, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
     __pyx_t_1 = (__pyx_t_2 != 0);
     if (__pyx_t_1) {
 
-      /* "ndsi/sensor.pyx":222
+      /* "ndsi/sensor.pyx":214
  *         if control_id in self.controls:
  *             if 'def' in self.controls[control_id]:
  *                 value = self.controls[control_id]['def']             # <<<<<<<<<<<<<<
@@ -8499,24 +8382,24 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
  */
       if (unlikely(__pyx_v_self->controls == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 222, __pyx_L1_error)
+        __PYX_ERR(0, 214, __pyx_L1_error)
       }
-      __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_self->controls, __pyx_v_control_id); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 222, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyDict_GetItem(__pyx_v_self->controls, __pyx_v_control_id); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 214, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_4 = PyObject_GetItem(__pyx_t_3, __pyx_n_s_def); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 222, __pyx_L1_error)
+      __pyx_t_4 = PyObject_GetItem(__pyx_t_3, __pyx_n_s_def); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 214, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_4);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __pyx_v_value = __pyx_t_4;
       __pyx_t_4 = 0;
 
-      /* "ndsi/sensor.pyx":223
+      /* "ndsi/sensor.pyx":215
  *             if 'def' in self.controls[control_id]:
  *                 value = self.controls[control_id]['def']
  *                 self.set_control_value(control_id, value)             # <<<<<<<<<<<<<<
  *             else:
  *                 logger.error(('Could not reset control `{}` because it does not have a default value.').format(control_id))
  */
-      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_set_control_value); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 223, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_set_control_value); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 215, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
       __pyx_t_5 = NULL;
       __pyx_t_6 = 0;
@@ -8533,7 +8416,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_control_id, __pyx_v_value};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 223, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 215, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
         __Pyx_GOTREF(__pyx_t_4);
       } else
@@ -8541,13 +8424,13 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[3] = {__pyx_t_5, __pyx_v_control_id, __pyx_v_value};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 223, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-__pyx_t_6, 2+__pyx_t_6); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 215, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
         __Pyx_GOTREF(__pyx_t_4);
       } else
       #endif
       {
-        __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 223, __pyx_L1_error)
+        __pyx_t_7 = PyTuple_New(2+__pyx_t_6); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 215, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
         if (__pyx_t_5) {
           __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_7, 0, __pyx_t_5); __pyx_t_5 = NULL;
@@ -8558,14 +8441,14 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
         __Pyx_INCREF(__pyx_v_value);
         __Pyx_GIVEREF(__pyx_v_value);
         PyTuple_SET_ITEM(__pyx_t_7, 1+__pyx_t_6, __pyx_v_value);
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 223, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_7, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 215, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       }
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-      /* "ndsi/sensor.pyx":221
+      /* "ndsi/sensor.pyx":213
  *     def reset_control_value(self, control_id):
  *         if control_id in self.controls:
  *             if 'def' in self.controls[control_id]:             # <<<<<<<<<<<<<<
@@ -8575,7 +8458,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
       goto __pyx_L4;
     }
 
-    /* "ndsi/sensor.pyx":225
+    /* "ndsi/sensor.pyx":217
  *                 self.set_control_value(control_id, value)
  *             else:
  *                 logger.error(('Could not reset control `{}` because it does not have a default value.').format(control_id))             # <<<<<<<<<<<<<<
@@ -8583,12 +8466,12 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
  * 
  */
     /*else*/ {
-      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_logger); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 225, __pyx_L1_error)
+      __pyx_t_3 = __Pyx_GetModuleGlobalName(__pyx_n_s_logger); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 217, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_3);
-      __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_error); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 225, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_GetAttrStr(__pyx_t_3, __pyx_n_s_error); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 217, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
       __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
-      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_Could_not_reset_control_because, __pyx_n_s_format); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 225, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_Could_not_reset_control_because, __pyx_n_s_format); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 217, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __pyx_t_8 = NULL;
       if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_5))) {
@@ -8601,13 +8484,13 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
         }
       }
       if (!__pyx_t_8) {
-        __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_control_id); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 225, __pyx_L1_error)
+        __pyx_t_3 = __Pyx_PyObject_CallOneArg(__pyx_t_5, __pyx_v_control_id); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 217, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_3);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_5)) {
           PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_v_control_id};
-          __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 225, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 217, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
           __Pyx_GOTREF(__pyx_t_3);
         } else
@@ -8615,19 +8498,19 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_5)) {
           PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_v_control_id};
-          __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 225, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyCFunction_FastCall(__pyx_t_5, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 217, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
           __Pyx_GOTREF(__pyx_t_3);
         } else
         #endif
         {
-          __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 225, __pyx_L1_error)
+          __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 217, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
           __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_8); __pyx_t_8 = NULL;
           __Pyx_INCREF(__pyx_v_control_id);
           __Pyx_GIVEREF(__pyx_v_control_id);
           PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_v_control_id);
-          __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_9, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 225, __pyx_L1_error)
+          __pyx_t_3 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_9, NULL); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 217, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_3);
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
         }
@@ -8644,14 +8527,14 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
         }
       }
       if (!__pyx_t_5) {
-        __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 225, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_7, __pyx_t_3); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 217, __pyx_L1_error)
         __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_GOTREF(__pyx_t_4);
       } else {
         #if CYTHON_FAST_PYCALL
         if (PyFunction_Check(__pyx_t_7)) {
           PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_3};
-          __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 225, __pyx_L1_error)
+          __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 217, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
           __Pyx_GOTREF(__pyx_t_4);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
@@ -8660,20 +8543,20 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
         #if CYTHON_FAST_PYCCALL
         if (__Pyx_PyFastCFunction_Check(__pyx_t_7)) {
           PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_t_3};
-          __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 225, __pyx_L1_error)
+          __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_7, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 217, __pyx_L1_error)
           __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
           __Pyx_GOTREF(__pyx_t_4);
           __Pyx_DECREF(__pyx_t_3); __pyx_t_3 = 0;
         } else
         #endif
         {
-          __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 225, __pyx_L1_error)
+          __pyx_t_9 = PyTuple_New(1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 217, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_9);
           __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_9, 0, __pyx_t_5); __pyx_t_5 = NULL;
           __Pyx_GIVEREF(__pyx_t_3);
           PyTuple_SET_ITEM(__pyx_t_9, 0+1, __pyx_t_3);
           __pyx_t_3 = 0;
-          __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 225, __pyx_L1_error)
+          __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_7, __pyx_t_9, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 217, __pyx_L1_error)
           __Pyx_GOTREF(__pyx_t_4);
           __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
         }
@@ -8683,7 +8566,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
     }
     __pyx_L4:;
 
-    /* "ndsi/sensor.pyx":220
+    /* "ndsi/sensor.pyx":212
  * 
  *     def reset_control_value(self, control_id):
  *         if control_id in self.controls:             # <<<<<<<<<<<<<<
@@ -8693,7 +8576,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
     goto __pyx_L3;
   }
 
-  /* "ndsi/sensor.pyx":226
+  /* "ndsi/sensor.pyx":218
  *             else:
  *                 logger.error(('Could not reset control `{}` because it does not have a default value.').format(control_id))
  *         else: logger.error('Could not reset unknown control `{}`'.format(control_id))             # <<<<<<<<<<<<<<
@@ -8701,12 +8584,12 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
  *     def set_control_value(self, control_id, value):
  */
   /*else*/ {
-    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_logger); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 226, __pyx_L1_error)
+    __pyx_t_7 = __Pyx_GetModuleGlobalName(__pyx_n_s_logger); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 218, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
-    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_error); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 226, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_7, __pyx_n_s_error); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 218, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
-    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_Could_not_reset_unknown_control, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 226, __pyx_L1_error)
+    __pyx_t_3 = __Pyx_PyObject_GetAttrStr(__pyx_kp_s_Could_not_reset_unknown_control, __pyx_n_s_format); if (unlikely(!__pyx_t_3)) __PYX_ERR(0, 218, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_3);
     __pyx_t_5 = NULL;
     if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_3))) {
@@ -8719,13 +8602,13 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
       }
     }
     if (!__pyx_t_5) {
-      __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_control_id); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 226, __pyx_L1_error)
+      __pyx_t_7 = __Pyx_PyObject_CallOneArg(__pyx_t_3, __pyx_v_control_id); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 218, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_7);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_control_id};
-        __pyx_t_7 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 226, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 218, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
         __Pyx_GOTREF(__pyx_t_7);
       } else
@@ -8733,19 +8616,19 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_3)) {
         PyObject *__pyx_temp[2] = {__pyx_t_5, __pyx_v_control_id};
-        __pyx_t_7 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 226, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyCFunction_FastCall(__pyx_t_3, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 218, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
         __Pyx_GOTREF(__pyx_t_7);
       } else
       #endif
       {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 226, __pyx_L1_error)
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 218, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_GIVEREF(__pyx_t_5); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_5); __pyx_t_5 = NULL;
         __Pyx_INCREF(__pyx_v_control_id);
         __Pyx_GIVEREF(__pyx_v_control_id);
         PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_v_control_id);
-        __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_8, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 226, __pyx_L1_error)
+        __pyx_t_7 = __Pyx_PyObject_Call(__pyx_t_3, __pyx_t_8, NULL); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 218, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_7);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
@@ -8762,14 +8645,14 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
       }
     }
     if (!__pyx_t_3) {
-      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_9, __pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 226, __pyx_L1_error)
+      __pyx_t_4 = __Pyx_PyObject_CallOneArg(__pyx_t_9, __pyx_t_7); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 218, __pyx_L1_error)
       __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       __Pyx_GOTREF(__pyx_t_4);
     } else {
       #if CYTHON_FAST_PYCALL
       if (PyFunction_Check(__pyx_t_9)) {
         PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_7};
-        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_9, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 226, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyFunction_FastCall(__pyx_t_9, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 218, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
@@ -8778,20 +8661,20 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
       #if CYTHON_FAST_PYCCALL
       if (__Pyx_PyFastCFunction_Check(__pyx_t_9)) {
         PyObject *__pyx_temp[2] = {__pyx_t_3, __pyx_t_7};
-        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_9, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 226, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyCFunction_FastCall(__pyx_t_9, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 218, __pyx_L1_error)
         __Pyx_XDECREF(__pyx_t_3); __pyx_t_3 = 0;
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
       } else
       #endif
       {
-        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 226, __pyx_L1_error)
+        __pyx_t_8 = PyTuple_New(1+1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 218, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_8);
         __Pyx_GIVEREF(__pyx_t_3); PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_t_3); __pyx_t_3 = NULL;
         __Pyx_GIVEREF(__pyx_t_7);
         PyTuple_SET_ITEM(__pyx_t_8, 0+1, __pyx_t_7);
         __pyx_t_7 = 0;
-        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 226, __pyx_L1_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(__pyx_t_9, __pyx_t_8, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 218, __pyx_L1_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
       }
@@ -8801,7 +8684,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
   }
   __pyx_L3:;
 
-  /* "ndsi/sensor.pyx":219
+  /* "ndsi/sensor.pyx":211
  *             self.reset_control_value(control_id)
  * 
  *     def reset_control_value(self, control_id):             # <<<<<<<<<<<<<<
@@ -8828,7 +8711,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_24reset_control_value(struct __p
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pyx":228
+/* "ndsi/sensor.pyx":220
  *         else: logger.error('Could not reset unknown control `{}`'.format(control_id))
  * 
  *     def set_control_value(self, control_id, value):             # <<<<<<<<<<<<<<
@@ -8864,11 +8747,11 @@ static PyObject *__pyx_pw_4ndsi_6sensor_6Sensor_27set_control_value(PyObject *__
         case  1:
         if (likely((values[1] = PyDict_GetItem(__pyx_kwds, __pyx_n_s_value)) != 0)) kw_args--;
         else {
-          __Pyx_RaiseArgtupleInvalid("set_control_value", 1, 2, 2, 1); __PYX_ERR(0, 228, __pyx_L3_error)
+          __Pyx_RaiseArgtupleInvalid("set_control_value", 1, 2, 2, 1); __PYX_ERR(0, 220, __pyx_L3_error)
         }
       }
       if (unlikely(kw_args > 0)) {
-        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "set_control_value") < 0)) __PYX_ERR(0, 228, __pyx_L3_error)
+        if (unlikely(__Pyx_ParseOptionalKeywords(__pyx_kwds, __pyx_pyargnames, 0, values, pos_args, "set_control_value") < 0)) __PYX_ERR(0, 220, __pyx_L3_error)
       }
     } else if (PyTuple_GET_SIZE(__pyx_args) != 2) {
       goto __pyx_L5_argtuple_error;
@@ -8881,7 +8764,7 @@ static PyObject *__pyx_pw_4ndsi_6sensor_6Sensor_27set_control_value(PyObject *__
   }
   goto __pyx_L4_argument_unpacking_done;
   __pyx_L5_argtuple_error:;
-  __Pyx_RaiseArgtupleInvalid("set_control_value", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 228, __pyx_L3_error)
+  __Pyx_RaiseArgtupleInvalid("set_control_value", 1, 2, 2, PyTuple_GET_SIZE(__pyx_args)); __PYX_ERR(0, 220, __pyx_L3_error)
   __pyx_L3_error:;
   __Pyx_AddTraceback("ndsi.sensor.Sensor.set_control_value", __pyx_clineno, __pyx_lineno, __pyx_filename);
   __Pyx_RefNannyFinishContext();
@@ -8912,7 +8795,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
   __Pyx_RefNannySetupContext("set_control_value", 0);
   __Pyx_INCREF(__pyx_v_value);
 
-  /* "ndsi/sensor.pyx":229
+  /* "ndsi/sensor.pyx":221
  * 
  *     def set_control_value(self, control_id, value):
  *         try:             # <<<<<<<<<<<<<<
@@ -8928,7 +8811,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
     __Pyx_XGOTREF(__pyx_t_3);
     /*try:*/ {
 
-      /* "ndsi/sensor.pyx":230
+      /* "ndsi/sensor.pyx":222
  *     def set_control_value(self, control_id, value):
  *         try:
  *             dtype = self.controls[control_id]['dtype']             # <<<<<<<<<<<<<<
@@ -8937,48 +8820,48 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
  */
       if (unlikely(__pyx_v_self->controls == Py_None)) {
         PyErr_SetString(PyExc_TypeError, "'NoneType' object is not subscriptable");
-        __PYX_ERR(0, 230, __pyx_L3_error)
+        __PYX_ERR(0, 222, __pyx_L3_error)
       }
-      __pyx_t_4 = __Pyx_PyDict_GetItem(__pyx_v_self->controls, __pyx_v_control_id); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 230, __pyx_L3_error)
+      __pyx_t_4 = __Pyx_PyDict_GetItem(__pyx_v_self->controls, __pyx_v_control_id); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 222, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_4);
-      __pyx_t_5 = PyObject_GetItem(__pyx_t_4, __pyx_n_s_dtype); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 230, __pyx_L3_error)
+      __pyx_t_5 = PyObject_GetItem(__pyx_t_4, __pyx_n_s_dtype); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 222, __pyx_L3_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
       __pyx_v_dtype = __pyx_t_5;
       __pyx_t_5 = 0;
 
-      /* "ndsi/sensor.pyx":231
+      /* "ndsi/sensor.pyx":223
  *         try:
  *             dtype = self.controls[control_id]['dtype']
  *             if dtype == 'bool': value = bool(value)             # <<<<<<<<<<<<<<
  *             elif dtype == 'string': value = str(value)
  *             elif dtype == 'integer': value = int(value)
  */
-      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_bool, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 231, __pyx_L3_error)
+      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_bool, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 223, __pyx_L3_error)
       if (__pyx_t_6) {
-        __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_value); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 231, __pyx_L3_error)
-        __pyx_t_5 = __Pyx_PyBool_FromLong((!(!__pyx_t_6))); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 231, __pyx_L3_error)
+        __pyx_t_6 = __Pyx_PyObject_IsTrue(__pyx_v_value); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 223, __pyx_L3_error)
+        __pyx_t_5 = __Pyx_PyBool_FromLong((!(!__pyx_t_6))); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 223, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF_SET(__pyx_v_value, __pyx_t_5);
         __pyx_t_5 = 0;
         goto __pyx_L11;
       }
 
-      /* "ndsi/sensor.pyx":232
+      /* "ndsi/sensor.pyx":224
  *             dtype = self.controls[control_id]['dtype']
  *             if dtype == 'bool': value = bool(value)
  *             elif dtype == 'string': value = str(value)             # <<<<<<<<<<<<<<
  *             elif dtype == 'integer': value = int(value)
  *             elif dtype == 'float': value = float(value)
  */
-      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_string, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 232, __pyx_L3_error)
+      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_string, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 224, __pyx_L3_error)
       if (__pyx_t_6) {
-        __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 232, __pyx_L3_error)
+        __pyx_t_5 = PyTuple_New(1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 224, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_INCREF(__pyx_v_value);
         __Pyx_GIVEREF(__pyx_v_value);
         PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_v_value);
-        __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 232, __pyx_L3_error)
+        __pyx_t_4 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_5, NULL); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 224, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
         __Pyx_DECREF_SET(__pyx_v_value, __pyx_t_4);
@@ -8986,69 +8869,69 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
         goto __pyx_L11;
       }
 
-      /* "ndsi/sensor.pyx":233
+      /* "ndsi/sensor.pyx":225
  *             if dtype == 'bool': value = bool(value)
  *             elif dtype == 'string': value = str(value)
  *             elif dtype == 'integer': value = int(value)             # <<<<<<<<<<<<<<
  *             elif dtype == 'float': value = float(value)
  *             elif dtype == 'intmapping': value = int(value)
  */
-      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_integer, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 233, __pyx_L3_error)
+      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_integer, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 225, __pyx_L3_error)
       if (__pyx_t_6) {
-        __pyx_t_4 = __Pyx_PyNumber_Int(__pyx_v_value); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 233, __pyx_L3_error)
+        __pyx_t_4 = __Pyx_PyNumber_Int(__pyx_v_value); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 225, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF_SET(__pyx_v_value, __pyx_t_4);
         __pyx_t_4 = 0;
         goto __pyx_L11;
       }
 
-      /* "ndsi/sensor.pyx":234
+      /* "ndsi/sensor.pyx":226
  *             elif dtype == 'string': value = str(value)
  *             elif dtype == 'integer': value = int(value)
  *             elif dtype == 'float': value = float(value)             # <<<<<<<<<<<<<<
  *             elif dtype == 'intmapping': value = int(value)
  *             elif dtype == 'strmapping': value = str(value)
  */
-      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_float, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 234, __pyx_L3_error)
+      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_float, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 226, __pyx_L3_error)
       if (__pyx_t_6) {
-        __pyx_t_4 = __Pyx_PyNumber_Float(__pyx_v_value); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 234, __pyx_L3_error)
+        __pyx_t_4 = __Pyx_PyNumber_Float(__pyx_v_value); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 226, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF_SET(__pyx_v_value, __pyx_t_4);
         __pyx_t_4 = 0;
         goto __pyx_L11;
       }
 
-      /* "ndsi/sensor.pyx":235
+      /* "ndsi/sensor.pyx":227
  *             elif dtype == 'integer': value = int(value)
  *             elif dtype == 'float': value = float(value)
  *             elif dtype == 'intmapping': value = int(value)             # <<<<<<<<<<<<<<
  *             elif dtype == 'strmapping': value = str(value)
  *         except KeyError:
  */
-      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_intmapping, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 235, __pyx_L3_error)
+      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_intmapping, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 227, __pyx_L3_error)
       if (__pyx_t_6) {
-        __pyx_t_4 = __Pyx_PyNumber_Int(__pyx_v_value); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 235, __pyx_L3_error)
+        __pyx_t_4 = __Pyx_PyNumber_Int(__pyx_v_value); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 227, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_DECREF_SET(__pyx_v_value, __pyx_t_4);
         __pyx_t_4 = 0;
         goto __pyx_L11;
       }
 
-      /* "ndsi/sensor.pyx":236
+      /* "ndsi/sensor.pyx":228
  *             elif dtype == 'float': value = float(value)
  *             elif dtype == 'intmapping': value = int(value)
  *             elif dtype == 'strmapping': value = str(value)             # <<<<<<<<<<<<<<
  *         except KeyError:
  *             pass
  */
-      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_strmapping, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 236, __pyx_L3_error)
+      __pyx_t_6 = (__Pyx_PyString_Equals(__pyx_v_dtype, __pyx_n_s_strmapping, Py_EQ)); if (unlikely(__pyx_t_6 < 0)) __PYX_ERR(0, 228, __pyx_L3_error)
       if (__pyx_t_6) {
-        __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 236, __pyx_L3_error)
+        __pyx_t_4 = PyTuple_New(1); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 228, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_4);
         __Pyx_INCREF(__pyx_v_value);
         __Pyx_GIVEREF(__pyx_v_value);
         PyTuple_SET_ITEM(__pyx_t_4, 0, __pyx_v_value);
-        __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 236, __pyx_L3_error)
+        __pyx_t_5 = __Pyx_PyObject_Call(((PyObject *)(&PyString_Type)), __pyx_t_4, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 228, __pyx_L3_error)
         __Pyx_GOTREF(__pyx_t_5);
         __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
         __Pyx_DECREF_SET(__pyx_v_value, __pyx_t_5);
@@ -9056,7 +8939,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
       }
       __pyx_L11:;
 
-      /* "ndsi/sensor.pyx":229
+      /* "ndsi/sensor.pyx":221
  * 
  *     def set_control_value(self, control_id, value):
  *         try:             # <<<<<<<<<<<<<<
@@ -9073,7 +8956,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
     __Pyx_XDECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_XDECREF(__pyx_t_5); __pyx_t_5 = 0;
 
-    /* "ndsi/sensor.pyx":237
+    /* "ndsi/sensor.pyx":229
  *             elif dtype == 'intmapping': value = int(value)
  *             elif dtype == 'strmapping': value = str(value)
  *         except KeyError:             # <<<<<<<<<<<<<<
@@ -9088,7 +8971,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
     goto __pyx_L5_except_error;
     __pyx_L5_except_error:;
 
-    /* "ndsi/sensor.pyx":229
+    /* "ndsi/sensor.pyx":221
  * 
  *     def set_control_value(self, control_id, value):
  *         try:             # <<<<<<<<<<<<<<
@@ -9110,47 +8993,47 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
     __pyx_L10_try_end:;
   }
 
-  /* "ndsi/sensor.pyx":239
+  /* "ndsi/sensor.pyx":231
  *         except KeyError:
  *             pass
  *         cmd = serial.dumps({             # <<<<<<<<<<<<<<
  *             "action": "set_control_value",
  *             "control_id": control_id,
  */
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_serial); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_serial); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 231, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_dumps); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 239, __pyx_L1_error)
+  __pyx_t_8 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_dumps); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 231, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
 
-  /* "ndsi/sensor.pyx":240
+  /* "ndsi/sensor.pyx":232
  *             pass
  *         cmd = serial.dumps({
  *             "action": "set_control_value",             # <<<<<<<<<<<<<<
  *             "control_id": control_id,
  *             "value": value})
  */
-  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 240, __pyx_L1_error)
+  __pyx_t_4 = PyDict_New(); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 232, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_action, __pyx_n_s_set_control_value) < 0) __PYX_ERR(0, 240, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_action, __pyx_n_s_set_control_value) < 0) __PYX_ERR(0, 232, __pyx_L1_error)
 
-  /* "ndsi/sensor.pyx":241
+  /* "ndsi/sensor.pyx":233
  *         cmd = serial.dumps({
  *             "action": "set_control_value",
  *             "control_id": control_id,             # <<<<<<<<<<<<<<
  *             "value": value})
  *         self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
  */
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_control_id, __pyx_v_control_id) < 0) __PYX_ERR(0, 240, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_control_id, __pyx_v_control_id) < 0) __PYX_ERR(0, 232, __pyx_L1_error)
 
-  /* "ndsi/sensor.pyx":242
+  /* "ndsi/sensor.pyx":234
  *             "action": "set_control_value",
  *             "control_id": control_id,
  *             "value": value})             # <<<<<<<<<<<<<<
  *         self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
  *         self.command_push.send_string(cmd)
  */
-  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_value, __pyx_v_value) < 0) __PYX_ERR(0, 240, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_4, __pyx_n_s_value, __pyx_v_value) < 0) __PYX_ERR(0, 232, __pyx_L1_error)
   __pyx_t_9 = NULL;
   if (CYTHON_UNPACK_METHODS && unlikely(PyMethod_Check(__pyx_t_8))) {
     __pyx_t_9 = PyMethod_GET_SELF(__pyx_t_8);
@@ -9162,14 +9045,14 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
     }
   }
   if (!__pyx_t_9) {
-    __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+    __pyx_t_5 = __Pyx_PyObject_CallOneArg(__pyx_t_8, __pyx_t_4); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 231, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     __Pyx_GOTREF(__pyx_t_5);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_8)) {
       PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_4};
-      __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 231, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
@@ -9178,20 +9061,20 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_8)) {
       PyObject *__pyx_temp[2] = {__pyx_t_9, __pyx_t_4};
-      __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyCFunction_FastCall(__pyx_t_8, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 231, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_9); __pyx_t_9 = 0;
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
     } else
     #endif
     {
-      __pyx_t_10 = PyTuple_New(1+1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 239, __pyx_L1_error)
+      __pyx_t_10 = PyTuple_New(1+1); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 231, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_10);
       __Pyx_GIVEREF(__pyx_t_9); PyTuple_SET_ITEM(__pyx_t_10, 0, __pyx_t_9); __pyx_t_9 = NULL;
       __Pyx_GIVEREF(__pyx_t_4);
       PyTuple_SET_ITEM(__pyx_t_10, 0+1, __pyx_t_4);
       __pyx_t_4 = 0;
-      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_10, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 239, __pyx_L1_error)
+      __pyx_t_5 = __Pyx_PyObject_Call(__pyx_t_8, __pyx_t_10, NULL); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 231, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
     }
@@ -9200,41 +9083,41 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
   __pyx_v_cmd = __pyx_t_5;
   __pyx_t_5 = 0;
 
-  /* "ndsi/sensor.pyx":243
+  /* "ndsi/sensor.pyx":235
  *             "control_id": control_id,
  *             "value": value})
  *         self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)             # <<<<<<<<<<<<<<
  *         self.command_push.send_string(cmd)
  */
-  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->command_push, __pyx_n_s_send_string); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 243, __pyx_L1_error)
+  __pyx_t_5 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->command_push, __pyx_n_s_send_string); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_5);
-  __pyx_t_8 = PyTuple_New(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 243, __pyx_L1_error)
+  __pyx_t_8 = PyTuple_New(1); if (unlikely(!__pyx_t_8)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_8);
   __Pyx_INCREF(__pyx_v_self->uuid);
   __Pyx_GIVEREF(__pyx_v_self->uuid);
   PyTuple_SET_ITEM(__pyx_t_8, 0, __pyx_v_self->uuid);
-  __pyx_t_10 = PyDict_New(); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 243, __pyx_L1_error)
+  __pyx_t_10 = PyDict_New(); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
-  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_zmq); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 243, __pyx_L1_error)
+  __pyx_t_4 = __Pyx_GetModuleGlobalName(__pyx_n_s_zmq); if (unlikely(!__pyx_t_4)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_4);
-  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_SNDMORE); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 243, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_GetAttrStr(__pyx_t_4, __pyx_n_s_SNDMORE); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_4); __pyx_t_4 = 0;
-  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_flags, __pyx_t_9) < 0) __PYX_ERR(0, 243, __pyx_L1_error)
+  if (PyDict_SetItem(__pyx_t_10, __pyx_n_s_flags, __pyx_t_9) < 0) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
-  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, __pyx_t_10); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 243, __pyx_L1_error)
+  __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_5, __pyx_t_8, __pyx_t_10); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 235, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_9);
   __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
   __Pyx_DECREF(__pyx_t_8); __pyx_t_8 = 0;
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
 
-  /* "ndsi/sensor.pyx":244
+  /* "ndsi/sensor.pyx":236
  *             "value": value})
  *         self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
  *         self.command_push.send_string(cmd)             # <<<<<<<<<<<<<<
  */
-  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->command_push, __pyx_n_s_send_string); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 244, __pyx_L1_error)
+  __pyx_t_10 = __Pyx_PyObject_GetAttrStr(__pyx_v_self->command_push, __pyx_n_s_send_string); if (unlikely(!__pyx_t_10)) __PYX_ERR(0, 236, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_10);
   __pyx_t_8 = NULL;
   if (CYTHON_UNPACK_METHODS && likely(PyMethod_Check(__pyx_t_10))) {
@@ -9247,13 +9130,13 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
     }
   }
   if (!__pyx_t_8) {
-    __pyx_t_9 = __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_v_cmd); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 244, __pyx_L1_error)
+    __pyx_t_9 = __Pyx_PyObject_CallOneArg(__pyx_t_10, __pyx_v_cmd); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 236, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_9);
   } else {
     #if CYTHON_FAST_PYCALL
     if (PyFunction_Check(__pyx_t_10)) {
       PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_v_cmd};
-      __pyx_t_9 = __Pyx_PyFunction_FastCall(__pyx_t_10, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 244, __pyx_L1_error)
+      __pyx_t_9 = __Pyx_PyFunction_FastCall(__pyx_t_10, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_GOTREF(__pyx_t_9);
     } else
@@ -9261,19 +9144,19 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
     #if CYTHON_FAST_PYCCALL
     if (__Pyx_PyFastCFunction_Check(__pyx_t_10)) {
       PyObject *__pyx_temp[2] = {__pyx_t_8, __pyx_v_cmd};
-      __pyx_t_9 = __Pyx_PyCFunction_FastCall(__pyx_t_10, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 244, __pyx_L1_error)
+      __pyx_t_9 = __Pyx_PyCFunction_FastCall(__pyx_t_10, __pyx_temp+1-1, 1+1); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_XDECREF(__pyx_t_8); __pyx_t_8 = 0;
       __Pyx_GOTREF(__pyx_t_9);
     } else
     #endif
     {
-      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 244, __pyx_L1_error)
+      __pyx_t_5 = PyTuple_New(1+1); if (unlikely(!__pyx_t_5)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_5);
       __Pyx_GIVEREF(__pyx_t_8); PyTuple_SET_ITEM(__pyx_t_5, 0, __pyx_t_8); __pyx_t_8 = NULL;
       __Pyx_INCREF(__pyx_v_cmd);
       __Pyx_GIVEREF(__pyx_v_cmd);
       PyTuple_SET_ITEM(__pyx_t_5, 0+1, __pyx_v_cmd);
-      __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_t_5, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 244, __pyx_L1_error)
+      __pyx_t_9 = __Pyx_PyObject_Call(__pyx_t_10, __pyx_t_5, NULL); if (unlikely(!__pyx_t_9)) __PYX_ERR(0, 236, __pyx_L1_error)
       __Pyx_GOTREF(__pyx_t_9);
       __Pyx_DECREF(__pyx_t_5); __pyx_t_5 = 0;
     }
@@ -9281,7 +9164,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
   __Pyx_DECREF(__pyx_t_10); __pyx_t_10 = 0;
   __Pyx_DECREF(__pyx_t_9); __pyx_t_9 = 0;
 
-  /* "ndsi/sensor.pyx":228
+  /* "ndsi/sensor.pyx":220
  *         else: logger.error('Could not reset unknown control `{}`'.format(control_id))
  * 
  *     def set_control_value(self, control_id, value):             # <<<<<<<<<<<<<<
@@ -25054,7 +24937,6 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_callbacks, __pyx_k_callbacks, sizeof(__pyx_k_callbacks), 0, 0, 1, 1},
   {&__pyx_n_s_caller, __pyx_k_caller, sizeof(__pyx_k_caller), 0, 0, 1, 1},
   {&__pyx_n_s_changes, __pyx_k_changes, sizeof(__pyx_k_changes), 0, 0, 1, 1},
-  {&__pyx_n_s_check_hash, __pyx_k_check_hash, sizeof(__pyx_k_check_hash), 0, 0, 1, 1},
   {&__pyx_n_s_class, __pyx_k_class, sizeof(__pyx_k_class), 0, 0, 1, 1},
   {&__pyx_n_s_close, __pyx_k_close, sizeof(__pyx_k_close), 0, 0, 1, 1},
   {&__pyx_n_s_command_endpoint, __pyx_k_command_endpoint, sizeof(__pyx_k_command_endpoint), 0, 0, 1, 1},
@@ -25180,6 +25062,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_tb, __pyx_k_tb, sizeof(__pyx_k_tb), 0, 0, 1, 1},
   {&__pyx_n_s_test, __pyx_k_test, sizeof(__pyx_k_test), 0, 0, 1, 1},
   {&__pyx_n_s_timeout, __pyx_k_timeout, sizeof(__pyx_k_timeout), 0, 0, 1, 1},
+  {&__pyx_n_s_timestamp, __pyx_k_timestamp, sizeof(__pyx_k_timestamp), 0, 0, 1, 1},
   {&__pyx_n_s_traceback, __pyx_k_traceback, sizeof(__pyx_k_traceback), 0, 0, 1, 1},
   {&__pyx_n_s_uint8, __pyx_k_uint8, sizeof(__pyx_k_uint8), 0, 0, 1, 1},
   {&__pyx_kp_s_unable_to_allocate_array_data, __pyx_k_unable_to_allocate_array_data, sizeof(__pyx_k_unable_to_allocate_array_data), 0, 0, 1, 0},
@@ -25263,14 +25146,14 @@ static int __Pyx_InitCachedConstants(void) {
   __Pyx_GIVEREF(__pyx_tuple__6);
   __pyx_codeobj__7 = (PyObject*)__Pyx_PyCode_New(3, 0, 3, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__6, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_papr_work_pyndsi_ndsi_sens, __pyx_n_s_setitem, 146, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__7)) __PYX_ERR(0, 146, __pyx_L1_error)
 
-  /* "ndsi/sensor.pyx":185
+  /* "ndsi/sensor.pyx":183
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
- *                 frame = H264Frame(*meta_data[:5], data_len=out_size, yuv_buffer=out_buffer)             # <<<<<<<<<<<<<<
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)             # <<<<<<<<<<<<<<
  *                 frame.attach_tj_context(self.tj_context)
  *             return frame
  */
-  __pyx_slice__8 = PySlice_New(Py_None, __pyx_int_5, Py_None); if (unlikely(!__pyx_slice__8)) __PYX_ERR(0, 185, __pyx_L1_error)
+  __pyx_slice__8 = PySlice_New(Py_None, __pyx_int_4, Py_None); if (unlikely(!__pyx_slice__8)) __PYX_ERR(0, 183, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_slice__8);
   __Pyx_GIVEREF(__pyx_slice__8);
 
@@ -25278,45 +25161,45 @@ static int __Pyx_InitCachedConstants(void) {
  *             raise NotDataSubSupportedError()
  * 
  *         def create_jpeg_frame(buffer_, meta_data):             # <<<<<<<<<<<<<<
- *             cdef JPEGFrame frame = JPEGFrame(*meta_data,
- *                                              zmq_frame=buffer_,
+ *             cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
+ *             frame.attach_tj_context(self.tj_context)
  */
   __pyx_tuple__9 = PyTuple_Pack(3, __pyx_n_s_buffer, __pyx_n_s_meta_data, __pyx_n_s_frame); if (unlikely(!__pyx_tuple__9)) __PYX_ERR(0, 169, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__9);
   __Pyx_GIVEREF(__pyx_tuple__9);
   __pyx_codeobj__10 = (PyObject*)__Pyx_PyCode_New(2, 0, 3, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__9, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_papr_work_pyndsi_ndsi_sens, __pyx_n_s_create_jpeg_frame, 169, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__10)) __PYX_ERR(0, 169, __pyx_L1_error)
 
-  /* "ndsi/sensor.pyx":176
+  /* "ndsi/sensor.pyx":174
  *             return frame
  * 
  *         def create_h264_frame(buffer_, meta_data):             # <<<<<<<<<<<<<<
  *             cdef H264Frame frame = None
  *             cdef unsigned char[:] out_buffer
  */
-  __pyx_tuple__11 = PyTuple_Pack(7, __pyx_n_s_buffer, __pyx_n_s_meta_data, __pyx_n_s_frame, __pyx_n_s_out_buffer, __pyx_n_s_pkt_pts, __pyx_n_s_out, __pyx_n_s_out_size); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 176, __pyx_L1_error)
+  __pyx_tuple__11 = PyTuple_Pack(7, __pyx_n_s_buffer, __pyx_n_s_meta_data, __pyx_n_s_frame, __pyx_n_s_out_buffer, __pyx_n_s_pkt_pts, __pyx_n_s_out, __pyx_n_s_out_size); if (unlikely(!__pyx_tuple__11)) __PYX_ERR(0, 174, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__11);
   __Pyx_GIVEREF(__pyx_tuple__11);
-  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(2, 0, 7, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__11, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_papr_work_pyndsi_ndsi_sens, __pyx_n_s_create_h264_frame, 176, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) __PYX_ERR(0, 176, __pyx_L1_error)
+  __pyx_codeobj__12 = (PyObject*)__Pyx_PyCode_New(2, 0, 7, 0, 0, __pyx_empty_bytes, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_tuple__11, __pyx_empty_tuple, __pyx_empty_tuple, __pyx_kp_s_home_papr_work_pyndsi_ndsi_sens, __pyx_n_s_create_h264_frame, 174, __pyx_empty_bytes); if (unlikely(!__pyx_codeobj__12)) __PYX_ERR(0, 174, __pyx_L1_error)
 
-  /* "ndsi/sensor.pyx":206
+  /* "ndsi/sensor.pyx":198
  *                         return frame
  *                 else:
  *                     raise StreamError('Frame was not of format MJPEG or H264')             # <<<<<<<<<<<<<<
  *         else:
  *             raise StreamError('Operation timed out.')
  */
-  __pyx_tuple__13 = PyTuple_Pack(1, __pyx_kp_s_Frame_was_not_of_format_MJPEG_or); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 206, __pyx_L1_error)
+  __pyx_tuple__13 = PyTuple_Pack(1, __pyx_kp_s_Frame_was_not_of_format_MJPEG_or); if (unlikely(!__pyx_tuple__13)) __PYX_ERR(0, 198, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__13);
   __Pyx_GIVEREF(__pyx_tuple__13);
 
-  /* "ndsi/sensor.pyx":208
+  /* "ndsi/sensor.pyx":200
  *                     raise StreamError('Frame was not of format MJPEG or H264')
  *         else:
  *             raise StreamError('Operation timed out.')             # <<<<<<<<<<<<<<
  * 
  *     def refresh_controls(self):
  */
-  __pyx_tuple__14 = PyTuple_Pack(1, __pyx_kp_s_Operation_timed_out); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 208, __pyx_L1_error)
+  __pyx_tuple__14 = PyTuple_Pack(1, __pyx_kp_s_Operation_timed_out); if (unlikely(!__pyx_tuple__14)) __PYX_ERR(0, 200, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_tuple__14);
   __Pyx_GIVEREF(__pyx_tuple__14);
 
@@ -25656,7 +25539,7 @@ static int __Pyx_InitGlobals(void) {
   __pyx_int_0 = PyInt_FromLong(0); if (unlikely(!__pyx_int_0)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_1 = PyInt_FromLong(1); if (unlikely(!__pyx_int_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_3 = PyInt_FromLong(3); if (unlikely(!__pyx_int_3)) __PYX_ERR(0, 1, __pyx_L1_error)
-  __pyx_int_5 = PyInt_FromLong(5); if (unlikely(!__pyx_int_5)) __PYX_ERR(0, 1, __pyx_L1_error)
+  __pyx_int_4 = PyInt_FromLong(4); if (unlikely(!__pyx_int_4)) __PYX_ERR(0, 1, __pyx_L1_error)
   __pyx_int_neg_1 = PyInt_FromLong(-1); if (unlikely(!__pyx_int_neg_1)) __PYX_ERR(0, 1, __pyx_L1_error)
   return 0;
   __pyx_L1_error:;
@@ -25809,8 +25692,8 @@ PyMODINIT_FUNC PyInit_sensor(void)
   __pyx_ptype_5numpy_ufunc = __Pyx_ImportType("numpy", "ufunc", sizeof(PyUFuncObject), 0); if (unlikely(!__pyx_ptype_5numpy_ufunc)) __PYX_ERR(2, 861, __pyx_L1_error)
   __pyx_ptype_4ndsi_5frame_JPEGFrame = __Pyx_ImportType("ndsi.frame", "JPEGFrame", sizeof(struct __pyx_obj_4ndsi_5frame_JPEGFrame), 1); if (unlikely(!__pyx_ptype_4ndsi_5frame_JPEGFrame)) __PYX_ERR(5, 13, __pyx_L1_error)
   __pyx_vtabptr_4ndsi_5frame_JPEGFrame = (struct __pyx_vtabstruct_4ndsi_5frame_JPEGFrame*)__Pyx_GetVtable(__pyx_ptype_4ndsi_5frame_JPEGFrame->tp_dict); if (unlikely(!__pyx_vtabptr_4ndsi_5frame_JPEGFrame)) __PYX_ERR(5, 13, __pyx_L1_error)
-  __pyx_ptype_4ndsi_5frame_H264Frame = __Pyx_ImportType("ndsi.frame", "H264Frame", sizeof(struct __pyx_obj_4ndsi_5frame_H264Frame), 1); if (unlikely(!__pyx_ptype_4ndsi_5frame_H264Frame)) __PYX_ERR(5, 29, __pyx_L1_error)
-  __pyx_vtabptr_4ndsi_5frame_H264Frame = (struct __pyx_vtabstruct_4ndsi_5frame_H264Frame*)__Pyx_GetVtable(__pyx_ptype_4ndsi_5frame_H264Frame->tp_dict); if (unlikely(!__pyx_vtabptr_4ndsi_5frame_H264Frame)) __PYX_ERR(5, 29, __pyx_L1_error)
+  __pyx_ptype_4ndsi_5frame_H264Frame = __Pyx_ImportType("ndsi.frame", "H264Frame", sizeof(struct __pyx_obj_4ndsi_5frame_H264Frame), 1); if (unlikely(!__pyx_ptype_4ndsi_5frame_H264Frame)) __PYX_ERR(5, 28, __pyx_L1_error)
+  __pyx_vtabptr_4ndsi_5frame_H264Frame = (struct __pyx_vtabstruct_4ndsi_5frame_H264Frame*)__Pyx_GetVtable(__pyx_ptype_4ndsi_5frame_H264Frame->tp_dict); if (unlikely(!__pyx_vtabptr_4ndsi_5frame_H264Frame)) __PYX_ERR(5, 28, __pyx_L1_error)
   /*--- Variable import code ---*/
   /*--- Function import code ---*/
   /*--- Execution code ---*/

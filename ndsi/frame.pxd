@@ -19,7 +19,6 @@ cdef class JPEGFrame(object):
     cdef bint _yuv_converted, _bgr_converted
     cdef public double timestamp
     cdef public yuv_subsampling
-    cdef public bint valid_hash
 
     cdef yuv2bgr(self)
     cdef jpeg2yuv(self)

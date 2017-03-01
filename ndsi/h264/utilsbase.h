@@ -42,17 +42,17 @@
 #define CHECK_LT(X, Y) { bool RES = (X < Y); assert(RES); }
 
 #if defined(USE_LOGALL) && !defined(LOG_NDEBUG)
-	#define LOGV(FMT, ...) fprintf(stderr, "[V/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+	#define LOGV(FMT, ...) fprintf(stderr, "[V/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGD(FMT, ...) fprintf(stderr, "[D/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+	#define LOGD(FMT, ...) fprintf(stderr, "[D/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGI(FMT, ...) fprintf(stderr, "[I/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+	#define LOGI(FMT, ...) fprintf(stderr, "[I/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGW(FMT, ...) fprintf(stderr, "[W/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+	#define LOGW(FMT, ...) fprintf(stderr, "[W/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGE(FMT, ...) fprintf(stderr, "[E/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+	#define LOGE(FMT, ...) fprintf(stderr, "[E/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGF(FMT, ...) fprintf(stderr, "[F/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+	#define LOGF(FMT, ...) fprintf(stderr, "[F/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 	#define LOGV_IF(cond, ...) \
 		( (CONDITION(cond)) \
@@ -80,7 +80,7 @@
 			: (0) )
 #else
 	#if defined(USE_LOGV) && !defined(LOG_NDEBUG)
-		#define LOGV(FMT, ...) fprintf(stderr, "[V/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+		#define LOGV(FMT, ...) fprintf(stderr, "[V/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 		#define LOGV_IF(cond, ...) \
 			( (CONDITION(cond)) \
@@ -91,7 +91,7 @@
 		#define LOGV_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGD) && !defined(LOG_NDEBUG)
-		#define LOGD(FMT, ...) fprintf(stderr, "[D/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+		#define LOGD(FMT, ...) fprintf(stderr, "[D/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 		#define LOGD_IF(cond, ...) \
 			( (CONDITION(cond)) \
@@ -102,7 +102,7 @@
 		#define LOGD_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGI)
-		#define LOGI(FMT, ...) fprintf(stderr, "[I/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+		#define LOGI(FMT, ...) fprintf(stderr, "[I/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 		#define LOGI_IF(cond, ...) \
 			( (CONDITION(cond)) \
@@ -113,7 +113,7 @@
 		#define LOGI_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGW)
-		#define LOGW(FMT, ...) fprintf(stderr, "[W/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+		#define LOGW(FMT, ...) fprintf(stderr, "[W/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 		#define LOGW_IF(cond, ...) \
 			( (CONDITION(cond)) \
@@ -124,7 +124,7 @@
 		#define LOGW_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGE)
-		#define LOGE(FMT, ...) fprintf(stderr, "[E/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+		#define LOGE(FMT, ...) fprintf(stderr, "[E/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 		#define LOGE_IF(cond, ...) \
 			( (CONDITION(cond)) \
@@ -135,7 +135,7 @@
 		#define LOGE_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGF)
-#define LOGF(FMT, ...) fprintf(stderr, "[F/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+#define LOGF(FMT, ...) fprintf(stderr, "[F/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 		#define LOGF_IF(cond, ...) \
 			( (CONDITION(cond)) \
@@ -190,7 +190,7 @@
 #define		PRE_EXIT()			LOGD("end")
 
 #if (defined(USE_LOGALL) || defined(USE_LOGI)) && !defined(LOG_NDEBUG)
-#define MARK(FMT, ...) fprintf(stderr, "[M/" LOG_TAG ":%s:%d:%s]:" FMT,	\
+#define MARK(FMT, ...) fprintf(stderr, "[M/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
 							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 #else
 #define		MARK(...)
