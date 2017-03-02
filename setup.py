@@ -74,7 +74,7 @@ extensions = [
               language='c++')]
 
 setup(name="ndsi",
-      version="0.2.15",  # make sure this is the same as in ndsi/__init__.py
+      version="0.2.16",  # make sure this is the same as in ndsi/__init__.py
       description="Remote Device Sensor Interface",
       packages=['ndsi'],
       ext_modules=cythonize(extensions))

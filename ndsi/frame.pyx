@@ -299,12 +299,13 @@ cdef class H264Frame(object):
         self._bgr_converted = False
         self.tj_context = NULL
 
-    def __init__(self, data_format, width, height, index, timestamp, data_len, yuv_buffer):
+    def __init__(self, data_format, width, height, index, timestamp, data_len, yuv_buffer, h264_buffer):
         self._width       = width
         self._height      = height
         self._index       = index
         self._buffer_len  = data_len
         self._yuv_buffer  = yuv_buffer
+        self._h264_buffer = np.fromstring(h264_buffer, dtype=np.uint8)
         self.timestamp    = (<double>timestamp)/1000000
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
@@ -329,6 +330,10 @@ cdef class H264Frame(object):
     property yuv_buffer:
         def __get__(self):
             return self._yuv_buffer
+
+    property h264_buffer:
+        def __get__(self):
+            return self._h264_buffer
 
     property gray:
         def __get__(self):

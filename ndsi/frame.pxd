@@ -27,7 +27,7 @@ cdef class JPEGFrame(object):
 
 cdef class H264Frame(object):
     cdef turbojpeg.tjhandle tj_context
-    cdef unsigned char[:] _yuv_buffer, _bgr_buffer, _gray_buffer
+    cdef unsigned char[:] _yuv_buffer, _bgr_buffer, _gray_buffer, _h264_buffer
     cdef long _width, _height, _index, _buffer_len
     cdef bint _bgr_converted
     cdef public double timestamp

@@ -1090,7 +1090,7 @@ struct __pyx_obj_4ndsi_5frame_JPEGFrame {
  * 
  * cdef class H264Frame(object):             # <<<<<<<<<<<<<<
  *     cdef turbojpeg.tjhandle tj_context
- *     cdef unsigned char[:] _yuv_buffer, _bgr_buffer, _gray_buffer
+ *     cdef unsigned char[:] _yuv_buffer, _bgr_buffer, _gray_buffer, _h264_buffer
  */
 struct __pyx_obj_4ndsi_5frame_H264Frame {
   PyObject_HEAD
@@ -1099,6 +1099,7 @@ struct __pyx_obj_4ndsi_5frame_H264Frame {
   __Pyx_memviewslice _yuv_buffer;
   __Pyx_memviewslice _bgr_buffer;
   __Pyx_memviewslice _gray_buffer;
+  __Pyx_memviewslice _h264_buffer;
   long _width;
   long _height;
   long _index;
@@ -1250,7 +1251,7 @@ static struct __pyx_vtabstruct_4ndsi_5frame_JPEGFrame *__pyx_vtabptr_4ndsi_5fram
  * 
  * cdef class H264Frame(object):             # <<<<<<<<<<<<<<
  *     cdef turbojpeg.tjhandle tj_context
- *     cdef unsigned char[:] _yuv_buffer, _bgr_buffer, _gray_buffer
+ *     cdef unsigned char[:] _yuv_buffer, _bgr_buffer, _gray_buffer, _h264_buffer
  */
 
 struct __pyx_vtabstruct_4ndsi_5frame_H264Frame {
@@ -2323,6 +2324,7 @@ static const char __pyx_k_ImportError[] = "ImportError";
 static const char __pyx_k_MemoryError[] = "MemoryError";
 static const char __pyx_k_StreamError[] = "StreamError";
 static const char __pyx_k_all_threads[] = "all_threads";
+static const char __pyx_k_h264_buffer[] = "h264_buffer";
 static const char __pyx_k_ndsi_sensor[] = "ndsi.sensor";
 static const char __pyx_k_send_string[] = "send_string";
 static const char __pyx_k_sensor_name[] = "sensor_name";
@@ -2505,6 +2507,7 @@ static PyObject *__pyx_n_s_get_newest_data_frame_locals_cre;
 static PyObject *__pyx_n_s_get_newest_data_frame_locals_cre_2;
 static PyObject *__pyx_n_s_getitem;
 static PyObject *__pyx_kp_s_got_differing_extents_in_dimensi;
+static PyObject *__pyx_n_s_h264_buffer;
 static PyObject *__pyx_n_s_has_data;
 static PyObject *__pyx_kp_s_home_papr_work_pyndsi_ndsi_sens;
 static PyObject *__pyx_n_s_host_name;
@@ -7376,7 +7379,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
  *                 out_size = self.decoder.get_output_bytes()
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)             # <<<<<<<<<<<<<<
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
- *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
  */
     __pyx_t_2 = __Pyx_GetModuleGlobalName(__pyx_n_s_np); if (unlikely(!__pyx_t_2)) __PYX_ERR(0, 181, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_2);
@@ -7415,7 +7418,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
  *                 out_size = self.decoder.get_output_bytes()
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)             # <<<<<<<<<<<<<<
- *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
  *                 frame.attach_tj_context(self.tj_context)
  */
     if (unlikely(!__pyx_cur_scope->__pyx_v_self)) { __Pyx_RaiseClosureNameError("self"); __PYX_ERR(0, 182, __pyx_L1_error) }
@@ -7434,7 +7437,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
     /* "ndsi/sensor.pyx":183
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
- *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)             # <<<<<<<<<<<<<<
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)             # <<<<<<<<<<<<<<
  *                 frame.attach_tj_context(self.tj_context)
  *             return frame
  */
@@ -7457,6 +7460,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
     __Pyx_GOTREF(__pyx_t_7);
     if (PyDict_SetItem(__pyx_t_9, __pyx_n_s_yuv_buffer, __pyx_t_7) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_DECREF(__pyx_t_7); __pyx_t_7 = 0;
+    if (PyDict_SetItem(__pyx_t_9, __pyx_n_s_h264_buffer, __pyx_v_buffer_) < 0) __PYX_ERR(0, 183, __pyx_L1_error)
     __pyx_t_7 = __Pyx_PyObject_Call(((PyObject *)__pyx_ptype_4ndsi_5frame_H264Frame), __pyx_t_2, __pyx_t_9); if (unlikely(!__pyx_t_7)) __PYX_ERR(0, 183, __pyx_L1_error)
     __Pyx_GOTREF(__pyx_t_7);
     __Pyx_DECREF(__pyx_t_2); __pyx_t_2 = 0;
@@ -7466,7 +7470,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
 
     /* "ndsi/sensor.pyx":184
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
- *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
  *                 frame.attach_tj_context(self.tj_context)             # <<<<<<<<<<<<<<
  *             return frame
  * 
@@ -7486,7 +7490,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_21get_newest_data_frame_2create_
   }
 
   /* "ndsi/sensor.pyx":185
- *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
  *                 frame.attach_tj_context(self.tj_context)
  *             return frame             # <<<<<<<<<<<<<<
  * 
@@ -24979,6 +24983,7 @@ static __Pyx_StringTabEntry __pyx_string_tab[] = {
   {&__pyx_n_s_get_newest_data_frame_locals_cre_2, __pyx_k_get_newest_data_frame_locals_cre_2, sizeof(__pyx_k_get_newest_data_frame_locals_cre_2), 0, 0, 1, 1},
   {&__pyx_n_s_getitem, __pyx_k_getitem, sizeof(__pyx_k_getitem), 0, 0, 1, 1},
   {&__pyx_kp_s_got_differing_extents_in_dimensi, __pyx_k_got_differing_extents_in_dimensi, sizeof(__pyx_k_got_differing_extents_in_dimensi), 0, 0, 1, 0},
+  {&__pyx_n_s_h264_buffer, __pyx_k_h264_buffer, sizeof(__pyx_k_h264_buffer), 0, 0, 1, 1},
   {&__pyx_n_s_has_data, __pyx_k_has_data, sizeof(__pyx_k_has_data), 0, 0, 1, 1},
   {&__pyx_kp_s_home_papr_work_pyndsi_ndsi_sens, __pyx_k_home_papr_work_pyndsi_ndsi_sens, sizeof(__pyx_k_home_papr_work_pyndsi_ndsi_sens), 0, 0, 1, 0},
   {&__pyx_n_s_host_name, __pyx_k_host_name, sizeof(__pyx_k_host_name), 0, 0, 1, 1},
@@ -25149,7 +25154,7 @@ static int __Pyx_InitCachedConstants(void) {
   /* "ndsi/sensor.pyx":183
  *                 out_buffer = np.empty(out_size, dtype=np.uint8)
  *                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
- *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer)             # <<<<<<<<<<<<<<
+ *                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)             # <<<<<<<<<<<<<<
  *                 frame.attach_tj_context(self.tj_context)
  *             return frame
  */
