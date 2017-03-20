@@ -18,19 +18,14 @@
 
 #include <string>
 
-#include "utilsbase.h"
+#include "utilbase.h"
+#include "h264_utils.h"
+#include "ffmpeg_utils.h"
 
 #include "h264_decoder.h"
 
 namespace serenegiant {
 namespace media {
-
-static std::string av_error(const int errnum) {
-	char errbuf[AV_ERROR_MAX_STRING_SIZE + 1];
-	av_strerror(errnum, errbuf, AV_ERROR_MAX_STRING_SIZE);
-	errbuf[AV_ERROR_MAX_STRING_SIZE] = '\0';
-	return std::string(errbuf);
-}
 
 /*public*/
 H264Decoder::H264Decoder(const color_format_t &_color_format)
@@ -184,12 +179,8 @@ ret:
 			LOGD("got frame");
 			frame_ready = true;
 		}
-		else
-			LOGD("A");
 		result = 0;
 	}
-	else
-		LOGD("B");
 #endif
 	RETURN(result, int);
 }
@@ -236,7 +227,7 @@ int H264Decoder::get_output_buffer(uint8_t *result_buf, const size_t &capacity, 
 		}
 		frame_ready = false;
 #if USE_NEW_AVCODEC_API
-		result_pts = src->pts; // this sometimes does not work an return AV_NOPTS_VALUE, use received one instead
+		result_pts = src->pts; // this is always AV_NOPTS_VALUE
 #else
 		result_pts = src->pkt_pts;
 #endif
