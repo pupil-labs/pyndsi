@@ -7,7 +7,10 @@
             "/opt/libjpeg-turbo/include/turbojpeg.h",
             "/usr/lib/python3/dist-packages/numpy/core/include/numpy/arrayobject.h",
             "/usr/lib/python3/dist-packages/numpy/core/include/numpy/ufuncobject.h",
-            "ndsi/h264/h264_decoder.h"
+            "ndsi/h264/h264_decoder.h",
+            "ndsi/h264/media_stream.h",
+            "ndsi/h264/mp4_writer.h",
+            "ndsi/h264/video_stream.h"
         ],
         "extra_objects": [
             "/opt/libjpeg-turbo/lib64/libturbojpeg.a"
@@ -477,7 +480,17 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include <stdlib.h>
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include <string>
+#include "ios"
+#include "new"
+#include "stdexcept"
+#include "typeinfo"
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
 #include "h264/h264_decoder.h"
+#include "h264/media_stream.h"
+#include "h264/video_stream.h"
+#include "h264/mp4_writer.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif /* _OPENMP */
@@ -954,8 +967,8 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
  */
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 
-/* "sensor.pxd":32
- *         int get_output_buffer(np.uint8_t *buf, const size_t &capacity, np.int64_t &result_pts)
+/* "sensor.pxd":16
+ * include 'h264.pxi'
  * 
  * cdef class Sensor(object):             # <<<<<<<<<<<<<<
  * 
@@ -1526,6 +1539,8 @@ static PyTypeObject *__pyx_ptype_5numpy_broadcast = 0;
 static PyTypeObject *__pyx_ptype_5numpy_ndarray = 0;
 static PyTypeObject *__pyx_ptype_5numpy_ufunc = 0;
 static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, char *, char *, int *); /*proto*/
+
+/* Module declarations from 'libcpp.string' */
 
 /* Module declarations from 'ndsi.sensor' */
 static PyTypeObject *__pyx_ptype_4ndsi_6sensor_Sensor = 0;
@@ -8669,7 +8684,7 @@ PyMODINIT_FUNC PyInit_network(void)
   __pyx_ptype_5numpy_broadcast = __Pyx_ImportType("numpy", "broadcast", sizeof(PyArrayMultiIterObject), 0); if (unlikely(!__pyx_ptype_5numpy_broadcast)) __PYX_ERR(1, 172, __pyx_L1_error)
   __pyx_ptype_5numpy_ndarray = __Pyx_ImportType("numpy", "ndarray", sizeof(PyArrayObject), 0); if (unlikely(!__pyx_ptype_5numpy_ndarray)) __PYX_ERR(1, 181, __pyx_L1_error)
   __pyx_ptype_5numpy_ufunc = __Pyx_ImportType("numpy", "ufunc", sizeof(PyUFuncObject), 0); if (unlikely(!__pyx_ptype_5numpy_ufunc)) __PYX_ERR(1, 861, __pyx_L1_error)
-  __pyx_ptype_4ndsi_6sensor_Sensor = __Pyx_ImportType("ndsi.sensor", "Sensor", sizeof(struct __pyx_obj_4ndsi_6sensor_Sensor), 1); if (unlikely(!__pyx_ptype_4ndsi_6sensor_Sensor)) __PYX_ERR(3, 32, __pyx_L1_error)
+  __pyx_ptype_4ndsi_6sensor_Sensor = __Pyx_ImportType("ndsi.sensor", "Sensor", sizeof(struct __pyx_obj_4ndsi_6sensor_Sensor), 1); if (unlikely(!__pyx_ptype_4ndsi_6sensor_Sensor)) __PYX_ERR(3, 16, __pyx_L1_error)
   /*--- Variable import code ---*/
   /*--- Function import code ---*/
   /*--- Execution code ---*/

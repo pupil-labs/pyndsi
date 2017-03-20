@@ -7,7 +7,16 @@
             "/opt/libjpeg-turbo/include/turbojpeg.h",
             "/usr/lib/python3/dist-packages/numpy/core/include/numpy/arrayobject.h",
             "/usr/lib/python3/dist-packages/numpy/core/include/numpy/ufuncobject.h",
-            "ndsi/h264/h264_decoder.h"
+            "ndsi/h264/h264_decoder.h",
+            "ndsi/h264/media_stream.h",
+            "ndsi/h264/mp4_writer.h",
+            "ndsi/h264/video_stream.h"
+        ],
+        "extra_compile_args": [
+            "-std=c++11"
+        ],
+        "extra_link_args": [
+            "-std=c++11"
         ],
         "extra_objects": [
             "/opt/libjpeg-turbo/lib64/libturbojpeg.a"
@@ -477,7 +486,17 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include <stdlib.h>
 #include "numpy/arrayobject.h"
 #include "numpy/ufuncobject.h"
+#include <string>
+#include "ios"
+#include "new"
+#include "stdexcept"
+#include "typeinfo"
+#include <libavformat/avformat.h>
+#include <libavcodec/avcodec.h>
 #include "h264/h264_decoder.h"
+#include "h264/media_stream.h"
+#include "h264/video_stream.h"
+#include "h264/mp4_writer.h"
 #include "pythread.h"
 #include "pystate.h"
 #ifdef _OPENMP
@@ -1109,8 +1128,8 @@ struct __pyx_obj_4ndsi_5frame_H264Frame {
 };
 
 
-/* "ndsi/sensor.pxd":32
- *         int get_output_buffer(np.uint8_t *buf, const size_t &capacity, np.int64_t &result_pts)
+/* "ndsi/sensor.pxd":16
+ * include 'h264.pxi'
  * 
  * cdef class Sensor(object):             # <<<<<<<<<<<<<<
  * 
@@ -2132,6 +2151,8 @@ static PyTypeObject *__pyx_ptype_5numpy_broadcast = 0;
 static PyTypeObject *__pyx_ptype_5numpy_ndarray = 0;
 static PyTypeObject *__pyx_ptype_5numpy_ufunc = 0;
 static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, char *, char *, int *); /*proto*/
+
+/* Module declarations from 'libcpp.string' */
 
 /* Module declarations from 'ndsi.frame' */
 static PyTypeObject *__pyx_ptype_4ndsi_5frame_JPEGFrame = 0;
@@ -9196,7 +9217,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_26set_control_value(struct __pyx
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":41
+/* "ndsi/sensor.pxd":25
  *     cdef object _recent_frame
  *     cdef turbojpeg.tjhandle tj_context
  *     cdef readonly object notify_sub             # <<<<<<<<<<<<<<
@@ -9233,7 +9254,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_10notify_sub___get__(struct __py
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":42
+/* "ndsi/sensor.pxd":26
  *     cdef turbojpeg.tjhandle tj_context
  *     cdef readonly object notify_sub
  *     cdef readonly object data_sub             # <<<<<<<<<<<<<<
@@ -9270,7 +9291,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_8data_sub___get__(struct __pyx_o
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":44
+/* "ndsi/sensor.pxd":28
  *     cdef readonly object data_sub
  * 
  *     cdef readonly unicode host_uuid             # <<<<<<<<<<<<<<
@@ -9307,7 +9328,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_9host_uuid___get__(struct __pyx_
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":45
+/* "ndsi/sensor.pxd":29
  * 
  *     cdef readonly unicode host_uuid
  *     cdef readonly unicode host_name             # <<<<<<<<<<<<<<
@@ -9344,7 +9365,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_9host_name___get__(struct __pyx_
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":46
+/* "ndsi/sensor.pxd":30
  *     cdef readonly unicode host_uuid
  *     cdef readonly unicode host_name
  *     cdef readonly unicode name             # <<<<<<<<<<<<<<
@@ -9381,7 +9402,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_4name___get__(struct __pyx_obj_4
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":47
+/* "ndsi/sensor.pxd":31
  *     cdef readonly unicode host_name
  *     cdef readonly unicode name
  *     cdef readonly unicode uuid             # <<<<<<<<<<<<<<
@@ -9418,7 +9439,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_4uuid___get__(struct __pyx_obj_4
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":48
+/* "ndsi/sensor.pxd":32
  *     cdef readonly unicode name
  *     cdef readonly unicode uuid
  *     cdef readonly unicode type             # <<<<<<<<<<<<<<
@@ -9455,7 +9476,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_4type___get__(struct __pyx_obj_4
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":49
+/* "ndsi/sensor.pxd":33
  *     cdef readonly unicode uuid
  *     cdef readonly unicode type
  *     cdef readonly unicode notify_endpoint             # <<<<<<<<<<<<<<
@@ -9492,7 +9513,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_15notify_endpoint___get__(struct
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":50
+/* "ndsi/sensor.pxd":34
  *     cdef readonly unicode type
  *     cdef readonly unicode notify_endpoint
  *     cdef readonly unicode command_endpoint             # <<<<<<<<<<<<<<
@@ -9529,7 +9550,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_16command_endpoint___get__(struc
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":51
+/* "ndsi/sensor.pxd":35
  *     cdef readonly unicode notify_endpoint
  *     cdef readonly unicode command_endpoint
  *     cdef readonly unicode data_endpoint             # <<<<<<<<<<<<<<
@@ -9566,7 +9587,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_13data_endpoint___get__(struct _
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":52
+/* "ndsi/sensor.pxd":36
  *     cdef readonly unicode command_endpoint
  *     cdef readonly unicode data_endpoint
  *     cdef readonly object unlink             # <<<<<<<<<<<<<<
@@ -9592,7 +9613,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_6unlink___get__(struct __pyx_obj
   PyObject *__pyx_t_1 = NULL;
   __Pyx_RefNannySetupContext("__get__", 0);
   __Pyx_XDECREF(__pyx_r);
-  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_unlink); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 52, __pyx_L1_error)
+  __pyx_t_1 = __Pyx_PyObject_GetAttrStr(((PyObject *)__pyx_v_self), __pyx_n_s_unlink); if (unlikely(!__pyx_t_1)) __PYX_ERR(1, 36, __pyx_L1_error)
   __Pyx_GOTREF(__pyx_t_1);
   __pyx_r = __pyx_t_1;
   __pyx_t_1 = 0;
@@ -9609,7 +9630,7 @@ static PyObject *__pyx_pf_4ndsi_6sensor_6Sensor_6unlink___get__(struct __pyx_obj
   return __pyx_r;
 }
 
-/* "ndsi/sensor.pxd":53
+/* "ndsi/sensor.pxd":37
  *     cdef readonly unicode data_endpoint
  *     cdef readonly object unlink
  *     cdef readonly dict controls             # <<<<<<<<<<<<<<
