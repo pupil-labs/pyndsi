@@ -6,7 +6,7 @@
  */
 
 #ifndef H264_DECODER_H_
-#define H264_DECODER_H_	int input(uint8_t *nal_units, const size_t bytes, const long presentation_time_us);
+#define H264_DECODER_H_
 
 #define USE_NEW_AVCODEC_API 1
 
@@ -47,6 +47,7 @@ public:
 	H264Decoder(const color_format_t &color_format = COLOR_FORMAT_YUV422);
 	virtual ~H264Decoder();
 
+	inline struct AVCodecContext *get_context() { return codec_context; };
 	inline const bool is_initialized() const { return codec_context != NULL; };
 	inline const bool is_frame_ready() const { return frame_ready; };
 	inline const int width() { return codec_context ? codec_context->width : 0; };

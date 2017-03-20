@@ -1,22 +1,17 @@
 /*
- * sensor_uvc.h
+ * h264_utils.h
  *
- *  Created on: 2017/02/17
+ *  Created on: 2017/03/09
  *      Author: saki
  */
 
-#ifndef SENSOR_UVC_H_
-#define SENSOR_UVC_H_
+#ifndef MEDIA_H264_UTILS_H_
+#define MEDIA_H264_UTILS_H_
 
-#include <vector>
-#include <iostream>
-#include <fstream>
-
-#include "sensor.h"
-#include "h264_decoder.h"
+#include <stdint.h>
 
 namespace serenegiant {
-namespace sensor {
+namespace media {
 
 typedef enum nal_unit_type {
 	NAL_UNIT_UNSPECIFIED = 0,
@@ -53,37 +48,20 @@ typedef enum nal_unit_type {
 	NAL_UNIT_UNSPECIFIED_31 = 31,
 } nal_unit_type_t;
 
-class UVCSensor: public virtual Sensor {
-private:
-	media::H264Decoder *h264;
-	std::vector<uint8_t> h264_output;
-	uint32_t h264_width, h264_height;
-	bool need_wait_iframe;
-	uint32_t last_sequence;
-	std::ofstream ofs;
-	uint32_t received_frames;
-	uint32_t error_frames;
-	uint32_t skipped_frames;
-	size_t received_bytes;
-	nsecs_t start_time;
-protected:
-	virtual int handle_notify_update(const std::string &identity, const std::string &payload);
-	virtual int handle_frame_data(const std::string &identity,
-		const publish_header_t &header, const size_t &size, const uint8_t *data);
-	int handle_frame_data_mjpeg(const uint32_t &width, const uint32_t &height,
-		const size_t &size, const uint8_t *data, const int64_t &presentation_time_us);
-	int handle_frame_data_h264(const uint32_t &width, const uint32_t &height,
-		const size_t &size, const uint8_t *data, const int64_t &presentation_time_us);
-	int handle_frame_data_vp8(const uint32_t &width, const uint32_t &height,
-		const size_t &size, const uint8_t *data, const int64_t &presentation_time_us);
-	const bool is_iframe(const size_t &size, const uint8_t *data);
-public:
-	UVCSensor(const char *uuid, const char *name);
-	virtual ~UVCSensor();
-	virtual int start(const char *command, const char *notify, const char *data);
-};
+int find_annexb(const uint8_t *data, const size_t &len, const uint8_t **payload);
+nal_unit_type_t get_first_nal_type_annexb(const uint8_t *data, const size_t &len);
+/**
+ * get vop type of first nal unit
+ * @return negative: err, 0: I-frame, 1: P-frame, 2: B-frame, 3: S-frame
+ */
+int get_first_vop_type_annexb(const uint8_t *data, const size_t &size);
+/**
+ * @return negative: err, 0: I-frame, 1: P-frame, 2: B-frame, 3: S-frame
+ */
+int get_vop_type_annexb(const uint8_t *data, const size_t &size);
+const bool is_iframe(const uint8_t *data, const size_t &size);
 
-} /* namespace sensor */
-} /* namespace serenegiant */
+}	// namespace media
+}	// namespace serenegiant
 
-#endif /* SENSOR_UVC_H_ */
+#endif /* MEDIA_H264_UTILS_H_ */
