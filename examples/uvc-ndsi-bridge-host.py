@@ -1,5 +1,14 @@
-import logging, zmq, sys, os, json, socket, struct, time
-from uuid import uuid4
+import logging
+import zmq
+import json
+import socket
+import struct
+import time
+
+from pyre import Pyre, PyreEvent
+import uvc
+import hashlib
+
 logging.basicConfig(
     format='%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s',
     datefmt='%H:%M:%S',
@@ -9,14 +18,12 @@ logger = logging.getLogger(__name__)
 logging.getLogger('pyre').setLevel(logging.WARNING)
 logging.getLogger('uvc').setLevel(logging.WARNING)
 
-from pyre import Pyre, zhelper, PyreEvent
-import uvc
-import hashlib
-
 sequence_limit = 2**32-1
+
 
 def has_data(socket):
     return socket.get(zmq.EVENTS) & zmq.POLLIN
+
 
 class Bridge(object):
     """docstring for Bridge"""
@@ -28,24 +35,24 @@ class Bridge(object):
 
         # init capture
         self.cap = uvc.Capture(uvc_id)
-        logger.info('Initialised uvc device %s'%self.cap.name)
+        logger.info('Initialised uvc device {}'.format(self.cap.name))
 
         # init pyre
         self.network = Pyre(socket.gethostname()+self.cap.name[-4:])
         self.network.start()
-        logger.info('Bridging under "%s"'%self.network.name())
+        logger.info('Bridging under "{}"'.format(self.network.name()))
 
         # init sensor sockets
         ctx = zmq.Context()
         generic_url = 'tcp://*:*'
-        public_ep   = self.network.endpoint()
-        self.note, self.note_url = self.bind(ctx, zmq.PUB , generic_url, public_ep)
-        self.data, self.data_url = self.bind(ctx, zmq.PUB , generic_url, public_ep,set_hwm=1)
-        self.cmd , self.cmd_url  = self.bind(ctx, zmq.PULL, generic_url, public_ep)
+        public_ep = self.network.endpoint()
+        self.note, self.note_url = self.bind(ctx, zmq.PUB, generic_url, public_ep)
+        self.data, self.data_url = self.bind(ctx, zmq.PUB, generic_url, public_ep, set_hwm=1)
+        self.cmd, self.cmd_url = self.bind(ctx, zmq.PULL, generic_url, public_ep)
 
     def loop(self):
         logger.info('Entering bridging loop...')
-        self.network.shout('pupil-mobile', self.sensor_attach_json())
+        self.network.shout('pupil-mobile', self.sensor_attach_json().encode())
         try:
             while True:
                 self.poll_network()
@@ -59,9 +66,9 @@ class Bridge(object):
             traceback.print_exc()
         finally:
             self.network.shout('pupil-mobile', json.dumps({
-                'subject'   : 'detach',
+                'subject': 'detach',
                 'sensor_uuid': self.network.uuid().hex
-            }))
+            }).encode())
             logger.info('Leaving bridging loop...')
 
     def publish_frame(self):
@@ -75,13 +82,13 @@ class Bridge(object):
         m = hashlib.md5(jpeg_buffer)
         lower_end = int(m.hexdigest(), 16) % 0x100000000
         meta_data = struct.pack('<LLLLQLL', 0x10, frame.width, frame.height, index, now, jpeg_buffer.size, lower_end)
-        self.data.send_multipart([self.network.uuid().hex, meta_data, jpeg_buffer])
+        self.data.send_multipart([self.network.uuid().hex.encode(), meta_data, jpeg_buffer])
 
     def poll_network(self):
         while has_data(self.network.socket()):
             event = PyreEvent(self.network)
             if event.type == 'JOIN' and event.group == 'pupil-mobile':
-                self.network.whisper(event.peer_uuid, self.sensor_attach_json())
+                self.network.whisper(event.peer_uuid, self.sensor_attach_json().encode())
 
     def poll_cmd_socket(self):
         while has_data(self.cmd):
@@ -89,9 +96,9 @@ class Bridge(object):
             try:
                 cmd = json.loads(cmd_str)
             except Exception as e:
-                logger.debug('Could not parse received cmd: %s'%cmd_str)
+                logger.debug('Could not parse received cmd: {}'.format(cmd_str))
             else:
-                logger.debug('Received cmd: %s'%cmd)
+                logger.debug('Received cmd: {}'.format(cmd))
                 if cmd.get('action') == 'refresh_controls':
                     self.publish_controls()
                 elif cmd.get('action') == 'set_control_value':
@@ -102,7 +109,6 @@ class Bridge(object):
                         self.cap.frame_size = self.cap.frame_sizes[val]
                     self.publish_controls()
 
-
     def __del__(self):
         self.note.close()
         self.data.close()
@@ -111,21 +117,21 @@ class Bridge(object):
 
     def publish_controls(self):
         self.note.send_multipart([
-            self.network.uuid().hex,
-            self.frame_size_control_json()])
+            self.network.uuid().hex.encode(),
+            self.frame_size_control_json().encode()])
         self.note.send_multipart([
-            self.network.uuid().hex,
-            self.frame_rate_control_json()])
+            self.network.uuid().hex.encode(),
+            self.frame_rate_control_json().encode()])
 
     def sensor_attach_json(self):
         sensor = {
-            "subject"         : "attach",
-            "sensor_name"     : self.cap.name,
-            "sensor_uuid"     : self.network.uuid().hex,
-            "sensor_type"     : 'video',
-            "notify_endpoint" : self.note_url,
+            "subject": "attach",
+            "sensor_name": self.cap.name,
+            "sensor_uuid": self.network.uuid().hex,
+            "sensor_type": 'video',
+            "notify_endpoint": self.note_url,
             "command_endpoint": self.cmd_url,
-            "data_endpoint"   : self.data_url
+            "data_endpoint": self.data_url
         }
         return json.dumps(sensor)
 
@@ -135,22 +141,22 @@ class Bridge(object):
         self.note_seq %= sequence_limit
         curr_fs = self.cap.frame_sizes.index(self.cap.frame_size)
         return json.dumps({
-            "subject"         : "update",
-            "control_id"      : "CAM_RES",
-            "seq"             : index,
-            "changes"         : {
-                "value"           : curr_fs,
-                "dtype"           : 'intmapping',
-                "min"             : None,
-                "max"             : None,
-                "res"             : None,
-                "def"             : 0,
-                "caption"         : 'Resolution',
-                "readonly"        : False,
-                "map"             : [{
-                    'value'  : idx,
-                    'caption': '%ix%i'%fs
-                } for idx,fs in enumerate(self.cap.frame_sizes)]
+            "subject": "update",
+            "control_id": "CAM_RES",
+            "seq": index,
+            "changes": {
+                "value": curr_fs,
+                "dtype": 'intmapping',
+                "min": None,
+                "max": None,
+                "res": None,
+                "def": 0,
+                "caption": 'Resolution',
+                "readonly": False,
+                "map": [{
+                    'value': idx,
+                    'caption': '{:i}x{:i}'.format(*fs)
+                } for idx, fs in enumerate(self.cap.frame_sizes)]
             }
         })
 
@@ -160,41 +166,43 @@ class Bridge(object):
         self.note_seq %= sequence_limit
         curr_fr = self.cap.frame_rates.index(self.cap.frame_rate)
         return json.dumps({
-            "subject"         : "update",
-            "control_id"      : "CAM_RATE",
-            "seq"             : index,
-            "changes"         : {
-                "value"           : curr_fr,
-                "dtype"           : 'intmapping',
-                "min"             : None,
-                "max"             : None,
-                "res"             : None,
-                "def"             : 0,
-                "caption"         : 'Frame Rate',
-                "readonly"        : False,
-                "map"             : [{
-                    'value'  : idx,
-                    'caption': '%.1f Hz'%fr
-                } for idx,fr in enumerate(self.cap.frame_rates)]
+            "subject": "update",
+            "control_id": "CAM_RATE",
+            "seq": index,
+            "changes": {
+                "value": curr_fr,
+                "dtype": 'intmapping',
+                "min": None,
+                "max": None,
+                "res": None,
+                "def": 0,
+                "caption": 'Frame Rate',
+                "readonly": False,
+                "map": [{
+                    'value': idx,
+                    'caption': '{:.1f} Hz'.format(fr)
+                } for idx, fr in enumerate(self.cap.frame_rates)]
             }
         })
 
     def bind(self, ctx, sock_type, url, public_ep, set_hwm=None):
         sock = ctx.socket(sock_type)
-        if set_hwm: sock.set_hwm(set_hwm)
+        if set_hwm:
+            sock.set_hwm(set_hwm)
         sock.bind(url)
-        ep = sock.last_endpoint
+        ep = sock.last_endpoint.decode()
         port = ep.split(':')[-1]
         public_ep.split(':')[-1]
         public_addr = public_ep.split(':')[:-1]
         return sock, ':'.join(public_addr+[port])
 
+
 if __name__ == '__main__':
     uuid = None
-    dev_list =  uvc.Device_List()
+    dev_list = uvc.Device_List()
     for dev in dev_list:
         uuid = dev['uid']
         if uvc.is_accessible(uuid):
             break
-
-    if uuid: Bridge(uuid).loop()
+    if uuid:
+        Bridge(uuid).loop()
