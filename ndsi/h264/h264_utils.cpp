@@ -75,6 +75,7 @@ int get_first_vop_type_annexb(const uint8_t *data, const size_t &size) {
 	ENTER();
 
 	int result = -1;
+
 	if (LIKELY(size > 3)) {
 		const uint8_t *payload = NULL;
 		const int r = find_annexb(data, size, &payload);

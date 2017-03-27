@@ -10,6 +10,7 @@
 
 NDS_PROTOCOL_VERSION = '0.2.16'
 
+
 class CaptureError(Exception):
     def __init__(self, message):
         super(CaptureError, self).__init__()
@@ -23,5 +24,6 @@ class StreamError(CaptureError):
 
 from .network import Network
 from .sensor import Sensor
+from .writer import H264Writer
 
 from . import frame

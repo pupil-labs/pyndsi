@@ -17,7 +17,6 @@
 #endif
 
 #include "utilbase.h"
-#include "app_const.h"
 
 extern "C" {
 	#include <libavformat/avformat.h>
@@ -29,11 +28,27 @@ extern "C" {
 namespace serenegiant {
 namespace media {
 
-VideoStream::VideoStream(const AVCodecContext *_codec_context,
+AVCodecContext *default_codec() {
+	avcodec_register_all();
+	struct AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+	return avcodec_alloc_context3(codec);
+}
+
+VideoStream::VideoStream(const uint32_t &_width, const uint32_t &_height, const int &_fps)
+:	VideoStream(default_codec(), _width, _height, _fps) {
+
+	ENTER();
+
+	own_context = true;
+
+	EXIT();
+}
+
+VideoStream::VideoStream(AVCodecContext *_codec_context,
 	const uint32_t &_width, const uint32_t &_height, const int &_fps)
 :	MediaStream(),
 	codec_context(_codec_context),
-	width(_width), height(_height), fps(_fps) {
+	width(_width), height(_height), fps(_fps), own_context(false) {
 
 	ENTER();
 
@@ -43,6 +58,9 @@ VideoStream::VideoStream(const AVCodecContext *_codec_context,
 VideoStream::~VideoStream() {
 
 	ENTER();
+
+	if (own_context)
+		avcodec_free_context(&codec_context);
 
 	EXIT();
 }
@@ -62,6 +80,7 @@ int VideoStream::init_stream(AVFormatContext *format_context,
 	params->codec_type = AVMEDIA_TYPE_VIDEO;
 	params->width = width;
 	params->height = height;
+	params->format = AV_PIX_FMT_YUV420P;
 	if (!params->extradata_size && !params->extradata) {
 		const size_t sz = params->extradata_size = codec_context->extradata_size;
 		uint8_t *extradata = NULL;

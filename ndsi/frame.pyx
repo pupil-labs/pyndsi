@@ -9,6 +9,7 @@
 '''
 
 from libc.string cimport memset
+from .h264 cimport get_vop_type_annexb
 cimport cturbojpeg as turbojpeg
 cimport numpy as np
 import numpy as np
@@ -310,6 +311,10 @@ cdef class H264Frame(object):
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
         self.tj_context = ctx
+
+    property is_iframe:
+        def __get__(self):
+            return (0 == get_vop_type_annexb(&self._h264_buffer[0], len(self._h264_buffer)))
 
     property width:
         def __get__(self):

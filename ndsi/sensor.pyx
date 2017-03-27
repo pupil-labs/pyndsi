@@ -8,12 +8,10 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-import faulthandler
-faulthandler.enable(all_threads=False)
-
 cimport cturbojpeg as turbojpeg
 
-import struct
+# importing `struct` module name-clashes with cython struct keyword
+import struct as py_struct
 import json as serial
 import traceback as tb
 import numpy as np
@@ -37,7 +35,7 @@ class NotDataSubSupportedError(Exception):
 cdef class Sensor(object):
 
     def __cinit__(self, *args, **kwargs):
-        pass
+        self.decoder = new H264Decoder(COLOR_FORMAT_YUV422)
 
     def __init__(self,
             host_uuid,
@@ -63,6 +61,7 @@ cdef class Sensor(object):
         self.data_endpoint = data_endpoint
         self.controls = {}
         self._recent_frame = None
+        self._waiting_for_iframe = True
 
         self.notify_sub = context.socket(zmq.SUB)
         self.notify_sub.connect(self.notify_endpoint)
@@ -187,7 +186,7 @@ cdef class Sensor(object):
         if self.data_sub.poll(timeout=timeout):
             while self.has_data:
                 data_msg = self.get_data(copy=True)
-                meta_data = struct.unpack("<LLLLQLL", data_msg[1])
+                meta_data = py_struct.unpack("<LLLLQLL", data_msg[1])
                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
                     return create_jpeg_frame(data_msg[2], meta_data)
                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:

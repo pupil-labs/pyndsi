@@ -17,7 +17,7 @@
 #endif
 
 #include "utilbase.h"
-#include "app_const.h"
+#include "h264_utils.h"
 #include "ffmpeg_utils.h"
 
 #include "media_stream.h"

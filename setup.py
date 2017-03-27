@@ -17,6 +17,7 @@ import glob
 
 libs = []
 library_dirs = []
+include_dirs = []
 extra_link_args = []
 extra_objects = []
 if platform.system() == 'Darwin':
@@ -24,52 +25,58 @@ if platform.system() == 'Darwin':
         tj_lib = glob.glob('/usr/local/opt/jpeg-turbo/lib/libturbojpeg.dylib')[0]
     except IndexError:
         raise Exception("Please install libturbojpeg")
-    include_dirs = ['/usr/local/opt/jpeg-turbo/include/']
+    include_dirs += ['/usr/local/opt/jpeg-turbo/include/']
     libs += ['turbojpeg']
     library_dirs += ['/usr/local/opt/jpeg-turbo/lib/']
 elif platform.system() == 'Linux':
-    try:
-        # check for tubo jpeg offical lib and select appropriate lib32/lib64 path.
-        tj_lib = glob.glob('/opt/libjpeg-turbo/lib*')[0]+'/libturbojpeg.a'
-    except IndexError:
-        raise Exception("Please install libturbojpeg")
-    libs = ['rt']
-    extra_link_args = []  # ['-Wl,-R/usr/local/lib/']
-    include_dirs = ['/opt/libjpeg-turbo/include']
-    extra_objects += [tj_lib]
+    libs = ['rt', 'turbojpeg']
+    include_dirs += ['/usr/include/x86_64-linux-gnu']
 elif platform.system() == 'Windows':
     # raise NotImplementedError("please fix me.")
     libs = ['winmm']
     tj_dir = 'C:\\work\\libjpeg-turbo-VC64'
     tj_lib = tj_dir + '\\lib\\turbojpeg.lib'
-    include_dirs = [tj_dir + '\\include']
+    include_dirs += [tj_dir + '\\include']
     extra_objects += [tj_lib]
 
-libs += ['avformat', 'avcodec', 'swscale']
+libs += ['avutil', 'avformat', 'avcodec', 'swscale']
+h264_sources = glob.glob('ndsi/h264/*.cpp')
 
 extensions = [
     Extension(name="ndsi.frame",
-              sources=['ndsi/frame.pyx'],
+              sources=h264_sources+['ndsi/frame.pyx'],
               include_dirs=[numpy.get_include()]+include_dirs,
               library_dirs=library_dirs,
               libraries=libs,
-              extra_link_args=extra_link_args,
+              extra_link_args=extra_link_args+["-std=c++11"],
+              extra_compile_args=["-std=c++11"],
+              extra_objects=extra_objects,
+              language='c++'),
+    Extension(name="ndsi.writer",
+              sources=h264_sources+['ndsi/writer.pyx'],
+              include_dirs=[numpy.get_include()]+include_dirs,
+              library_dirs=library_dirs,
+              libraries=libs,
+              extra_link_args=extra_link_args+["-std=c++11"],
+              extra_compile_args=["-std=c++11"],
               extra_objects=extra_objects,
               language='c++'),
     Extension(name="ndsi.sensor",
-              sources=['ndsi/h264/h264_decoder.cpp', 'ndsi/sensor.pyx'],
+              sources=h264_sources+['ndsi/sensor.pyx'],
               include_dirs=[numpy.get_include()]+include_dirs,
               library_dirs=library_dirs,
               libraries=libs,
-              extra_link_args=extra_link_args,
+              extra_link_args=extra_link_args+["-std=c++11"],
+              extra_compile_args=["-std=c++11"],
               extra_objects=extra_objects,
               language='c++'),
     Extension(name="ndsi.network",
-              sources=['ndsi/network.pyx'],
+              sources=h264_sources+['ndsi/network.pyx'],
               include_dirs=[numpy.get_include()]+include_dirs,
               library_dirs=library_dirs,
               libraries=libs,
-              extra_link_args=extra_link_args,
+              extra_link_args=extra_link_args+["-std=c++11"],
+              extra_compile_args=["-std=c++11"],
               extra_objects=extra_objects,
               language='c++')]
 
