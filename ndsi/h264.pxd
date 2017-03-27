@@ -9,13 +9,17 @@
 '''
 
 from libcpp.string cimport string
+cimport numpy as np
+
+cdef extern from "<libavcodec/avcodec.h>":
+    struct AVCodec:
+        pass
+
+    struct AVCodecContext:
+        pass
 
 cdef extern from "<libavformat/avformat.h>":
     struct AVFormatContext:
-        pass
-
-cdef extern from "<libavcodec/avcodec.h>":
-    struct AVCodecContext:
         pass
 
 
@@ -45,6 +49,11 @@ cdef extern from "h264/h264_decoder.h" namespace "serenegiant::media":
                               const size_t &capacity,
                               np.int64_t &result_pts)
 
+
+cdef extern from "h264/h264_utils.h" namespace "serenegiant::media":
+    int get_vop_type_annexb(const np.uint8_t *data, const size_t &size)
+
+
 cdef extern from "h264/media_stream.h" namespace "serenegiant::media":
     cdef cppclass MediaStream:
         MediaStream()
@@ -55,13 +64,14 @@ cdef extern from "h264/media_stream.h" namespace "serenegiant::media":
                              const size_t &bytes,
                              const np.int64_t &presentation_time_us)
 
+
 cdef extern from "h264/video_stream.h" namespace "serenegiant::media":
     cdef cppclass VideoStream(MediaStream):
 
-        VideoStream(const AVCodecContext *codec_context,
-                    const np.uint32_t &width,
+        VideoStream(const np.uint32_t &width,
                     const np.uint32_t &height,
                     const int &fps)
+
 
 cdef extern from "h264/mp4_writer.h" namespace "serenegiant::media":
     cdef cppclass Mp4Writer:
@@ -74,5 +84,5 @@ cdef extern from "h264/mp4_writer.h" namespace "serenegiant::media":
         const bint isRunning()
         int set_input_buffer(const int &stream_index,
                              const np.uint8_t *nal_units,
-                             const size_t &bytes,
+                             const size_t &bytes_,
                              const np.int64_t &presentation_time_us);

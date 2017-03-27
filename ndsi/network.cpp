@@ -4,24 +4,29 @@
 {
     "distutils": {
         "depends": [
-            "/opt/libjpeg-turbo/include/turbojpeg.h",
             "/usr/lib/python3/dist-packages/numpy/core/include/numpy/arrayobject.h",
             "/usr/lib/python3/dist-packages/numpy/core/include/numpy/ufuncobject.h",
             "ndsi/h264/h264_decoder.h",
+            "ndsi/h264/h264_utils.h",
             "ndsi/h264/media_stream.h",
             "ndsi/h264/mp4_writer.h",
             "ndsi/h264/video_stream.h"
         ],
-        "extra_objects": [
-            "/opt/libjpeg-turbo/lib64/libturbojpeg.a"
+        "extra_compile_args": [
+            "-std=c++11"
+        ],
+        "extra_link_args": [
+            "-std=c++11"
         ],
         "include_dirs": [
             "/usr/lib/python3/dist-packages/numpy/core/include",
-            "/opt/libjpeg-turbo/include"
+            "/usr/include/x86_64-linux-gnu"
         ],
         "language": "c++",
         "libraries": [
             "rt",
+            "turbojpeg",
+            "avutil",
             "avformat",
             "avcodec",
             "swscale"
@@ -485,9 +490,10 @@ static CYTHON_INLINE float __PYX_NAN() {
 #include "new"
 #include "stdexcept"
 #include "typeinfo"
-#include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
 #include "h264/h264_decoder.h"
+#include "h264/h264_utils.h"
 #include "h264/media_stream.h"
 #include "h264/video_stream.h"
 #include "h264/mp4_writer.h"
@@ -968,19 +974,20 @@ typedef npy_clongdouble __pyx_t_5numpy_clongdouble_t;
 typedef npy_cdouble __pyx_t_5numpy_complex_t;
 
 /* "sensor.pxd":16
- * include 'h264.pxi'
+ * from .h264 cimport H264Decoder, COLOR_FORMAT_YUV422
  * 
  * cdef class Sensor(object):             # <<<<<<<<<<<<<<
  * 
- *     cdef H264Decoder decoder
+ *     cdef H264Decoder *decoder
  */
 struct __pyx_obj_4ndsi_6sensor_Sensor {
   PyObject_HEAD
-  serenegiant::media::H264Decoder decoder;
+  serenegiant::media::H264Decoder *decoder;
   PyObject *callbacks;
   PyObject *context;
   PyObject *command_push;
   PyObject *_recent_frame;
+  int _waiting_for_iframe;
   tjhandle tj_context;
   PyObject *notify_sub;
   PyObject *data_sub;
@@ -1371,9 +1378,6 @@ static void __pyx_insert_code_object(int code_line, PyCodeObject* code_object);
 static void __Pyx_AddTraceback(const char *funcname, int c_line,
                                int py_line, const char *filename);
 
-/* None.proto */
-#include <new>
-
 /* RealImag.proto */
 #if CYTHON_CCOMPLEX
   #ifdef __cplusplus
@@ -1541,6 +1545,10 @@ static PyTypeObject *__pyx_ptype_5numpy_ufunc = 0;
 static CYTHON_INLINE char *__pyx_f_5numpy__util_dtypestring(PyArray_Descr *, char *, char *, int *); /*proto*/
 
 /* Module declarations from 'libcpp.string' */
+
+/* Module declarations from 'libcpp' */
+
+/* Module declarations from 'ndsi.h264' */
 
 /* Module declarations from 'ndsi.sensor' */
 static PyTypeObject *__pyx_ptype_4ndsi_6sensor_Sensor = 0;

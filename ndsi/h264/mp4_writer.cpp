@@ -11,7 +11,7 @@
 	#endif
 	#undef USE_LOGALL
 #else
-//	#define USE_LOGALL
+	#define USE_LOGALL
 	#undef LOG_NDEBUG
 	#undef NDEBUG
 #endif
@@ -51,7 +51,6 @@ Mp4Writer::Mp4Writer(const std::string &_file_name)
 			LOGE("avformat_alloc_output_context2 failed, err=%s", av_error(result).c_str());
 		}
 	}
-
 	if (LIKELY(format_context)) {
 		format = format_context->oformat;
 	} else {
