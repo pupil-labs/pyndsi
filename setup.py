@@ -9,30 +9,25 @@
 '''
 import platform
 import numpy
+import glob
 
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
-import glob
 
 libs = []
 library_dirs = []
 include_dirs = []
 extra_link_args = []
 extra_objects = []
+include_dirs = [numpy.get_include()]
 if platform.system() == 'Darwin':
-    try:
-        tj_lib = glob.glob('/usr/local/opt/jpeg-turbo/lib/libturbojpeg.dylib')[0]
-    except IndexError:
-        raise Exception("Please install libturbojpeg")
     include_dirs += ['/usr/local/opt/jpeg-turbo/include/']
     libs += ['turbojpeg']
     library_dirs += ['/usr/local/opt/jpeg-turbo/lib/']
 elif platform.system() == 'Linux':
     libs = ['rt', 'turbojpeg']
-    include_dirs += ['/usr/include/x86_64-linux-gnu']
 elif platform.system() == 'Windows':
-    # raise NotImplementedError("please fix me.")
     libs = ['winmm']
     tj_dir = 'C:\\work\\libjpeg-turbo-VC64'
     tj_lib = tj_dir + '\\lib\\turbojpeg.lib'
