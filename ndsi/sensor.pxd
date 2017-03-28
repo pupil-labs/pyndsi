@@ -9,12 +9,19 @@
 '''
 
 cimport cturbojpeg as turbojpeg
+cimport numpy as np
+
+from .h264 cimport H264Decoder, COLOR_FORMAT_YUV422
 
 cdef class Sensor(object):
+
+    cdef H264Decoder *decoder
 
     cdef list callbacks
     cdef object context
     cdef object command_push
+    cdef object _recent_frame
+    cdef bint _waiting_for_iframe
     cdef turbojpeg.tjhandle tj_context
     cdef readonly object notify_sub
     cdef readonly object data_sub

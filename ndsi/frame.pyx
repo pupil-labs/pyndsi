@@ -9,6 +9,7 @@
 '''
 
 from libc.string cimport memset
+from .h264 cimport get_vop_type_annexb
 cimport cturbojpeg as turbojpeg
 cimport numpy as np
 import numpy as np
@@ -73,7 +74,8 @@ class InitError(CaptureError):
 def unpack_metadata(packed_metadata):
     return struct.unpack("<LLLLQL", packed_metadata)
 
-cdef class JEPGFrame(object):
+
+cdef class JPEGFrame(object):
     '''
     The Frame Object holds image data and image metadata.
 
@@ -97,7 +99,7 @@ cdef class JEPGFrame(object):
         self._bgr_converted = False
         self.tj_context = NULL
 
-    def __init__(self, data_format, width, height, index, timestamp, data_len, reserved, object zmq_frame, check_hash=False):
+    def __init__(self, data_format, width, height, index, timestamp, data_len, reserved, object zmq_frame):
         #if data_format != VIDEO_FRAME_FORMAT_MJPEG:
         #    raise ValueError('%s does not support format %s'%(self.__class__.__name__, hex(data_format)))
         self._width       = width
@@ -106,16 +108,6 @@ cdef class JEPGFrame(object):
         self._buffer_len  = data_len
         self._raw_data    = zmq_frame
         self.timestamp    = (<double>timestamp)/1000000
-        self.valid_hash   = True
-
-        if check_hash:
-            m = hashlib.md5(zmq_frame)
-            lower_end = int(m.hexdigest(), 16) % 0x100000000
-            self.valid_hash = lower_end == reserved
-
-        if not self.valid_hash:
-            logger.warning('Received corrupted frame')
-
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
         self.tj_context = ctx
@@ -240,7 +232,6 @@ cdef class JEPGFrame(object):
             Y = np.asarray(self._yuv_buffer[:self.width*self.height]).reshape(self.height,self.width)
             return Y
 
-
     property bgr:
         def __get__(self):
             if self._bgr_converted is False:
@@ -251,7 +242,6 @@ cdef class JEPGFrame(object):
             cdef np.ndarray[np.uint8_t, ndim=3] BGR
             BGR = np.asarray(self._bgr_buffer).reshape(self.height,self.width,3)
             return BGR
-
 
     #for legacy reasons.
     property img:
@@ -271,6 +261,9 @@ cdef class JEPGFrame(object):
             logger.error('Turbojpeg yuv2bgr: {}'.format(turbojpeg.tjGetErrorStr()))
         self._bgr_converted = True
 
+    def clear_caches(self):
+        self._bgr_converted = False
+        self._yuv_converted = False
 
     cdef jpeg2yuv(self):
         # 7.55 ms on 1080p
@@ -302,9 +295,86 @@ cdef class JEPGFrame(object):
         self._yuv_converted = True
 
 
+cdef class H264Frame(object):
+    def __cinit__(self,*args,**kwargs):
+        self._bgr_converted = False
+        self.tj_context = NULL
+
+    def __init__(self, data_format, width, height, index, timestamp, data_len, yuv_buffer, h264_buffer):
+        self._width       = width
+        self._height      = height
+        self._index       = index
+        self._buffer_len  = data_len
+        self._yuv_buffer  = yuv_buffer
+        self._h264_buffer = np.fromstring(h264_buffer, dtype=np.uint8)
+        self.timestamp    = (<double>timestamp)/1000000
+
+    cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
+        self.tj_context = ctx
+
+    property is_iframe:
+        def __get__(self):
+            return (0 == get_vop_type_annexb(&self._h264_buffer[0], len(self._h264_buffer)))
+
+    property width:
+        def __get__(self):
+            return self._width
+
+    property height:
+        def __get__(self):
+            return self._height
+
+    property size:
+        def __get__(self):
+            return (self.width, self.height)
+
+    property index:
+        def __get__(self):
+            return self._index
+
+    property yuv_buffer:
+        def __get__(self):
+            return self._yuv_buffer
+
+    property h264_buffer:
+        def __get__(self):
+            return self._h264_buffer
+
+    property gray:
+        def __get__(self):
+            # return gray aka luminace plane of YUV image.
+            cdef np.ndarray[np.uint8_t, ndim=2] Y
+            Y = np.asarray(self._yuv_buffer[:self.width*self.height]).reshape(self.height,self.width)
+            return Y
+
+    property bgr:
+        def __get__(self):
+            if self._bgr_converted is False:
+                self.yuv2bgr()
+            cdef np.ndarray[np.uint8_t, ndim=3] BGR
+            BGR = np.asarray(self._bgr_buffer).reshape(self.height,self.width,3)
+            return BGR
+
+    #for legacy reasons.
+    property img:
+        def __get__(self):
+            return self.bgr
+
+    cdef yuv2bgr(self):
+        #2.75 ms at 1080p
+        cdef int channels = 3
+        cdef int result
+        self._bgr_buffer = np.empty(self.width*self.height*channels, dtype=np.uint8)
+        result = turbojpeg.tjDecodeYUV(
+            self.tj_context, &self._yuv_buffer[0], 4, turbojpeg.TJSAMP_420,
+            &self._bgr_buffer[0], self.width, 0,
+            self.height, turbojpeg.TJPF_BGR, 0)
+        if result == -1:
+            logger.error('Turbojpeg yuv2bgr: {}'.format(turbojpeg.tjGetErrorStr()))
+        self._bgr_converted = True
+
     def clear_caches(self):
         self._bgr_converted = False
-        self._yuv_converted = False
 
 
 cdef inline int interval_to_fps(int interval):

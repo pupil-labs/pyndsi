@@ -8,7 +8,7 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-NDS_PROTOCOL_VERSION = '0.2.14'
+NDS_PROTOCOL_VERSION = '0.2.16'
 
 
 class CaptureError(Exception):
@@ -24,5 +24,6 @@ class StreamError(CaptureError):
 
 from .network import Network
 from .sensor import Sensor
+from .writer import H264Writer
 
 from . import frame

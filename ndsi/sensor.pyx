@@ -10,7 +10,8 @@
 
 cimport cturbojpeg as turbojpeg
 
-import struct
+# importing `struct` module name-clashes with cython struct keyword
+import struct as py_struct
 import json as serial
 import traceback as tb
 import numpy as np
@@ -21,8 +22,8 @@ logger = logging.getLogger(__name__)
 
 from . import StreamError
 
-from .frame cimport JEPGFrame
-from .frame import VIDEO_FRAME_HEADER_FMT, VIDEO_FRAME_FORMAT_MJPEG
+from .frame cimport JPEGFrame, H264Frame
+from .frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
 
 
 class NotDataSubSupportedError(Exception):
@@ -34,7 +35,7 @@ class NotDataSubSupportedError(Exception):
 cdef class Sensor(object):
 
     def __cinit__(self, *args, **kwargs):
-        pass
+        self.decoder = new H264Decoder(COLOR_FORMAT_YUV422)
 
     def __init__(self,
             host_uuid,
@@ -59,6 +60,8 @@ cdef class Sensor(object):
         self.command_endpoint = command_endpoint
         self.data_endpoint = data_endpoint
         self.controls = {}
+        self._recent_frame = None
+        self._waiting_for_iframe = True
 
         self.notify_sub = context.socket(zmq.SUB)
         self.notify_sub.connect(self.notify_endpoint)
@@ -79,11 +82,11 @@ cdef class Sensor(object):
 
     def unlink(self):
         self.notify_sub.unsubscribe(self.uuid)
-        self.notify_sub.close()
-        self.command_push.close()
+        self.notify_sub.close(linger=0)
+        self.command_push.close(linger=0)
         if self.supports_data_subscription:
             self.data_sub.unsubscribe(self.uuid)
-            self.data_sub.close()
+            self.data_sub.close(linger=0)
 
     def __del__(self):
         logger.debug('Sensor deleted: {}'.format(self))
@@ -162,19 +165,36 @@ cdef class Sensor(object):
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
-        # blocks until new frame arrives or times out
-        cdef JEPGFrame frame
-        if self.data_sub.poll(timeout=timeout):
-            #while self.has_data:
-            # skip to newest frame
-            data_msg = self.get_data(copy=True)
-            meta_data = struct.unpack("<LLLLQLL", data_msg[1])
-            if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                frame = JEPGFrame(*meta_data, zmq_frame=data_msg[2], check_hash=True)
-                frame.attach_tj_context(self.tj_context)
-            else:
-                raise StreamError('Frame was not of format MJPEG')
+        def create_jpeg_frame(buffer_, meta_data):
+            cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
+            frame.attach_tj_context(self.tj_context)
             return frame
+
+        def create_h264_frame(buffer_, meta_data):
+            cdef H264Frame frame = None
+            cdef unsigned char[:] out_buffer
+            pkt_pts = 0
+            out = self.decoder.set_input_buffer(buffer_, meta_data[5], meta_data[4])
+            if self.decoder.is_frame_ready():
+                out_size = self.decoder.get_output_bytes()
+                out_buffer = np.empty(out_size, dtype=np.uint8)
+                out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
+                frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
+                frame.attach_tj_context(self.tj_context)
+            return frame
+
+        if self.data_sub.poll(timeout=timeout):
+            while self.has_data:
+                data_msg = self.get_data(copy=True)
+                meta_data = py_struct.unpack("<LLLLQLL", data_msg[1])
+                if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
+                    return create_jpeg_frame(data_msg[2], meta_data)
+                elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
+                    frame = create_h264_frame(data_msg[2], meta_data)
+                    if frame is not None:
+                        return frame
+                else:
+                    raise StreamError('Frame was not of format MJPEG or H264')
         else:
             raise StreamError('Operation timed out.')
 
