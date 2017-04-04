@@ -173,12 +173,12 @@ cdef class Sensor(object):
         def create_h264_frame(buffer_, meta_data):
             cdef H264Frame frame = None
             cdef unsigned char[:] out_buffer
-            pkt_pts = 0
+            cdef long long pkt_pts = 0 # explicit define required for macos.
             out = self.decoder.set_input_buffer(buffer_, meta_data[5], meta_data[4])
             if self.decoder.is_frame_ready():
                 out_size = self.decoder.get_output_bytes()
                 out_buffer = np.empty(out_size, dtype=np.uint8)
-                out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
+                out_size = self.decoder.get_output_buffer(&out_buffer[0],out_size, pkt_pts)
                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
                 frame.attach_tj_context(self.tj_context)
             return frame
