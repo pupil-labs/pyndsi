@@ -179,7 +179,7 @@ cdef class Sensor(object):
             if self.decoder.is_frame_ready():
                 out_size = self.decoder.get_output_bytes()
                 out_buffer = np.empty(out_size, dtype=np.uint8)
-                out_size = self.decoder.get_output_buffer(&out_buffer[0],out_size, pkt_pts)
+                out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
                 frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
                 frame.attach_tj_context(self.tj_context)
             return frame
