@@ -12,6 +12,7 @@ cimport cturbojpeg as turbojpeg
 
 # importing `struct` module name-clashes with cython struct keyword
 import struct as py_struct
+from libc.stdint cimport int64_t
 import json as serial
 import traceback as tb
 import numpy as np
@@ -173,7 +174,7 @@ cdef class Sensor(object):
         def create_h264_frame(buffer_, meta_data):
             cdef H264Frame frame = None
             cdef unsigned char[:] out_buffer
-            cdef long long pkt_pts = 0 # explicit define required for macos.
+            cdef int64_t pkt_pts = 0 # explicit define required for macos.
             out = self.decoder.set_input_buffer(buffer_, meta_data[5], meta_data[4])
             if self.decoder.is_frame_ready():
                 out_size = self.decoder.get_output_bytes()
