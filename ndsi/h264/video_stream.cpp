@@ -95,7 +95,15 @@ int VideoStream::init_stream(AVFormatContext *format_context,
 				(params->extradata_size > 32 ? 32 : params->extradata_size)).c_str());
 	}
 
+#if !defined(_MSC_VER)
 	stream->time_base = (AVRational) {1, fps };
+#else
+	static AVRational time_base;
+	time_base.num = 1;
+	time_base.den = 1000;
+	stream->time_base.num = 1;
+	stream->time_base.den = fps;
+#endif
 
 	RETURN(result ,int);
 }

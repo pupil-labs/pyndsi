@@ -9,8 +9,15 @@
 #define UTILBASE_H_
 
 #include <stddef.h>
-#include <unistd.h>
-#include <libgen.h>
+
+#if defined(_MSC_VER)
+//	#include "windows/unistd.h"
+	#define basename(x) ((x))
+
+#else
+	#include <unistd.h>
+	#include <libgen.h>
+#endif
 #include <stdio.h>
 #include <sys/types.h>
 
@@ -42,105 +49,57 @@
 #define CHECK_LT(X, Y) { bool RES = (X < Y); assert(RES); }
 
 #if defined(USE_LOGALL) && !defined(LOG_NDEBUG)
-	#define LOGV(FMT, ...) fprintf(stderr, "[V/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGD(FMT, ...) fprintf(stderr, "[D/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGI(FMT, ...) fprintf(stderr, "[I/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGW(FMT, ...) fprintf(stderr, "[W/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGE(FMT, ...) fprintf(stderr, "[E/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGF(FMT, ...) fprintf(stderr, "[F/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-	#define LOGV_IF(cond, ...) \
-		( (CONDITION(cond)) \
-			? LOGV(__VA_ARGS__) \
-			: (0) )
-	#define LOGD_IF(cond, ...) \
-		( (CONDITION(cond)) \
-			? LOGD(__VA_ARGS__) \
-			: (0) )
-	#define LOGI_IF(cond, ...) \
-		( (CONDITION(cond)) \
-			? LOGI(__VA_ARGS__) \
-			: (0) )
-	#define LOGW_IF(cond, ...) \
-		( (CONDITION(cond)) \
-			? LOGW(__VA_ARGS__) \
-			: (0) )
-	#define LOGE_IF(cond, ...) \
-		( (CONDITION(cond)) \
-			? LOGE(__VA_ARGS__) \
-			: (0) )
-	#define LOGF_IF(cond, ...) \
-		( (CONDITION(cond)) \
-			? LOGF(__VA_ARGS__) \
-			: (0) )
+	#define LOGV(FMT, ...) fprintf(stderr, "[V/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+	#define LOGD(FMT, ...) fprintf(stderr, "[D/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+	#define LOGI(FMT, ...) fprintf(stderr, "[I/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+	#define LOGW(FMT, ...) fprintf(stderr, "[W/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+	#define LOGE(FMT, ...) fprintf(stderr, "[E/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+	#define LOGF(FMT, ...) fprintf(stderr, "[F/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+	#define LOGV_IF(cond, ...) ( (CONDITION(cond)) ? LOGV(__VA_ARGS__) : (0) )
+	#define LOGD_IF(cond, ...) ( (CONDITION(cond)) ? LOGD(__VA_ARGS__) : (0) )
+	#define LOGI_IF(cond, ...) ( (CONDITION(cond)) ? LOGI(__VA_ARGS__) : (0) )
+	#define LOGW_IF(cond, ...) ( (CONDITION(cond)) ? LOGW(__VA_ARGS__) : (0) )
+	#define LOGE_IF(cond, ...) ( (CONDITION(cond)) ? LOGE(__VA_ARGS__) : (0) )
+	#define LOGF_IF(cond, ...) ( (CONDITION(cond)) ? LOGF(__VA_ARGS__) : (0) )
 #else
 	#if defined(USE_LOGV) && !defined(LOG_NDEBUG)
-		#define LOGV(FMT, ...) fprintf(stderr, "[V/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-		#define LOGV_IF(cond, ...) \
-			( (CONDITION(cond)) \
-			? LOGV(__VA_ARGS__) \
-			: (0) )
+		#define LOGV(FMT, ...) fprintf(stderr, "[V/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+		#define LOGV_IF(cond, ...) ( (CONDITION(cond)) ? LOGV(__VA_ARGS__) : (0) )
 		#else
 		#define LOGV(...)
 		#define LOGV_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGD) && !defined(LOG_NDEBUG)
-		#define LOGD(FMT, ...) fprintf(stderr, "[D/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-		#define LOGD_IF(cond, ...) \
-			( (CONDITION(cond)) \
-			? LOGD(__VA_ARGS__) \
-			: (0) )
+		#define LOGD(FMT, ...) fprintf(stderr, "[D/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+		#define LOGD_IF(cond, ...) ( (CONDITION(cond)) ? LOGD(__VA_ARGS__) : (0) )
 	#else
 		#define LOGD(...)
 		#define LOGD_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGI)
-		#define LOGI(FMT, ...) fprintf(stderr, "[I/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-		#define LOGI_IF(cond, ...) \
-			( (CONDITION(cond)) \
-			? LOGI(__VA_ARGS__) \
-			: (0) )
+		#define LOGI(FMT, ...) fprintf(stderr, "[I/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+		#define LOGI_IF(cond, ...) ( (CONDITION(cond)) ? LOGI(__VA_ARGS__) : (0) )
 	#else
 		#define LOGI(...)
 		#define LOGI_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGW)
-		#define LOGW(FMT, ...) fprintf(stderr, "[W/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-		#define LOGW_IF(cond, ...) \
-			( (CONDITION(cond)) \
-			? LOGW(__VA_ARGS__) \
-			: (0) )
+		#define LOGW(FMT, ...) fprintf(stderr, "[W/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+		#define LOGW_IF(cond, ...) ( (CONDITION(cond)) ? LOGW(__VA_ARGS__) : (0) )
 	#else
 		#define LOGW(...)
 		#define LOGW_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGE)
-		#define LOGE(FMT, ...) fprintf(stderr, "[E/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-		#define LOGE_IF(cond, ...) \
-			( (CONDITION(cond)) \
-			? LOGE(__VA_ARGS__) \
-			: (0) )
+		#define LOGE(FMT, ...) fprintf(stderr, "[E/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+		#define LOGE_IF(cond, ...) ( (CONDITION(cond)) ? LOGE(__VA_ARGS__) : (0) )
 	#else
 		#define LOGE(...)
 		#define LOGE_IF(cond, ...)
 	#endif
 	#if defined(USE_LOGF)
-#define LOGF(FMT, ...) fprintf(stderr, "[F/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
-		#define LOGF_IF(cond, ...) \
-			( (CONDITION(cond)) \
-			? LOGF(__VA_ARGS__) \
-			: (0) )
+#define LOGF(FMT, ...) fprintf(stderr, "[F/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+		#define LOGF_IF(cond, ...) ( (CONDITION(cond)) ? LOGF(__VA_ARGS__) : (0) )
 	#else
 		#define LOGF(...)
 		#define LOGF_IF(cond, ...)
@@ -148,16 +107,12 @@
 #endif
 
 #ifndef		LOG_ALWAYS_FATAL_IF
-#define		LOG_ALWAYS_FATAL_IF(cond, ...) \
-				( (CONDITION(cond)) \
-				? ((void)__android_log_assert(#cond, LOG_TAG, ## __VA_ARGS__)) \
-				: (void)0 )
+#define		LOG_ALWAYS_FATAL_IF(cond, ...) ( (CONDITION(cond)) ? ((void)__android_log_assert(#cond, LOG_TAG, ## __VA_ARGS__)) : (void)0 )
 #endif
 
-#ifndef		LOG_ALWAYS_FATAL
-#define		LOG_ALWAYS_FATAL(...) \
-				( ((void)__android_log_assert(NULL, LOG_TAG, ## __VA_ARGS__)) )
-#endif
+//#ifndef		LOG_ALWAYS_FATAL
+//#define		LOG_ALWAYS_FATAL(...) ( ((void)__android_log_assert(NULL, LOG_TAG, ## __VA_ARGS__)) )
+//#endif
 
 #ifndef		LOG_ASSERT
 #define		LOG_ASSERT(cond, ...) LOG_FATAL_IF(!(cond), ## __VA_ARGS__)
@@ -190,8 +145,7 @@
 #define		PRE_EXIT()			LOGD("end")
 
 #if (defined(USE_LOGALL) || defined(USE_LOGI)) && !defined(LOG_NDEBUG)
-#define MARK(FMT, ...) fprintf(stderr, "[M/" LOG_TAG ":%s:%d:%s]:" FMT "\n",	\
-							basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
+#define MARK(FMT, ...) fprintf(stderr, "[M/" LOG_TAG ":%s:%d:%s]:" FMT "\n", basename(__FILE__), __LINE__, __FUNCTION__, ## __VA_ARGS__)
 #else
 #define		MARK(...)
 #endif
@@ -199,9 +153,6 @@
 #define LITERAL_TO_STRING_INTERNAL(x)    #x
 #define LITERAL_TO_STRING(x) LITERAL_TO_STRING_INTERNAL(x)
 
-#define TRESPASS() \
-		LOG_ALWAYS_FATAL(                                       \
-			__FILE__ ":" LITERAL_TO_STRING(__LINE__)            \
-			" Should not be here.");
+#define TRESPASS() LOG_ALWAYS_FATAL( __FILE__ ":" LITERAL_TO_STRING(__LINE__) " Should not be here.");
 
 #endif /* UTILBASE_H_ */

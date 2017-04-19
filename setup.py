@@ -33,9 +33,12 @@ elif platform.system() == 'Windows':
     tj_lib = tj_dir + '\\lib\\turbojpeg.lib'
     include_dirs += [tj_dir + '\\include']
     extra_objects += [tj_lib]
+    include_dirs += ['ndsi/h264/windows']
 
 libs += ['avutil', 'avformat', 'avcodec', 'swscale']
 h264_sources = glob.glob('ndsi/h264/*.cpp')
+if platform.system() == 'Windows':
+    h264_sources += glob.glob('ndsi/h264/windows/*.cpp')
 
 extensions = [
     Extension(name="ndsi.frame",
