@@ -157,10 +157,10 @@ const bool is_iframe(const uint8_t *_data, const size_t &size) {
 		const uint8_t *data = _data;
 		const uint8_t *payload = NULL;
 		int sz = size;
-		LOGD("annexBマーカーを探す");
+		LOGD("find annexB marker");
 		int ret = find_annexb(data, sz, &payload);
 		if (LIKELY(!ret)) {
-			LOGV("annexBマーカーが見つかった");
+			LOGV("found annexB marker");
 			bool sps = false, pps = false;
 			int ix = payload - data;
 			sz -= ix;
@@ -169,15 +169,13 @@ const bool is_iframe(const uint8_t *_data, const size_t &size) {
 				switch (type) {
 				case NAL_UNIT_CODEC_SLICE_IDR:
 					LOGD("IDR frame");
-//					LOGI("ペイロード:%s", bin2hex(&data[0], 128).c_str());
 //					LOGD("SPS/PPS?:%s", bin2hex(&payload[0], 128).c_str());
 					result = true;
 					goto ret;
 //					break;
 				case NAL_UNIT_SEQUENCE_PARAM_SET:
 				{
-					LOGD("SPSが見つかった...次のannexbマーカーを探す");
-//					LOGI("ペイロード:%s", bin2hex(&data[0], 128).c_str());
+					LOGD("found SPS...try to find next annexb marker");
 //					LOGI("SPS:%s", bin2hex(&payload[0], 128).c_str());
 					sps = true;
 					ret = find_annexb(&payload[1], sz - 1, &payload);
@@ -192,8 +190,7 @@ const bool is_iframe(const uint8_t *_data, const size_t &size) {
 				case NAL_UNIT_PICTURE_PARAM_SET:
 				{
 					if (LIKELY(sps)) {
-						LOGD("PPSが見つかった...次のannexbマーカーを探す");
-//						LOGI("ペイロード:%s", bin2hex(&data[0], 128).c_str());
+						LOGD("found PPS...try to find next annexb marker");
 //						LOGI("PPS:%s", bin2hex(&payload[0], 128).c_str());
 						pps = true;
 						ret = find_annexb(&payload[1], sz  -1, &payload);
@@ -208,7 +205,7 @@ const bool is_iframe(const uint8_t *_data, const size_t &size) {
 				}
 				case NAL_UNIT_PICTURE_DELIMITER:
 				{
-					LOGD("IFrameじゃないけど1フレームを生成できるNALユニットの集まりの区切り");
+					LOGD("IDR");
 					result = true;
 					goto ret;
 				}
@@ -224,7 +221,7 @@ const bool is_iframe(const uint8_t *_data, const size_t &size) {
 					break;
 				}
 				default:
-					// 何かAnnexBマーカーで始まるpayloadの時, SPS+PPSが見つかっていればIFrameとする
+					// found something start with AnnexB marker
 					LOGV("type=%x", type);
 					result = sps && pps;
 					goto end;

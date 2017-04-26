@@ -25,17 +25,25 @@ if platform.system() == 'Darwin':
     include_dirs += ['/usr/local/opt/jpeg-turbo/include/']
     libs += ['turbojpeg']
     library_dirs += ['/usr/local/opt/jpeg-turbo/lib/']
+    libs += ['avutil', 'avformat', 'avcodec', 'swscale']
 elif platform.system() == 'Linux':
     libs = ['rt', 'turbojpeg']
+    libs += ['avutil', 'avformat', 'avcodec', 'swscale']
 elif platform.system() == 'Windows':
     libs = ['winmm']
     tj_dir = 'C:\\work\\libjpeg-turbo-VC64'
     tj_lib = tj_dir + '\\lib\\turbojpeg.lib'
     include_dirs += [tj_dir + '\\include']
     extra_objects += [tj_lib]
+    include_dirs += ['ndsi\\h264\\windows']
+    ffmpeg_libs = 'C:\\work\\ffmpeg-3.2-win64-dev\\lib'
+    include_dirs += ['C:\\work\\ffmpeg-3.2-win64-dev\\include']
+    libs += [ffmpeg_libs+'\\avutil',ffmpeg_libs+'\\avformat',ffmpeg_libs+'\\avcodec',ffmpeg_libs+'\\swscale']
 
 libs += ['avutil', 'avformat', 'avcodec', 'swscale']
 h264_sources = glob.glob('ndsi/h264/*.cpp')
+if platform.system() == 'Windows':
+    h264_sources += glob.glob('ndsi/h264/windows/*.cpp')
 
 extensions = [
     Extension(name="ndsi.frame",

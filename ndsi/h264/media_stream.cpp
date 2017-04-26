@@ -89,7 +89,13 @@ int MediaStream::set_input_buffer(AVFormatContext *output_context,
 
 	int result = 0;
 	AVPacket packet;
+#if !defined(_MSC_VER)
 	static AVRational time_base = (AVRational){1, 1000};
+#else
+	static AVRational time_base;
+	time_base.num = 1;
+	time_base.den = 1000;
+#endif
 
 	if (UNLIKELY(first_pts_us <= 0)) {
 		first_pts_us = presentation_time_us;
