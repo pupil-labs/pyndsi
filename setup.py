@@ -40,7 +40,6 @@ elif platform.system() == 'Windows':
     include_dirs += ['C:\\work\\ffmpeg-3.2-win64-dev\\include']
     libs += [ffmpeg_libs+'\\avutil',ffmpeg_libs+'\\avformat',ffmpeg_libs+'\\avcodec',ffmpeg_libs+'\\swscale']
 
-libs += ['avutil', 'avformat', 'avcodec', 'swscale']
 h264_sources = glob.glob('ndsi/h264/*.cpp')
 if platform.system() == 'Windows':
     h264_sources += glob.glob('ndsi/h264/windows/*.cpp')
