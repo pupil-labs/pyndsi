@@ -10,10 +10,33 @@
 import platform
 import numpy
 import glob
+import os
+import io
+import re
 
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
+
+
+def read(*names, **kwargs):
+    with io.open(
+        os.path.join(os.path.dirname(__file__), *names),
+        encoding=kwargs.get("encoding", "utf8")
+    ) as fp:
+        return fp.read()
+
+
+# pip's single-source version method as described here:
+# https://python-packaging-user-guide.readthedocs.io/single_source_version/
+def find_version(*file_paths):
+    version_file = read(*file_paths)
+    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]",
+                              version_file, re.M)
+    if version_match:
+        return version_match.group(1)
+    raise RuntimeError("Unable to find version string.")
+
 
 libs = []
 library_dirs = []
@@ -83,7 +106,7 @@ extensions = [
               language='c++')]
 
 setup(name="ndsi",
-      version="0.2.16",  # make sure this is the same as in ndsi/__init__.py
+      version=find_version('ndsi', '__init__.py'),
       description="Remote Device Sensor Interface",
       packages=['ndsi'],
       ext_modules=cythonize(extensions))

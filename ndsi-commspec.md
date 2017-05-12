@@ -1,10 +1,11 @@
-# Network Device Sensor Interface Protocol Specification v2.13
+# Network Device Sensor Interface Protocol Specification v2.14
 
 Status: draft
 
 
 Network Device Sensor Interface protocol specifies the communication
-between *Pupil Mobile* and the *Network Device Sensor Interface*.
+between a set of hosts that provide sensor information to a set of clients.
+Examples for these include [Pupil Mobile](https://github.com/pupil-labs/pupil-mobile-app) as host and [Pupil Capture](https://github.com/pupil-labs/pupil) as client.
 
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
@@ -15,7 +16,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 **Hosts** (e.g. Android app):
 
-- **Hosts** SHOULD NOT join `pupil-mobile`.
+- **Hosts** SHOULD NOT join `pupil-mobile-v2.14`.
 - **Hosts** MUST SHOUT `<attach>` and `<detach>` notifications to
 `pupil-mobile`.
 - **Hosts** MUST WHISPER all currently available `sensor`s as a series
@@ -36,7 +37,7 @@ socket.
 
 **Clients** (e.g. the `ndsi` library)
 
-- **Clients** MUST join `pupil-mobile`.
+- **Clients** MUST join `pupil-mobile-v2.14`.
 - **Clients** MUST listen to incoming SHOUT and WHISPER messages.
     - Messages including invalid `json` SHOULD be dropped (silently).
 - **Clients** SHOULD maintain a list of available `sensor`s including
@@ -74,7 +75,7 @@ Each host has multiple `sensor` instances. These can be of different types. The 
 
 All sensor related messages MUST be zeromq multi-part messages with at least
 two frames. The first frame MUST include the `sensor`'s unique identifier and
-the second the content of a notification or a command. The unique identfier MUST be formatted as an unicode string.
+the second the [`json`](http://www.json.org/)-encoded content of a notification or a command. The unique identfier MUST be formatted as an unicode string.
 
 Note: The corresponding value of missing message keys SHALL be handled as `null`.
 
@@ -278,7 +279,7 @@ typedef struct publish_header {
     uint32_t width_le;
     uint32_t height_le;
     uint32_t sequence_le;
-    int64_t presentation_time_us_le;
+    float64_t presentation_time_s_le;
     uint32_t data_bytes_le;
     uint32_t reserved_le;
 } __attribute__ ((packed)) publish_header_t;
@@ -316,7 +317,7 @@ typedef struct audio_header {
     uint32_t format_le;  // PCM8, PCM16, etc., usually use PCM8 on most of Android devices.
     uint32_t channel_le; // 1 or 2, but most of Android devices just support 1
     uint32_t sequence_le;
-    int64_t presentation_time_us_le;
+    float64_t presentation_time_s_le;
     uint32_t data_bytes_le;
 } __attribute__ ((packed)) audio_header;
 ```
