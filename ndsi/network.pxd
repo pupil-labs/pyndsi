@@ -13,6 +13,7 @@ cdef class Network(object):
     cdef object context
     cdef unicode name
     cdef object headers
+    cdef bint _warned_once_older_version, _warned_once_newer_version
     cdef readonly list callbacks
     cdef readonly dict sensors
     cdef readonly object pyre_node

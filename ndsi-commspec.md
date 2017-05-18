@@ -1,6 +1,7 @@
-# Network Device Sensor Interface Protocol Specification v2.14
+# Network Device Sensor Interface Protocol Specification
 
-Status: draft
+Protocol version: v3
+Protocol status: draft
 
 
 Network Device Sensor Interface protocol specifies the communication
@@ -12,45 +13,35 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 ## Control
 
-### Host vs Clients
+### Actors
+
+NDSI actors (**Hosts** and **Clients**) find each other using the [ZeroMQ Realtime Exchange Protocol](https://rfc.zeromq.org/spec:36/ZRE). We recommend the usage of existing libraries (e.g. [zyre](https://github.com/zeromq/zyre), [Pyre](https://github.com/zeromq/pyre)) that implement the ZRE protocol. See the protocol spec for definitons of SHOUT, WHISPER, and join.
+
+All actors MUST join the ZRE group `pupil-mobile-v3` -- hereinafter referred to as _GROUP_.
 
 **Hosts** (e.g. Android app):
 
-- **Hosts** SHOULD NOT join `pupil-mobile-v2.14`.
-- **Hosts** MUST SHOUT `<attach>` and `<detach>` notifications to
-`pupil-mobile`.
-- **Hosts** MUST WHISPER all currently available `sensor`s as a series
-of `<attach>` notifications when a **client** joins `pupil-mobile`.
+- **Hosts** SHOULD ignore incoming SHOUT and WHISPER messages.
+- **Hosts** MUST SHOUT `<attach>` and `<detach>` notifications to the GROUP when sensors become available or unavailable respectively.
+- **Hosts** MUST WHISPER all currently available `sensor`s as a series of `<attach>` notifications when a **client** joins the GROUP.
 - **Hosts** MUST open at least one socket for each following type:
-    - **Notify** `zmq.PUB` socket, publishes `sensor` specific control
-    notifications (`update` and `remove`), randomly choosen port
-    - **Command** `zmq.PULL` socket, receives `sensor` specific commands,
-    randomly choosen port
-    - **Data** `zmq.PUB` socket, publishes stream data, format depends on
-    `sensor` type, randomly choosen port
+    - **Notify** `zmq.PUB` socket, publishes `sensor` specific control notifications (`update` and `remove`), randomly choosen port
+    - **Command** `zmq.PULL` socket, receives `sensor` specific commands, randomly choosen port
+    - **Data** `zmq.PUB` socket, publishes stream data, format depends on `sensor` type, randomly choosen port
 - All messages send over these sockets MUST follow the format described below in **Sensor Messages**
 - **Hosts** MUST listen for messages on the **command** socket.
-- **Hosts** MUST publish all `control` state changes over its **notify**
-socket.
-- **Hosts** MUST respond to `<refresh_controls>` by publishing all available
-`control` states as a series of `<control_update>`
+- **Hosts** MUST publish all `control` state changes over its **notify** socket.
+- **Hosts** MUST respond to `<refresh_controls>` by publishing all available `control` states as a series of `<control_update>`
 
-**Clients** (e.g. the `ndsi` library)
+**Clients** (e.g. the `pyndsi` library)
 
-- **Clients** MUST join `pupil-mobile-v2.14`.
 - **Clients** MUST listen to incoming SHOUT and WHISPER messages.
     - Messages including invalid `json` SHOULD be dropped (silently).
-- **Clients** SHOULD maintain a list of available `sensor`s including
-    their static information (this includes especially the unique identifier
-    defined by the **host**, see **Sensor Messages** below).
+- **Clients** SHOULD maintain a list of available `sensor`s including their static information (this includes especially the unique identifier defined by the **host**, see **Sensor Messages** below).
 - To receive control updates of a specific `sensor`, **Clients** MUST:
-    1. Create a `zmq.SUB` socket, connected to
-        `notify_endpoint`,
-    2. Subscribe to the `sensor`s unique identifier
-        (`zmq_setsockopt(<socket>,ZMQ_SUBSCRIBE,<unique identifier>)`) and
-        start listening for *update* and *remove* notifications.
-    3. Create a `zmq.PUSH` socket, connected to `command_endpoint` (see
-        `<attach>` below), send `<refresh_controls>` command.
+    1. Create a `zmq.SUB` socket, connected to `notify_endpoint`,
+    2. Subscribe to the `sensor`s unique identifier (`zmq_setsockopt(<socket>,ZMQ_SUBSCRIBE,<unique identifier>)`) and start listening for *update* and *remove* notifications.
+    3. Create a `zmq.PUSH` socket, connected to `command_endpoint` (see `<attach>` below), send `<refresh_controls>` command.
 
     - All messages send over these sockets MUST follow the format described below in **Sensor Messages**
 

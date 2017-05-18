@@ -107,7 +107,7 @@ cdef class JPEGFrame(object):
         self._index       = index
         self._buffer_len  = data_len
         self._raw_data    = zmq_frame
-        self.timestamp    = (<double>timestamp)/1000000
+        self.timestamp    = timestamp
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
         self.tj_context = ctx
