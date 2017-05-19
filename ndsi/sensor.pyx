@@ -187,7 +187,7 @@ cdef class Sensor(object):
         if self.data_sub.poll(timeout=timeout):
             while self.has_data:
                 data_msg = self.get_data(copy=True)
-                meta_data = py_struct.unpack("<LLLLQLL", data_msg[1])
+                meta_data = py_struct.unpack("<LLLLdLL", data_msg[1])
                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
                     return create_jpeg_frame(data_msg[2], meta_data)
                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:

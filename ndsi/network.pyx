@@ -16,7 +16,7 @@ import traceback  as tb
 import zmq
 from pyre import Pyre, PyreEvent, zhelper
 
-from . import NDS_PROTOCOL_VERSION
+from . import __protocol_version__
 from .sensor cimport Sensor
 
 import logging
@@ -28,16 +28,21 @@ cdef class Network(object):
 
     Creates Pyre node and handles all communication.
     '''
+
+    group = 'pupil-mobile-v{}'.format(__protocol_version__)
+
     def __cinit__(self, *args, **kwargs):
         pass
 
     def __init__(self, context=None, name=None, headers=(), callbacks=()):
         self.name = name
-        self.headers = [('nds-protocol-version', NDS_PROTOCOL_VERSION)]+list(headers)
+        self.headers = headers
         self.pyre_node = None
         self.context = context or zmq.Context()
         self.sensors = {}
         self.callbacks = [self.on_event]+list(callbacks)
+        self._warned_once_older_version = False
+        self._warned_once_newer_version = False
 
     def start(self):
         # Setup node
@@ -95,6 +100,23 @@ cdef class Network(object):
                     logger.debug('Unknown host message: {}'.format(msg))
                     return
                 self.execute_callbacks(msg)
+        elif event.type == 'JOIN':
+            # possible values for `group_version`
+            # - [<unrelated group>]
+            # - [<unrelated group>, <unrelated version>]
+            # - ['pupil-mobile']
+            # - ['pupil-mobile', <version>]
+            group_version = event.group.split('-v')
+            group = group_version[0]
+            version = group_version[1] if len(group_version) > 1 else '0'
+            if group == 'pupil-mobile':
+                if not self._warned_once_older_version and version < __protocol_version__:
+                    logger.warning('Devices with outdated NDSI version found. Please update these devices.')
+                    self._warned_once_older_version = True
+                elif not self._warned_once_newer_version and version > __protocol_version__:
+                    logger.warning('Devices with newer NDSI version found. You should update.')
+                    self._warned_once_newer_version = True
+
         elif event.type == 'EXIT':
             gone_peer = event.peer_uuid.hex
             for sensor_uuid in list(self.sensors.keys()):
@@ -141,7 +163,3 @@ cdef class Network(object):
     property running:
         def __get__(self):
             return bool(self.pyre_node)
-
-    property group:
-        def __get__(self):
-            return 'pupil-mobile'

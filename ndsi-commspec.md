@@ -1,55 +1,47 @@
-# Network Device Sensor Interface Protocol Specification v2.13
+# Network Device Sensor Interface Protocol Specification
 
-Status: draft
+Protocol version: v3
+Protocol status: draft
 
 
 Network Device Sensor Interface protocol specifies the communication
-between *Pupil Mobile* and the *Network Device Sensor Interface*.
+between a set of hosts that provide sensor information to a set of clients.
+Examples for these include [Pupil Mobile](https://github.com/pupil-labs/pupil-mobile-app) as host and [Pupil Capture](https://github.com/pupil-labs/pupil) as client.
 
 
 The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY", and "OPTIONAL" in this document are to be interpreted as described in [RFC 2119](https://tools.ietf.org/html/rfc2119).
 
 ## Control
 
-### Host vs Clients
+### Actors
+
+NDSI actors (**Hosts** and **Clients**) find each other using the [ZeroMQ Realtime Exchange Protocol](https://rfc.zeromq.org/spec:36/ZRE). We recommend the usage of existing libraries (e.g. [zyre](https://github.com/zeromq/zyre), [Pyre](https://github.com/zeromq/pyre)) that implement the ZRE protocol. See the protocol spec for definitons of SHOUT, WHISPER, and join.
+
+All actors MUST join the ZRE group `pupil-mobile-v3` -- hereinafter referred to as _GROUP_.
 
 **Hosts** (e.g. Android app):
 
-- **Hosts** SHOULD NOT join `pupil-mobile`.
-- **Hosts** MUST SHOUT `<attach>` and `<detach>` notifications to
-`pupil-mobile`.
-- **Hosts** MUST WHISPER all currently available `sensor`s as a series
-of `<attach>` notifications when a **client** joins `pupil-mobile`.
+- **Hosts** SHOULD ignore incoming SHOUT and WHISPER messages.
+- **Hosts** MUST SHOUT `<attach>` and `<detach>` notifications to the GROUP when sensors become available or unavailable respectively.
+- **Hosts** MUST WHISPER all currently available `sensor`s as a series of `<attach>` notifications when a **client** joins the GROUP.
 - **Hosts** MUST open at least one socket for each following type:
-    - **Notify** `zmq.PUB` socket, publishes `sensor` specific control
-    notifications (`update` and `remove`), randomly choosen port
-    - **Command** `zmq.PULL` socket, receives `sensor` specific commands,
-    randomly choosen port
-    - **Data** `zmq.PUB` socket, publishes stream data, format depends on
-    `sensor` type, randomly choosen port
+    - **Notify** `zmq.PUB` socket, publishes `sensor` specific control notifications (`update` and `remove`), randomly choosen port
+    - **Command** `zmq.PULL` socket, receives `sensor` specific commands, randomly choosen port
+    - **Data** `zmq.PUB` socket, publishes stream data, format depends on `sensor` type, randomly choosen port
 - All messages send over these sockets MUST follow the format described below in **Sensor Messages**
 - **Hosts** MUST listen for messages on the **command** socket.
-- **Hosts** MUST publish all `control` state changes over its **notify**
-socket.
-- **Hosts** MUST respond to `<refresh_controls>` by publishing all available
-`control` states as a series of `<control_update>`
+- **Hosts** MUST publish all `control` state changes over its **notify** socket.
+- **Hosts** MUST respond to `<refresh_controls>` by publishing all available `control` states as a series of `<control_update>`
 
-**Clients** (e.g. the `ndsi` library)
+**Clients** (e.g. the `pyndsi` library)
 
-- **Clients** MUST join `pupil-mobile`.
 - **Clients** MUST listen to incoming SHOUT and WHISPER messages.
     - Messages including invalid `json` SHOULD be dropped (silently).
-- **Clients** SHOULD maintain a list of available `sensor`s including
-    their static information (this includes especially the unique identifier
-    defined by the **host**, see **Sensor Messages** below).
+- **Clients** SHOULD maintain a list of available `sensor`s including their static information (this includes especially the unique identifier defined by the **host**, see **Sensor Messages** below).
 - To receive control updates of a specific `sensor`, **Clients** MUST:
-    1. Create a `zmq.SUB` socket, connected to
-        `notify_endpoint`,
-    2. Subscribe to the `sensor`s unique identifier
-        (`zmq_setsockopt(<socket>,ZMQ_SUBSCRIBE,<unique identifier>)`) and
-        start listening for *update* and *remove* notifications.
-    3. Create a `zmq.PUSH` socket, connected to `command_endpoint` (see
-        `<attach>` below), send `<refresh_controls>` command.
+    1. Create a `zmq.SUB` socket, connected to `notify_endpoint`,
+    2. Subscribe to the `sensor`s unique identifier (`zmq_setsockopt(<socket>,ZMQ_SUBSCRIBE,<unique identifier>)`) and start listening for *update* and *remove* notifications.
+    3. Create a `zmq.PUSH` socket, connected to `command_endpoint` (see `<attach>` below), send `<refresh_controls>` command.
 
     - All messages send over these sockets MUST follow the format described below in **Sensor Messages**
 
@@ -74,7 +66,7 @@ Each host has multiple `sensor` instances. These can be of different types. The 
 
 All sensor related messages MUST be zeromq multi-part messages with at least
 two frames. The first frame MUST include the `sensor`'s unique identifier and
-the second the content of a notification or a command. The unique identfier MUST be formatted as an unicode string.
+the second the [`json`](http://www.json.org/)-encoded content of a notification or a command. The unique identfier MUST be formatted as an unicode string.
 
 Note: The corresponding value of missing message keys SHALL be handled as `null`.
 
@@ -278,7 +270,7 @@ typedef struct publish_header {
     uint32_t width_le;
     uint32_t height_le;
     uint32_t sequence_le;
-    int64_t presentation_time_us_le;
+    float64_t presentation_time_s_le;
     uint32_t data_bytes_le;
     uint32_t reserved_le;
 } __attribute__ ((packed)) publish_header_t;
@@ -316,7 +308,7 @@ typedef struct audio_header {
     uint32_t format_le;  // PCM8, PCM16, etc., usually use PCM8 on most of Android devices.
     uint32_t channel_le; // 1 or 2, but most of Android devices just support 1
     uint32_t sequence_le;
-    int64_t presentation_time_us_le;
+    float64_t presentation_time_s_le;
     uint32_t data_bytes_le;
 } __attribute__ ((packed)) audio_header;
 ```

@@ -8,7 +8,8 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-NDS_PROTOCOL_VERSION = '0.2.16'
+__version__ = '0.3.1'
+__protocol_version__ = '3'
 
 
 class CaptureError(Exception):

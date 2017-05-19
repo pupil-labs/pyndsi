@@ -5,7 +5,7 @@ import socket
 import struct
 import time
 
-from pyre import Pyre, PyreEvent
+from pyre import Pyre
 import uvc
 import hashlib
 
@@ -19,6 +19,8 @@ logging.getLogger('pyre').setLevel(logging.WARNING)
 logging.getLogger('uvc').setLevel(logging.WARNING)
 
 sequence_limit = 2**32-1
+
+GROUP = 'pupil-mobile-v3'
 
 
 def has_data(socket):
@@ -39,6 +41,7 @@ class Bridge(object):
 
         # init pyre
         self.network = Pyre(socket.gethostname()+self.cap.name[-4:])
+        self.network.join(GROUP)
         self.network.start()
         logger.info('Bridging under "{}"'.format(self.network.name()))
 
@@ -52,7 +55,7 @@ class Bridge(object):
 
     def loop(self):
         logger.info('Entering bridging loop...')
-        self.network.shout('pupil-mobile', self.sensor_attach_json().encode())
+        self.network.shout(GROUP, self.sensor_attach_json().encode())
         try:
             while True:
                 self.poll_network()
@@ -65,7 +68,7 @@ class Bridge(object):
             import traceback
             traceback.print_exc()
         finally:
-            self.network.shout('pupil-mobile', json.dumps({
+            self.network.shout(GROUP, json.dumps({
                 'subject': 'detach',
                 'sensor_uuid': self.network.uuid().hex
             }).encode())
@@ -73,7 +76,7 @@ class Bridge(object):
 
     def publish_frame(self):
         frame = self.cap.get_frame_robust()
-        now = int(time.time()*1000000)
+        now = time.time()
         index = self.data_seq
         self.data_seq += 1
         self.data_seq %= sequence_limit
@@ -81,20 +84,19 @@ class Bridge(object):
         jpeg_buffer = frame.jpeg_buffer
         m = hashlib.md5(jpeg_buffer)
         lower_end = int(m.hexdigest(), 16) % 0x100000000
-        meta_data = struct.pack('<LLLLQLL', 0x10, frame.width, frame.height, index, now, jpeg_buffer.size, lower_end)
+        meta_data = struct.pack('<LLLLdLL', 0x10, frame.width, frame.height, index, now, jpeg_buffer.size, lower_end)
         self.data.send_multipart([self.network.uuid().hex.encode(), meta_data, jpeg_buffer])
 
     def poll_network(self):
-        while has_data(self.network.socket()):
-            event = PyreEvent(self.network)
-            if event.type == 'JOIN' and event.group == 'pupil-mobile':
+        for event in self.network.recent_events():
+            if event.type == 'JOIN' and event.group == GROUP:
                 self.network.whisper(event.peer_uuid, self.sensor_attach_json().encode())
 
     def poll_cmd_socket(self):
         while has_data(self.cmd):
             sensor, cmd_str = self.cmd.recv_multipart()
             try:
-                cmd = json.loads(cmd_str)
+                cmd = json.loads(cmd_str.decode())
             except Exception as e:
                 logger.debug('Could not parse received cmd: {}'.format(cmd_str))
             else:
@@ -155,7 +157,7 @@ class Bridge(object):
                 "readonly": False,
                 "map": [{
                     'value': idx,
-                    'caption': '{:i}x{:i}'.format(*fs)
+                    'caption': '{:d}x{:d}'.format(*fs)
                 } for idx, fs in enumerate(self.cap.frame_sizes)]
             }
         })
