@@ -70,10 +70,6 @@ class InitError(CaptureError):
         super(InitError, self).__init__(message)
         self.message = message
 
-@staticmethod
-def unpack_metadata(packed_metadata):
-    return struct.unpack("<LLLLQL", packed_metadata)
-
 
 cdef class JPEGFrame(object):
     '''
@@ -307,7 +303,7 @@ cdef class H264Frame(object):
         self._buffer_len  = data_len
         self._yuv_buffer  = yuv_buffer
         self._h264_buffer = np.fromstring(h264_buffer, dtype=np.uint8)
-        self.timestamp    = (<double>timestamp)/1000000
+        self.timestamp    = timestamp
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
         self.tj_context = ctx
