@@ -175,12 +175,16 @@ cdef class Sensor(object):
             cdef H264Frame frame = None
             cdef unsigned char[:] out_buffer
             cdef int64_t pkt_pts = 0 # explicit define required for macos.
-            out = self.decoder.set_input_buffer(buffer_, meta_data[5], meta_data[4])
+            out = self.decoder.set_input_buffer(buffer_, meta_data[5], int(meta_data[4]*1e6))
             if self.decoder.is_frame_ready():
                 out_size = self.decoder.get_output_bytes()
                 out_buffer = np.empty(out_size, dtype=np.uint8)
                 out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
-                frame = H264Frame(*meta_data[:4], timestamp=pkt_pts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
+                # The observation here is that the output frame comes from the input set right before.
+                # this means that we can use the timestamps from meta_data of the input buffer frame.
+                # to be on the save side we still use the h264 packet pts of the output
+                # print(round(pkt_pts*1e-6,6),meta_data[4] )
+                frame = H264Frame(*meta_data[:4], timestamp=round(pkt_pts*1e-6,6), data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
                 frame.attach_tj_context(self.tj_context)
             return frame
 
