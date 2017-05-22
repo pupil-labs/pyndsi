@@ -17,15 +17,17 @@ logger.setLevel(logging.DEBUG)
 
 cdef class H264Writer(object):
 
-    def __cinit__(self, video_loc, width, height, fps=30, *args, **kwargs):
+    def __cinit__(self, video_loc,int width,int height,int fps, *args, **kwargs):
         self.video_loc = video_loc
         # Mp4Writer takes a std:string
         # http://cython.readthedocs.io/en/latest/src/tutorial/strings.html#c-strings
+        assert fps
         self.fps = fps
         self.width = width
         self.height = height
         self.timestamps = []
         self.waiting_for_iframe = True
+        self.frame_count = 0
         self.video_stream = new VideoStream(width, height, fps)
         self.proxy = new Mp4Writer(self.video_loc.encode('utf-8'))
         self.proxy.add(self.video_stream)
@@ -55,9 +57,13 @@ cdef class H264Writer(object):
                 return
 
         cdef unsigned char[:] buffer_ = input_frame.h264_buffer
-        cdef long long pts = <long long>(input_frame.timestamp * 1000000)
+        #we are using indexing pts instead of real pts
+        # cdef long long pts = <long long>(input_frame.timestamp * 1e6)
+        cdef long long pts = <long long>int((self.frame_count*1e6/self.fps))
+        print(pts)
         self.proxy.set_input_buffer(0, &buffer_[0], len(buffer_), pts)
         self.timestamps.append(input_frame.timestamp)
+        self.frame_count +=1
 
     def close(self):
         if self.proxy != NULL:

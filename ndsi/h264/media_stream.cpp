@@ -90,22 +90,18 @@ int MediaStream::set_input_buffer(AVFormatContext *output_context,
 	int result = 0;
 	AVPacket packet;
 #if !defined(_MSC_VER)
-	static AVRational time_base = (AVRational){1, 1000};
+	static AVRational time_base = (AVRational){1, 1000000};
 #else
 	static AVRational time_base;
 	time_base.num = 1;
-	time_base.den = 1000;
+	time_base.den = 1000000;
 #endif
-
-	if (UNLIKELY(first_pts_us <= 0)) {
-		first_pts_us = presentation_time_us;
-	}
 
 	av_init_packet(&packet);
 	packet.flags |= (get_vop_type_annexb(nal_units, bytes) >= 0 ? AV_PKT_FLAG_KEY : 0);
 	packet.data = (uint8_t *)nal_units;
 	packet.size = bytes;
-	packet.pts = packet.dts = (presentation_time_us - first_pts_us) / 1000;
+	packet.pts = packet.dts = presentation_time_us;
 	av_packet_rescale_ts(&packet, time_base, stream->time_base);
 	packet.stream_index = stream->index;
 

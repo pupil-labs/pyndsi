@@ -18,5 +18,6 @@ cdef class H264Writer(object):
     cdef VideoStream *video_stream
     cdef Mp4Writer *proxy
     cdef object timestamps
+    cdef int frame_count
 
     cdef readonly unicode video_loc
