@@ -53,14 +53,13 @@ cdef class H264Writer(object):
             if input_frame.is_iframe:
                 self.waiting_for_iframe = False
             else:
-                logger.warning('No I-frame found yet -- dropping frame.')
+                logger.debug('No I-frame found yet -- dropping frame.')
                 return
 
         cdef unsigned char[:] buffer_ = input_frame.h264_buffer
         #we are using indexing pts instead of real pts
         # cdef long long pts = <long long>(input_frame.timestamp * 1e6)
         cdef long long pts = <long long>int((self.frame_count*1e6/self.fps))
-        print(pts)
         self.proxy.set_input_buffer(0, &buffer_[0], len(buffer_), pts)
         self.timestamps.append(input_frame.timestamp)
         self.frame_count +=1
