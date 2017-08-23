@@ -82,6 +82,8 @@ cdef class Network(object):
                 msg['sensor_uuid']
                 msg['host_uuid'] = event.peer_uuid.hex
                 msg['host_name'] = event.peer_name
+            except serial.decoder.JSONDecodeError:
+                logger.warning('Malformatted message: "{}"'.format(payload))
             except (ValueError, KeyError):
                 logger.warning('Malformatted message: {}'.format(msg))
             except Exception:
