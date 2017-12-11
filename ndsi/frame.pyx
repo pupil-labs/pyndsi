@@ -102,7 +102,7 @@ cdef class JPEGFrame(object):
         self._height      = height
         self._index       = index
         self._buffer_len  = data_len
-        self._raw_data    = zmq_frame
+        self._raw_data    = bytearray(zmq_frame)
         self.timestamp    = timestamp
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx):
@@ -136,7 +136,7 @@ cdef class JPEGFrame(object):
 
     property jpeg_buffer:
         def __get__(self):
-            return bytearray(self._raw_data)
+            return self._raw_data
 
     property yuv_buffer:
         def __get__(self):
