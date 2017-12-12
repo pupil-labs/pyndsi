@@ -21,13 +21,6 @@ import struct
 import logging
 logger = logging.getLogger(__name__)
 
-IF UNAME_SYSNAME == "Windows":
-    include "windows_time.pxi"
-ELIF UNAME_SYSNAME == "Darwin":
-    include "darwin_time.pxi"
-ELIF UNAME_SYSNAME == "Linux":
-    include "linux_time.pxi"
-
 uvc_error_codes = {  0:"Success (no error)",
                     -1:"Input/output error.",
                     -2:"Invalid parameter.",
@@ -382,6 +375,3 @@ cdef inline str uint_array_to_GuidCode(np.uint8_t * u):
     for x in range(16):
         s += "{0:0{1}x}".format(u[x],2) # map int to rwo digit hex without "0x" prefix.
     return '%s%s%s%s%s%s%s%s-%s%s%s%s-%s%s%s%s-%s%s%s%s-%s%s%s%s%s%s%s%s%s%s%s%s'%tuple(s)
-
-def get_time_monotonic():
-    return get_sys_time_monotonic()
