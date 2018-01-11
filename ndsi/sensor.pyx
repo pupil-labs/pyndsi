@@ -175,7 +175,7 @@ cdef class Sensor(object):
             cdef H264Frame frame = None
             cdef unsigned char[:] out_buffer
             cdef int64_t pkt_pts = 0 # explicit define required for macos.
-            out = self.decoder.set_input_buffer(buffer_, meta_data[5], int(meta_data[4]*1e6))
+            out = self.decoder.set_input_buffer(bytearray(buffer_), meta_data[5], int(meta_data[4]*1e6))
             if self.decoder.is_frame_ready():
                 out_size = self.decoder.get_output_bytes()
                 out_buffer = np.empty(out_size, dtype=np.uint8)
