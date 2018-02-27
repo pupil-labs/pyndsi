@@ -59,11 +59,11 @@ cdef extern from "h264/media_stream.h" namespace "serenegiant::media":
         MediaStream()
         void release()
 
+        const np.uint32_t num_frames_written()
         int set_input_buffer(AVFormatContext *output_context,
                              const np.uint8_t *nal_units,
                              const size_t &bytes,
                              const np.int64_t &presentation_time_us)
-
 
 cdef extern from "h264/video_stream.h" namespace "serenegiant::media":
     cdef cppclass VideoStream(MediaStream):

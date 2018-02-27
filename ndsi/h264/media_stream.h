@@ -54,6 +54,7 @@ public:
 	virtual void release();
 	virtual int set_input_buffer(AVFormatContext *output_context,
 		const uint8_t *nal_units, const size_t &bytes, const int64_t &presentation_time_us);
+	inline const uint32_t num_frames_written() const { return frames; };
 };
 
 } /* namespace media */

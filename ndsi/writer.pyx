@@ -9,7 +9,7 @@
 '''
 
 import numpy as np
-from os import path
+from os import path, remove
 from .frame cimport H264Frame
 import logging
 logger = logging.getLogger(__name__)
@@ -65,10 +65,27 @@ cdef class H264Writer(object):
         self.frame_count +=1
 
     def close(self):
+        # Access number of written frames first
+        # since proxy.release() releases the stream
+        if self.video_stream != NULL:
+            num_frames_written = self.video_stream.num_frames_written()
+        else:
+            num_frames_written = 0
+
         if self.proxy != NULL:
             self.proxy.release()
             self.proxy = NULL
-        self.write_timestamps()
+
+        if num_frames_written:
+            self.write_timestamps()
+        else:
+            try:
+                # no frames have been written. Do not write timestamps
+                # and delete empty video container
+                remove(self.video_loc)
+            except OSError:
+                logger.debug('Video file has not been created')
+            raise RuntimeError('Empty world video recording')
 
     def release(self):
         self.close()
