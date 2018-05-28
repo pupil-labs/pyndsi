@@ -61,9 +61,9 @@ H264Decoder::H264Decoder(const color_format_t &_color_format)
 		codec_context = avcodec_alloc_context3(codec);
 		if (LIKELY(codec_context)) {
 			codec_context->pix_fmt = color_format;
-			codec_context->flags2 |= CODEC_FLAG2_CHUNKS;
-			if (codec->capabilities & CODEC_CAP_TRUNCATED) {
-				codec_context->flags |= CODEC_FLAG_TRUNCATED;
+			codec_context->flags2 |= AV_CODEC_FLAG2_CHUNKS;
+			if (codec->capabilities & AV_CODEC_CAP_TRUNCATED) {
+				codec_context->flags |= AV_CODEC_FLAG_TRUNCATED;
 			}
 			int result = avcodec_open2(codec_context, codec, NULL);
 			if (LIKELY(!result)) {
