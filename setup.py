@@ -59,8 +59,8 @@ elif platform.system() == 'Windows':
     include_dirs += [tj_dir + '\\include']
     extra_objects += [tj_lib]
     include_dirs += ['ndsi\\h264\\windows']
-    ffmpeg_libs = 'C:\\work\\ffmpeg-3.2-win64-dev\\lib'
-    include_dirs += ['C:\\work\\ffmpeg-3.2-win64-dev\\include']
+    ffmpeg_libs = 'C:\\work\\ffmpeg-4.0-win64-dev\\lib'
+    include_dirs += ['C:\\work\\ffmpeg-4.0-win64-dev\\include']
     libs += [ffmpeg_libs+'\\avutil',ffmpeg_libs+'\\avformat',ffmpeg_libs+'\\avcodec',ffmpeg_libs+'\\swscale']
 
 h264_sources = glob.glob('ndsi/h264/*.cpp')
