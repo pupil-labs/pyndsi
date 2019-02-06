@@ -64,6 +64,11 @@ cdef class Sensor:
         self.command_push = context.socket(zmq.PUSH)
         self.command_push.connect(self.command_endpoint)
 
+        self._init_data_sub(context)
+
+        self.refresh_controls()
+
+    def _init_data_sub(self, context):
         if self.data_endpoint:
             self.data_sub = context.socket(zmq.SUB)
             self.data_sub.set_hwm(3)
@@ -71,8 +76,6 @@ cdef class Sensor:
             self.data_sub.subscribe(self.uuid)
         else:
             self.data_sub = None
-
-        self.refresh_controls()
 
     def unlink(self):
         self.notify_sub.unsubscribe(self.uuid)
@@ -253,5 +256,5 @@ cdef class AnnotateSensor(Sensor):
             # data_msg[1]: metadata, None for now
             # data_msg[2]: <uint8 - button state> <float - timestamp>
 
-            data = py_struct.unpack("<Id", data_msg[2])
+            data = py_struct.unpack("<Bd", data_msg[2])
             yield data
