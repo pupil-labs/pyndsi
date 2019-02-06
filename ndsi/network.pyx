@@ -19,10 +19,14 @@ import zmq
 from pyre import Pyre, PyreEvent, zhelper
 
 from ndsi import __protocol_version__
-from ndsi.sensor cimport Sensor
+from ndsi.sensor import VideoSensor, AnnotateSensor
 
 logger = logging.getLogger(__name__)
 
+SENSOR_TYPE_CLASS_MAP = {
+    "video": VideoSensor,
+    "annotate": AnnotateSensor,
+}
 
 cdef class Network:
     ''' Communication node
@@ -140,10 +144,22 @@ cdef class Network:
 
     def sensor(self, sensor_uuid, callbacks=()):
         try:
-            sensor = Sensor(context=self.context, callbacks=callbacks, **self.sensors[sensor_uuid])
-            return sensor
+            sensor_settings = self.sensors[sensor_uuid]
         except KeyError:
             raise ValueError('"{}" is not an available sensor id.'.format(sensor_uuid))
+
+        try:
+            sensor_type = sensor_settings.get("sensor_type", "unknown")
+            sensor_cls = SENSOR_TYPE_CLASS_MAP[sensor_type]
+        except KeyError:
+            raise ValueError('Sensor of type "{}" is not supported.'.format(sensor_type))
+
+        sensor = sensor_cls(
+            context=self.context,
+            callbacks=callbacks,
+            **sensor_settings
+        )
+        return sensor
 
     def on_event(self, caller, event):
         if event['subject'] == 'attach':

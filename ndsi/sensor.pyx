@@ -34,9 +34,6 @@ class NotDataSubSupportedError(Exception):
 
 cdef class Sensor:
 
-    def __cinit__(self, *args, **kwargs):
-        self.decoder = new H264Decoder(COLOR_FORMAT_YUV422)
-
     def __init__(self,
             host_uuid,
             host_name,
@@ -48,7 +45,6 @@ cdef class Sensor:
             data_endpoint=None,
             context=None,
             callbacks=()):
-        self.tj_context = turbojpeg.tjInitDecompress()
         self.callbacks = [self.on_notification]+list(callbacks)
         self.context = context or zmq.Context()
         self.host_uuid = host_uuid
@@ -60,8 +56,6 @@ cdef class Sensor:
         self.command_endpoint = command_endpoint
         self.data_endpoint = data_endpoint
         self.controls = {}
-        self._recent_frame = None
-        self._waiting_for_iframe = True
 
         self.notify_sub = context.socket(zmq.SUB)
         self.notify_sub.connect(self.notify_endpoint)
@@ -87,10 +81,6 @@ cdef class Sensor:
         if self.supports_data_subscription:
             self.data_sub.unsubscribe(self.uuid)
             self.data_sub.close(linger=0)
-
-    def __del__(self):
-        logger.debug('Sensor deleted: {}'.format(self))
-        self.unlink()
 
     property supports_data_subscription:
         def __get__(self):
@@ -161,6 +151,54 @@ cdef class Sensor:
         except AttributeError:
             raise NotDataSubSupportedError()
 
+    def refresh_controls(self):
+        cmd = serial.dumps({'action': 'refresh_controls'})
+        self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
+        self.command_push.send_string(cmd)
+
+    def reset_all_control_values(self):
+        for control_id in self.controls:
+            self.reset_control_value(control_id)
+
+    def reset_control_value(self, control_id):
+        if control_id in self.controls:
+            if 'def' in self.controls[control_id]:
+                value = self.controls[control_id]['def']
+                self.set_control_value(control_id, value)
+            else:
+                logger.error(('Could not reset control `{}` because it does not have a default value.').format(control_id))
+        else: logger.error('Could not reset unknown control `{}`'.format(control_id))
+
+    def set_control_value(self, control_id, value):
+        try:
+            dtype = self.controls[control_id]['dtype']
+            if dtype == 'bool': value = bool(value)
+            elif dtype == 'string': value = str(value)
+            elif dtype == 'integer': value = int(value)
+            elif dtype == 'float': value = float(value)
+            elif dtype == 'intmapping': value = int(value)
+            elif dtype == 'strmapping': value = str(value)
+        except KeyError:
+            pass
+        cmd = serial.dumps({
+            "action": "set_control_value",
+            "control_id": control_id,
+            "value": value})
+        self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
+        self.command_push.send_string(cmd)
+
+
+cdef class VideoSensor(Sensor):
+
+    def __cinit__(self, *args, **kwargs):
+        self.decoder = new H264Decoder(COLOR_FORMAT_YUV422)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.tj_context = turbojpeg.tjInitDecompress()
+        self._recent_frame = None
+        self._waiting_for_iframe = True
+
     def get_newest_data_frame(self, timeout=None):
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
@@ -202,38 +240,6 @@ cdef class Sensor:
         else:
             raise StreamError('Operation timed out.')
 
-    def refresh_controls(self):
-        cmd = serial.dumps({'action': 'refresh_controls'})
-        self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
-        self.command_push.send_string(cmd)
 
-    def reset_all_control_values(self):
-        for control_id in self.controls:
-            self.reset_control_value(control_id)
-
-    def reset_control_value(self, control_id):
-        if control_id in self.controls:
-            if 'def' in self.controls[control_id]:
-                value = self.controls[control_id]['def']
-                self.set_control_value(control_id, value)
-            else:
-                logger.error(('Could not reset control `{}` because it does not have a default value.').format(control_id))
-        else: logger.error('Could not reset unknown control `{}`'.format(control_id))
-
-    def set_control_value(self, control_id, value):
-        try:
-            dtype = self.controls[control_id]['dtype']
-            if dtype == 'bool': value = bool(value)
-            elif dtype == 'string': value = str(value)
-            elif dtype == 'integer': value = int(value)
-            elif dtype == 'float': value = float(value)
-            elif dtype == 'intmapping': value = int(value)
-            elif dtype == 'strmapping': value = str(value)
-        except KeyError:
-            pass
-        cmd = serial.dumps({
-            "action": "set_control_value",
-            "control_id": control_id,
-            "value": value})
-        self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
-        self.command_push.send_string(cmd)
+cdef class AnnotateSensor(Sensor):
+    pass

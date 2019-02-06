@@ -16,14 +16,9 @@ from ndsi.h264 cimport H264Decoder, COLOR_FORMAT_YUV422
 
 cdef class Sensor:
 
-    cdef H264Decoder *decoder
-
     cdef list callbacks
     cdef object context
     cdef object command_push
-    cdef object _recent_frame
-    cdef bint _waiting_for_iframe
-    cdef turbojpeg.tjhandle tj_context
     cdef readonly object notify_sub
     cdef readonly object data_sub
 
@@ -37,3 +32,14 @@ cdef class Sensor:
     cdef readonly unicode data_endpoint
     cdef readonly object unlink
     cdef readonly dict controls
+
+
+cdef class VideoSensor(Sensor):
+
+    cdef H264Decoder *decoder
+    cdef object _recent_frame
+    cdef bint _waiting_for_iframe
+    cdef turbojpeg.tjhandle tj_context
+
+cdef class AnnotateSensor(Sensor):
+    pass
