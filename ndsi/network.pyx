@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -8,22 +9,22 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-import time
-import sys
 import json as serial
+import logging
+import sys
+import time
 import traceback  as tb
 
 import zmq
 from pyre import Pyre, PyreEvent, zhelper
 
-from . import __protocol_version__
-from .sensor cimport Sensor
+from ndsi import __protocol_version__
+from ndsi.sensor cimport Sensor
 
-import logging
 logger = logging.getLogger(__name__)
 
 
-cdef class Network(object):
+cdef class Network:
     ''' Communication node
 
     Creates Pyre node and handles all communication.

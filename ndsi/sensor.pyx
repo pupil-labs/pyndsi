@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -7,8 +8,6 @@
  License details are in the file LICENSE, distributed as part of this software.
 ----------------------------------------------------------------------------------~(*)
 '''
-
-cimport cturbojpeg as turbojpeg
 
 # importing `struct` module name-clashes with cython struct keyword
 import struct as py_struct
@@ -21,10 +20,10 @@ import zmq
 import logging
 logger = logging.getLogger(__name__)
 
-from . import StreamError
+from ndsi import StreamError
 
-from .frame cimport JPEGFrame, H264Frame
-from .frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
+from ndsi.frame cimport JPEGFrame, H264Frame
+from ndsi.frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
 
 
 class NotDataSubSupportedError(Exception):
@@ -33,7 +32,7 @@ class NotDataSubSupportedError(Exception):
     def __str__(self):
         return repr(self.value)
 
-cdef class Sensor(object):
+cdef class Sensor:
 
     def __cinit__(self, *args, **kwargs):
         self.decoder = new H264Decoder(COLOR_FORMAT_YUV422)

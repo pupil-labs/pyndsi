@@ -1,4 +1,4 @@
-'''
+"""
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
  Copyright (C) 2012-2015  Pupil Labs
@@ -6,10 +6,10 @@
  Distributed under the terms of the CC BY-NC-SA License.
  License details are in the file LICENSE, distributed as part of this software.
 ----------------------------------------------------------------------------------~(*)
-'''
+"""
 
-__version__ = '0.4'
-__protocol_version__ = '3'
+__version__ = "0.5"
+__protocol_version__ = "3"
 
 
 class CaptureError(Exception):
@@ -23,8 +23,9 @@ class StreamError(CaptureError):
         super(StreamError, self).__init__(message)
         self.message = message
 
-from .network import Network
-from .sensor import Sensor
-from .writer import H264Writer
 
-from . import frame
+from ndsi.network import Network
+from ndsi.sensor import Sensor
+from ndsi.writer import H264Writer
+
+from ndsi import frame

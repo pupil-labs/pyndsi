@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -8,7 +9,7 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-cdef class Network(object):
+cdef class Network:
 
     cdef object context
     cdef unicode name

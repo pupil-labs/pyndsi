@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -8,14 +9,17 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-import numpy as np
-from os import path, remove
-from .frame cimport H264Frame
 import logging
+from os import path, remove
+
+import numpy as np
+
+from ndsi.frame cimport H264Frame
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-cdef class H264Writer(object):
+cdef class H264Writer:
 
     def __cinit__(self, video_loc,int width,int height,int fps, *args, **kwargs):
         self.video_loc = video_loc

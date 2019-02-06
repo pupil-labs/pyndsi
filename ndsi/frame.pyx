@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -8,17 +9,16 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
+import hashlib
+import logging
 from libc.string cimport memset
-from .h264 cimport get_vop_type_annexb
-cimport cturbojpeg as turbojpeg
+
 cimport numpy as np
 import numpy as np
 
-import hashlib
-import struct
+from ndsi.h264 cimport get_vop_type_annexb
 
 # logging
-import logging
 logger = logging.getLogger(__name__)
 
 uvc_error_codes = {  0:"Success (no error)",
@@ -64,7 +64,7 @@ class InitError(CaptureError):
         self.message = message
 
 
-cdef class JPEGFrame(object):
+cdef class JPEGFrame:
     '''
     The Frame Object holds image data and image metadata.
 
@@ -284,7 +284,7 @@ cdef class JPEGFrame(object):
         self._yuv_converted = True
 
 
-cdef class H264Frame(object):
+cdef class H264Frame:
     def __cinit__(self,*args,**kwargs):
         self._bgr_converted = False
         self.tj_context = NULL

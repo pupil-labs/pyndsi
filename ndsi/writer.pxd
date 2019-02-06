@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -9,9 +10,10 @@
 '''
 
 cimport numpy as np
-from .h264 cimport VideoStream, Mp4Writer
 
-cdef class H264Writer(object):
+from ndsi.h264 cimport VideoStream, Mp4Writer
+
+cdef class H264Writer:
 
     cdef readonly np.uint32_t width, height, fps
     cdef readonly bint waiting_for_iframe

@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -8,12 +9,12 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-cimport cturbojpeg as turbojpeg
 cimport numpy as np
 
-from .h264 cimport H264Decoder, COLOR_FORMAT_YUV422
+cimport ndsi.cturbojpeg as turbojpeg
+from ndsi.h264 cimport H264Decoder, COLOR_FORMAT_YUV422
 
-cdef class Sensor(object):
+cdef class Sensor:
 
     cdef H264Decoder *decoder
 
