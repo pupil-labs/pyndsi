@@ -9,7 +9,7 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-cimport pl_ndsi.cturbojpeg as turbojpeg
+cimport ndsi.cturbojpeg as turbojpeg
 
 cdef class JPEGFrame:
     cdef turbojpeg.tjhandle tj_context

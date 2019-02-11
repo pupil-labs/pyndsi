@@ -16,7 +16,7 @@ from libc.string cimport memset
 cimport numpy as np
 import numpy as np
 
-from pl_ndsi.h264 cimport get_vop_type_annexb
+from ndsi.h264 cimport get_vop_type_annexb
 
 # logging
 logger = logging.getLogger(__name__)

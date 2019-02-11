@@ -18,8 +18,8 @@ import traceback  as tb
 import zmq
 from pyre import Pyre, PyreEvent, zhelper
 
-from pl_ndsi import __protocol_version__
-from pl_ndsi.sensor import VideoSensor, AnnotateSensor
+from ndsi import __protocol_version__
+from ndsi.sensor import VideoSensor, AnnotateSensor
 
 logger = logging.getLogger(__name__)
 
@@ -118,10 +118,10 @@ cdef class Network:
             version = group_version[1] if len(group_version) > 1 else '0'
             if group == 'pupil-mobile':
                 if not self._warned_once_older_version and version < __protocol_version__:
-                    logger.warning('Devices with outdated pl_ndsi version found. Please update these devices.')
+                    logger.warning('Devices with outdated NDSI version found. Please update these devices.')
                     self._warned_once_older_version = True
                 elif not self._warned_once_newer_version and version > __protocol_version__:
-                    logger.warning('Devices with newer pl_ndsi version found. You should update.')
+                    logger.warning('Devices with newer NDSI version found. You should update.')
                     self._warned_once_newer_version = True
 
         elif event.type == 'EXIT':

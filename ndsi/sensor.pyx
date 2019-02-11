@@ -20,10 +20,10 @@ import zmq
 import logging
 logger = logging.getLogger(__name__)
 
-from pl_ndsi import StreamError
+from ndsi import StreamError
 
-from pl_ndsi.frame cimport JPEGFrame, H264Frame
-from pl_ndsi.frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
+from ndsi.frame cimport JPEGFrame, H264Frame
+from ndsi.frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
 
 
 class NotDataSubSupportedError(Exception):

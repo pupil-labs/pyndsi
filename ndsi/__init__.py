@@ -24,8 +24,8 @@ class StreamError(CaptureError):
         self.message = message
 
 
-from pl_ndsi.network import Network
-from pl_ndsi.sensor import Sensor
-from pl_ndsi.writer import H264Writer
+from ndsi.network import Network
+from ndsi.sensor import Sensor
+from ndsi.writer import H264Writer
 
-from pl_ndsi import frame
+from ndsi import frame

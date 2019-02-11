@@ -11,8 +11,8 @@
 
 cimport numpy as np
 
-cimport pl_ndsi.cturbojpeg as turbojpeg
-from pl_ndsi.h264 cimport H264Decoder, COLOR_FORMAT_YUV422
+cimport ndsi.cturbojpeg as turbojpeg
+from ndsi.h264 cimport H264Decoder, COLOR_FORMAT_YUV422
 
 cdef class Sensor:
 
