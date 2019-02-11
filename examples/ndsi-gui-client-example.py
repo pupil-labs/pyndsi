@@ -19,11 +19,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
-logging.getLogger('ndsi').setLevel(logging.INFO)
+logging.getLogger('pl_ndsi').setLevel(logging.INFO)
 logging.getLogger('pyre').setLevel(logging.WARNING)
 logging.getLogger('glfw').setLevel(logging.WARNING)
 
-import ndsi
+import pl_ndsi
 import pprint, random
 
 from glfw import *
@@ -215,7 +215,7 @@ class SensorUIWrapper(object):
 
         self.menu.append(ui.Button("Reset to default values",self.sensor.reset_all_control_values))
 
-def runNDSIClient():
+def runpl_ndsiClient():
     global quit
     quit = False
 
@@ -335,7 +335,7 @@ def runNDSIClient():
             sensors[event['sensor_uuid']].cleanup()
             del sensors[event['sensor_uuid']]
 
-    n = ndsi.Network(callbacks=(on_network_event,))
+    n = pl_ndsi.Network(callbacks=(on_network_event,))
     n.start()
 
     import os
@@ -375,7 +375,7 @@ def runNDSIClient():
             glfwSwapBuffers(window)
             glfwPollEvents()
 
-            # handle ndsi
+            # handle pl_ndsi
             while n.has_events:
                 n.handle_event()
             for s in sensors.values():
@@ -394,4 +394,4 @@ def runNDSIClient():
 
 if __name__ == '__main__':
     logging.basicConfig()
-    runNDSIClient()
+    runpl_ndsiClient()

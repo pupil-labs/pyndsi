@@ -14,7 +14,7 @@ from os import path, remove
 
 import numpy as np
 
-from ndsi.frame cimport H264Frame
+from pl_ndsi.frame cimport H264Frame
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
