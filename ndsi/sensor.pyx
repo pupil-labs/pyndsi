@@ -256,5 +256,14 @@ cdef class AnnotateSensor(Sensor):
             # data_msg[1]: metadata, None for now
             # data_msg[2]: <uint8 - button state> <float - timestamp>
 
-            data = py_struct.unpack("<Bd", data_msg[2])
+            data = py_struct.unpack("<Bd", data_msg[0])
             yield data
+
+    def _init_data_sub(self, context):
+        if self.data_endpoint:
+            self.data_sub = context.socket(zmq.SUB)
+            self.data_sub.set_hwm(3)
+            self.data_sub.connect(self.data_endpoint)
+            self.data_sub.subscribe("")
+        else:
+            self.data_sub = None
