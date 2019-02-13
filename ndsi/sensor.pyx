@@ -229,6 +229,7 @@ cdef class VideoSensor(Sensor):
             return frame
 
         if self.data_sub.poll(timeout=timeout):
+            newest_h264_frame = None
             while self.has_data:
                 data_msg = self.get_data(copy=False)
                 meta_data = py_struct.unpack("<LLLLdLL", data_msg[1])
@@ -236,10 +237,13 @@ cdef class VideoSensor(Sensor):
                     return create_jpeg_frame(data_msg[2], meta_data)
                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
                     frame = create_h264_frame(data_msg[2], meta_data)
-                    if frame is not None:
-                        return frame
+                    newest_h264_frame = frame or newest_h264_frame
                 else:
                     raise StreamError('Frame was not of format MJPEG or H264')
+            if newest_h264_frame is not None:
+                return newest_h264_frame
+            else:
+                raise StreamError('Operation timed out.')
         else:
             raise StreamError('Operation timed out.')
 
