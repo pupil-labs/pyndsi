@@ -1,3 +1,5 @@
+# cython: language_level=3
+
 cdef extern from "turbojpeg.h":
     cdef enum TJSAMP:
         TJSAMP_444

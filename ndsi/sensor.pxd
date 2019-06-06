@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -8,21 +9,16 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-cimport cturbojpeg as turbojpeg
 cimport numpy as np
 
-from .h264 cimport H264Decoder, COLOR_FORMAT_YUV422
+cimport ndsi.cturbojpeg as turbojpeg
+from ndsi.h264 cimport H264Decoder, COLOR_FORMAT_YUV422
 
-cdef class Sensor(object):
-
-    cdef H264Decoder *decoder
+cdef class Sensor:
 
     cdef list callbacks
     cdef object context
     cdef object command_push
-    cdef object _recent_frame
-    cdef bint _waiting_for_iframe
-    cdef turbojpeg.tjhandle tj_context
     cdef readonly object notify_sub
     cdef readonly object data_sub
 
@@ -36,3 +32,14 @@ cdef class Sensor(object):
     cdef readonly unicode data_endpoint
     cdef readonly object unlink
     cdef readonly dict controls
+
+
+cdef class VideoSensor(Sensor):
+
+    cdef H264Decoder *decoder
+    cdef object _recent_frame
+    cdef bint _waiting_for_iframe
+    cdef turbojpeg.tjhandle tj_context
+
+cdef class AnnotateSensor(Sensor):
+    pass

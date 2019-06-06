@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -8,22 +9,27 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-import time
-import sys
 import json as serial
+import logging
+import sys
+import time
 import traceback  as tb
 
 import zmq
 from pyre import Pyre, PyreEvent, zhelper
 
-from . import __protocol_version__
-from .sensor cimport Sensor
+from ndsi import __protocol_version__
+from ndsi.sensor import VideoSensor, AnnotateSensor, GazeSensor
 
-import logging
 logger = logging.getLogger(__name__)
 
+SENSOR_TYPE_CLASS_MAP = {
+    "video": VideoSensor,
+    "annotate": AnnotateSensor,
+    "gaze": GazeSensor,
+}
 
-cdef class Network(object):
+cdef class Network:
     ''' Communication node
 
     Creates Pyre node and handles all communication.
@@ -139,10 +145,22 @@ cdef class Network(object):
 
     def sensor(self, sensor_uuid, callbacks=()):
         try:
-            sensor = Sensor(context=self.context, callbacks=callbacks, **self.sensors[sensor_uuid])
-            return sensor
+            sensor_settings = self.sensors[sensor_uuid]
         except KeyError:
             raise ValueError('"{}" is not an available sensor id.'.format(sensor_uuid))
+
+        try:
+            sensor_type = sensor_settings.get("sensor_type", "unknown")
+            sensor_cls = SENSOR_TYPE_CLASS_MAP[sensor_type]
+        except KeyError:
+            raise ValueError('Sensor of type "{}" is not supported.'.format(sensor_type))
+
+        sensor = sensor_cls(
+            context=self.context,
+            callbacks=callbacks,
+            **sensor_settings
+        )
+        return sensor
 
     def on_event(self, caller, event):
         if event['subject'] == 'attach':

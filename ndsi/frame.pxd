@@ -1,3 +1,4 @@
+# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -8,9 +9,9 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-cimport cturbojpeg as turbojpeg
+cimport ndsi.cturbojpeg as turbojpeg
 
-cdef class JPEGFrame(object):
+cdef class JPEGFrame:
     cdef turbojpeg.tjhandle tj_context
     #we use numpy for memory management.
     cdef object _raw_data
@@ -25,7 +26,7 @@ cdef class JPEGFrame(object):
 
     cdef attach_tj_context(self, turbojpeg.tjhandle ctx)
 
-cdef class H264Frame(object):
+cdef class H264Frame:
     cdef turbojpeg.tjhandle tj_context
     cdef unsigned char[:] _yuv_buffer, _bgr_buffer, _gray_buffer, _h264_buffer
     cdef long _width, _height, _index, _buffer_len
