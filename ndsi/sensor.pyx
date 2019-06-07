@@ -280,6 +280,6 @@ cdef class GazeSensor(Sensor):
 
         while self.has_data:
             data_msg = self.get_data(copy=False)
-            ts = py_struct.unpack("<d", data_msg[1])
+            ts, = py_struct.unpack("<d", data_msg[1])
             x, y = py_struct.unpack("<ff", data_msg[2])
             yield x, y, ts
