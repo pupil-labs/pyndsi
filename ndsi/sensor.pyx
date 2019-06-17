@@ -283,3 +283,36 @@ cdef class GazeSensor(Sensor):
             ts, = py_struct.unpack("<d", data_msg[1])
             x, y = py_struct.unpack("<ff", data_msg[2])
             yield x, y, ts
+
+
+cdef class IMUSensor(Sensor):
+
+    CONTENT_DTYPE = np.dtype(
+        [
+            ("time_s", "<f8"),
+            ("accel_x", "<f4"),
+            ("accel_y", "<f4"),
+            ("accel_z", "<f4"),
+            ("gyro_x", "<f4"),
+            ("gyro_y", "<f4"),
+            ("gyro_z", "<f4"),
+        ]
+    )
+
+    def fetch_data(self):
+        if not self.supports_data_subscription:
+            raise NotDataSubSupportedError()
+
+        while self.has_data:
+            data_msg = self.get_data(copy=False)
+            content = np.frombuffer(data_msg[2], dtype=self.CONTENT_DTYPE).view(np.recarray)
+            yield content
+
+
+SENSOR_TYPE_CLASS_MAP = {
+    "hardware": Sensor,
+    "video": VideoSensor,
+    "annotate": AnnotateSensor,
+    "gaze": GazeSensor,
+    "imu": IMUSensor,
+}
