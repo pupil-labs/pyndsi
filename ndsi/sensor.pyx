@@ -287,8 +287,17 @@ cdef class GazeSensor(Sensor):
 
 cdef class IMUSensor(Sensor):
 
-    HEADER_FIELDS = ("format", "channel", "sequence", "data_bytes", "reserved")
-    CONTENT_FIELDS = ("time_s", "accel_x", "accel_y", "accel_z", "gyro_x", "gyro_y", "gyro_z")
+    CONTENT_DTYPE = np.dtype(
+        [
+            ("time_s", "<f8"),
+            ("accel_x", "<f4"),
+            ("accel_y", "<f4"),
+            ("accel_z", "<f4"),
+            ("gyro_x", "<f4"),
+            ("gyro_y", "<f4"),
+            ("gyro_z", "<f4"),
+        ]
+    )
 
     def fetch_data(self):
         if not self.supports_data_subscription:
@@ -296,12 +305,9 @@ cdef class IMUSensor(Sensor):
 
         while self.has_data:
             data_msg = self.get_data(copy=False)
-            header = py_struct.unpack("<LLLLL", data_msg[1])
-            content = py_struct.unpack("<dffffff", data_msg[2])
-            yield (
-                {self.HEADER_FIELDS[i]: val for i, val in enumerate(header)},
-                {self.CONTENT_FIELDS[i]: val for i, val in enumerate(content)}
-            )
+            content = np.frombuffer(data_msg[2], dtype=self.CONTENT_DTYPE).view(np.recarray)
+            yield content
+
 
 SENSOR_TYPE_CLASS_MAP = {
     "hardware": Sensor,
