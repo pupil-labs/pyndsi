@@ -19,17 +19,10 @@ import zmq
 from pyre import Pyre, PyreEvent, zhelper
 
 from ndsi import __protocol_version__
-from ndsi.sensor import Sensor, VideoSensor, AnnotateSensor, GazeSensor
+from ndsi.sensor import SENSOR_TYPE_CLASS_MAP
 
 logger = logging.getLogger(__name__)
 
-SENSOR_TYPE_CLASS_MAP = {
-    "hardware": Sensor,
-    "video": VideoSensor,
-    "annotate": AnnotateSensor,
-    "gaze": GazeSensor,
-    "imu": IMUSensor,
-}
 
 cdef class Network:
     ''' Communication node

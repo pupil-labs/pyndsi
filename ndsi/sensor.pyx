@@ -302,3 +302,11 @@ cdef class IMUSensor(Sensor):
                 {HEADER_FIELDS[i]: val for i, val in enumerate(header)},
                 {CONTENT_FIELDS[i]: val for i, val in enumerate(content)}
             )
+
+SENSOR_TYPE_CLASS_MAP = {
+    "hardware": Sensor,
+    "video": VideoSensor,
+    "annotate": AnnotateSensor,
+    "gaze": GazeSensor,
+    "imu": IMUSensor,
+}
