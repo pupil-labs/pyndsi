@@ -281,7 +281,7 @@ typedef struct publish_header {
     uint32_t width_le;
     uint32_t height_le;
     uint32_t sequence_le;
-    int64_t presentation_time_ns_le;
+    uint64_t presentation_time_ns_le;
     uint32_t data_bytes_le;
     uint32_t reserved_le;
 } __attribute__ ((packed)) publish_header_t;
@@ -319,7 +319,7 @@ typedef struct audio_header {
     uint32_t format_le;  // PCM8, PCM16, etc., usually use PCM8 on most of Android devices.
     uint32_t channel_le; // 1 or 2, but most of Android devices just support 1
     uint32_t sequence_le;
-    int64_t presentation_time_ns_le;
+    uint64_t presentation_time_ns_le;
     uint32_t data_bytes_le;
 } __attribute__ ((packed)) audio_header;
 ```
@@ -340,7 +340,7 @@ typedef struct imu_header {
 } __attribute__ ((packed)) imu_header_t;
 
 typedef struct imu_data {
-    int64_t time_ns_le;
+    uint64_t time_ns_le;
     float32_t accel_x_le;
     float32_t accel_y_le;
     float32_t accel_z_le;
@@ -359,7 +359,7 @@ data body: `location_data_t`
 typedef struct location_header {
     uint32_t format_le;	 // always 0
     uint32_t sequence_le;
-    int64_t presentation_time_ns_le;
+    uint64_t presentation_time_ns_le;
     uint32_t data_bytes_le;
     uint32_t reserved_le;
 } __attribute__ ((packed)) location_header_t;
@@ -382,7 +382,7 @@ data body: `key_data_t`
 ```
 typedef struct keyboard_header {
     uint32_t sequence_le;
-    int64_t presentation_time_ns_le;
+    uint64_t presentation_time_ns_le;
     uint32_t data_bytes_le;
 } __attribute__ ((packed)) keyboard_header_t;
 
@@ -402,7 +402,7 @@ data body: `gaze_data_t`
 
 ```
 typedef struct location_header {
-    int64_t time_ns_le;
+    uint64_t time_ns_le;
 } __attribute__ ((packed)) location_header_t;
 
 typedef location_data {
