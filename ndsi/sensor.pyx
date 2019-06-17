@@ -299,8 +299,8 @@ cdef class IMUSensor(Sensor):
             header = py_struct.unpack("<LLLLL", data_msg[1])
             content = py_struct.unpack("<dffffff", data_msg[2])
             yield (
-                {HEADER_FIELDS[i]: val for i, val in enumerate(header)},
-                {CONTENT_FIELDS[i]: val for i, val in enumerate(content)}
+                {self.HEADER_FIELDS[i]: val for i, val in enumerate(header)},
+                {self.CONTENT_FIELDS[i]: val for i, val in enumerate(content)}
             )
 
 SENSOR_TYPE_CLASS_MAP = {
