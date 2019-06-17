@@ -108,7 +108,17 @@ detach = {
     "sensor_uuid"     : <String>
 }
 
-sensor_type = "video" XOR "audio" XOR "imu" XOR "hardware" XOR <String>
+sensor_type = <String>
+```
+
+Defined sesnor types are:
+```js
+video
+audio
+imu
+hardware
+key
+location
 ```
 
 Endpoints are strings which are used for zmq sockets and follow the `<protocol>://<address>:<port>` scheme.
@@ -313,4 +323,73 @@ typedef struct audio_header {
 } __attribute__ ((packed)) audio_header;
 ```
 
-**IMU** and other headers are still to be defined.
+
+### **IMU**
+
+frame data = `imu_header_t` + data body;
+data body: `imu_data_t[from 1 to 80]`
+
+```
+typedef struct imu_header {
+    uint32_t format_le;	 // always 0
+    uint32_t channel_le; // 3
+    uint32_t sequence_le;
+    uint32_t data_bytes_le;
+    uint32_t reserved_le;
+} __attribute__ ((packed)) imu_header_t;
+
+typedef struct imu_data {
+    float64_t time_s_le;
+    float32_t accel_x_le;
+    float32_t accel_y_le;
+    float32_t accel_z_le;
+    float32_t gyro_x_le;
+    float32_t gyro_y_le;
+    float32_t gyro_z_le;
+} __attribute__ ((packed)) imu_data_t;
+```
+
+### **location**
+
+frame data: `location_header_t` + data body
+data body: `location_data_t`
+
+```
+typedef struct location_header {
+    uint32_t format_le;	 // always 0
+    uint32_t sequence_le;
+    float64_t presentation_time_s_le;
+    uint32_t data_bytes_le;
+    uint32_t reserved_le;
+} __attribute__ ((packed)) location_header_t;
+
+typedef location_data {
+    float64_t longitude_le;
+    float64_t latitude_le;
+    float64_t altitude_le;
+    float64_t accuracy_le;
+    float64_t bearing_le;
+    float64_t speed_le;
+} __attribute__ ((packed)) location_data_t;
+```
+
+### **key**
+
+frame data: `keyboard_header_t` + data body;
+data body: `key_data_t`
+
+```
+typedef struct keyboard_header {
+    uint32_t sequence_le;
+    float64_t presentation_time_s_le;
+    uint32_t data_bytes_le;
+} __attribute__ ((packed)) keyboard_header_t;
+
+typedef struct key_data {
+    int16_t char_le;
+    int32_t meta_state_le;
+    int8_t action;
+} __attribute__ ((packed)) key_data_t;
+```
+
+Note: Key sensor is only available if the screen of device is ON and when device is not locked because of limitation of Android OS.
