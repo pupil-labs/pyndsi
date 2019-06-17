@@ -1,6 +1,6 @@
 # Network Device Sensor Interface Protocol Specification
 
-Protocol version: v3
+Protocol version: v4
 Protocol status: draft
 
 
@@ -17,7 +17,7 @@ The key words "MUST", "MUST NOT", "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "S
 
 NDSI actors (**Hosts** and **Clients**) find each other using the [ZeroMQ Realtime Exchange Protocol](https://rfc.zeromq.org/spec:36/ZRE). We recommend the usage of existing libraries (e.g. [zyre](https://github.com/zeromq/zyre), [Pyre](https://github.com/zeromq/pyre)) that implement the ZRE protocol. See the protocol spec for definitons of SHOUT, WHISPER, and join.
 
-All actors MUST join the ZRE group `pupil-mobile-v3` -- hereinafter referred to as _GROUP_.
+All actors MUST join the ZRE group `pupil-mobile-v4` -- hereinafter referred to as _GROUP_.
 
 **Hosts** (e.g. Android app):
 
@@ -119,6 +119,7 @@ imu
 hardware
 key
 location
+gaze
 ```
 
 Endpoints are strings which are used for zmq sockets and follow the `<protocol>://<address>:<port>` scheme.
@@ -280,7 +281,7 @@ typedef struct publish_header {
     uint32_t width_le;
     uint32_t height_le;
     uint32_t sequence_le;
-    float64_t presentation_time_s_le;
+    int64_t presentation_time_ns_le;
     uint32_t data_bytes_le;
     uint32_t reserved_le;
 } __attribute__ ((packed)) publish_header_t;
@@ -318,7 +319,7 @@ typedef struct audio_header {
     uint32_t format_le;  // PCM8, PCM16, etc., usually use PCM8 on most of Android devices.
     uint32_t channel_le; // 1 or 2, but most of Android devices just support 1
     uint32_t sequence_le;
-    float64_t presentation_time_s_le;
+    int64_t presentation_time_ns_le;
     uint32_t data_bytes_le;
 } __attribute__ ((packed)) audio_header;
 ```
@@ -339,7 +340,7 @@ typedef struct imu_header {
 } __attribute__ ((packed)) imu_header_t;
 
 typedef struct imu_data {
-    float64_t time_s_le;
+    int64_t time_ns_le;
     float32_t accel_x_le;
     float32_t accel_y_le;
     float32_t accel_z_le;
@@ -358,7 +359,7 @@ data body: `location_data_t`
 typedef struct location_header {
     uint32_t format_le;	 // always 0
     uint32_t sequence_le;
-    float64_t presentation_time_s_le;
+    int64_t presentation_time_ns_le;
     uint32_t data_bytes_le;
     uint32_t reserved_le;
 } __attribute__ ((packed)) location_header_t;
@@ -381,7 +382,7 @@ data body: `key_data_t`
 ```
 typedef struct keyboard_header {
     uint32_t sequence_le;
-    float64_t presentation_time_s_le;
+    int64_t presentation_time_ns_le;
     uint32_t data_bytes_le;
 } __attribute__ ((packed)) keyboard_header_t;
 
@@ -393,3 +394,19 @@ typedef struct key_data {
 ```
 
 Note: Key sensor is only available if the screen of device is ON and when device is not locked because of limitation of Android OS.
+
+### **gaze**
+
+frame data: `gaze_header_t` + data body
+data body: `gaze_data_t`
+
+```
+typedef struct location_header {
+    int64_t time_ns_le;
+} __attribute__ ((packed)) location_header_t;
+
+typedef location_data {
+    float32_t gaze_x;  // 0.0 - 1088.0
+    float32_t gaze_y;  // 0.0 - 1080.0
+} __attribute__ ((packed)) location_data_t;
+```
