@@ -25,6 +25,7 @@ from ndsi import StreamError
 from ndsi.frame cimport JPEGFrame, H264Frame
 from ndsi.frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
 
+NANO = 1e-9
 
 class NotDataSubSupportedError(Exception):
     def __init__(self, value=None):
@@ -232,7 +233,7 @@ cdef class VideoSensor(Sensor):
             newest_h264_frame = None
             while self.has_data:
                 data_msg = self.get_data(copy=False)
-                meta_data = py_struct.unpack("<LLLLdLL", data_msg[1])
+                meta_data = py_struct.unpack("<LLLLQLL", data_msg[1])
                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
                     return create_jpeg_frame(data_msg[2], meta_data)
                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
@@ -258,10 +259,12 @@ cdef class AnnotateSensor(Sensor):
             data_msg = self.get_data(copy=False)
             # data_msg[0]: sensor uuid
             # data_msg[1]: metadata, None for now
-            # data_msg[2]: <uint8 - button state> <float - timestamp>
+            # data_msg[2]: <uint8 - button state> <uint64_t - timestamp>
 
-            data = py_struct.unpack("<Bd", data_msg[0])
-            yield data
+            key, ts = py_struct.unpack("<BQ", data_msg[0])
+            ts *= NANO
+
+            yield key, ts
 
     def _init_data_sub(self, context):
         if self.data_endpoint:
@@ -280,7 +283,8 @@ cdef class GazeSensor(Sensor):
 
         while self.has_data:
             data_msg = self.get_data(copy=False)
-            ts, = py_struct.unpack("<d", data_msg[1])
+            ts, = py_struct.unpack("<Q", data_msg[1])
+            ts *= NANO
             x, y = py_struct.unpack("<ff", data_msg[2])
             yield x, y, ts
 
