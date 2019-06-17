@@ -283,3 +283,22 @@ cdef class GazeSensor(Sensor):
             ts, = py_struct.unpack("<d", data_msg[1])
             x, y = py_struct.unpack("<ff", data_msg[2])
             yield x, y, ts
+
+
+cdef class IMUSensor(Sensor):
+
+    HEADER_FIELDS = ("format", "channel", "sequence", "data_bytes", "reserved")
+    CONTENT_FIELDS = ("time_s", "accel_x", "accel_y", "accel_z", "gyro_x", "gyro_y", "gyro_z")
+
+    def fetch_data(self):
+        if not self.supports_data_subscription:
+            raise NotDataSubSupportedError()
+
+        while self.has_data:
+            data_msg = self.get_data(copy=False)
+            header = py_struct.unpack("<LLLLL", data_msg[1])
+            content = py_struct.unpack("<dffffff", data_msg[2])
+            yield (
+                {HEADER_FIELDS[i]: val for i, val in enumerate(header)},
+                {CONTENT_FIELDS[i]: val for i, val in enumerate(content)}
+            )

@@ -28,6 +28,7 @@ SENSOR_TYPE_CLASS_MAP = {
     "video": VideoSensor,
     "annotate": AnnotateSensor,
     "gaze": GazeSensor,
+    "imu": IMUSensor,
 }
 
 cdef class Network:
