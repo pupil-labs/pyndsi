@@ -9,7 +9,7 @@
 """
 
 __version__ = "0.5"
-__protocol_version__ = "3"
+__protocol_version__ = "4"
 
 
 class CaptureError(Exception):
