@@ -14,6 +14,7 @@ import os
 import io
 import re
 
+import setuptools  # needed for creating wheel distributions
 from distutils.core import setup
 from distutils.extension import Extension
 from Cython.Build import cythonize
