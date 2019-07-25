@@ -1,4 +1,3 @@
-# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -24,16 +23,13 @@ from ndsi.sensor import SENSOR_TYPE_CLASS_MAP
 logger = logging.getLogger(__name__)
 
 
-cdef class Network:
+class Network:
     ''' Communication node
 
     Creates Pyre node and handles all communication.
     '''
 
     group = 'pupil-mobile-v{}'.format(__protocol_version__)
-
-    def __cinit__(self, *args, **kwargs):
-        pass
 
     def __init__(self, context=None, name=None, headers=(), callbacks=()):
         self.name = name
@@ -171,10 +167,10 @@ cdef class Network:
     def __str__(self):
         return '<{} {} [{}]>'.format(__name__, self.name, self.pyre_node.uuid().hex)
 
-    property has_events:
-        def __get__(self):
-            return self.running and self.pyre_node.socket().get(zmq.EVENTS) & zmq.POLLIN
+    @property
+    def has_events(self):
+        return self.running and self.pyre_node.socket().get(zmq.EVENTS) & zmq.POLLIN
 
-    property running:
-        def __get__(self):
-            return bool(self.pyre_node)
+    @property
+    def running(self):
+        return bool(self.pyre_node)
