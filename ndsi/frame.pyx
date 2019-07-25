@@ -12,6 +12,7 @@
 import hashlib
 import logging
 from libc.string cimport memset
+from libc.stdint cimport int64_t, uint64_t
 
 cimport numpy as np
 import numpy as np
@@ -62,6 +63,42 @@ class InitError(CaptureError):
     def __init__(self, message):
         super(InitError, self).__init__(message)
         self.message = message
+
+
+cdef class FrameFactory:
+
+    def __cinit__(self, *args, **kwargs):
+        self.decoder = new H264Decoder(COLOR_FORMAT_YUV422)
+
+    def __init__(self, *args, **kwargs):
+        self.tj_context = turbojpeg.tjInitDecompress()
+
+    def create_jpeg_frame(self, buffer_, meta_data):
+        cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
+        frame.attach_tj_context(self.tj_context)
+        return frame
+
+    def create_h264_frame(self, buffer_, meta_data):
+        cdef H264Frame frame = None
+        cdef unsigned char[:] out_buffer
+        cdef int64_t pkt_pts = 0 # explicit define required for macos.
+        cdef uint64_t time_ns = meta_data[4]
+        cdef int64_t time_us = time_ns // 1000
+        cdef double pupil_ts = 0.0
+
+        out = self.decoder.set_input_buffer(bytearray(buffer_), meta_data[5], time_us)
+        if self.decoder.is_frame_ready():
+            out_size = self.decoder.get_output_bytes()
+            out_buffer = np.empty(out_size, dtype=np.uint8)
+            out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
+            # The observation here is that the output frame comes from the input set right before.
+            # this means that we can use the timestamps from meta_data of the input buffer frame.
+            # to be on the save side we still use the h264 packet pts of the output
+            # print(round(pkt_pts*1e-6,6),meta_data[4] )
+            pupil_ts = round(pkt_pts * 1e-6, 6)
+            frame = H264Frame(*meta_data[:4], timestamp=pupil_ts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
+            frame.attach_tj_context(self.tj_context)
+        return frame
 
 
 cdef class JPEGFrame:
