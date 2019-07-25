@@ -1,4 +1,3 @@
-# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -11,7 +10,6 @@
 
 # importing `struct` module name-clashes with cython struct keyword
 import struct as py_struct
-from libc.stdint cimport int64_t, uint64_t
 import json as serial
 import traceback as tb
 import numpy as np
@@ -20,9 +18,11 @@ import zmq
 import logging
 logger = logging.getLogger(__name__)
 
+import typing
+
 from ndsi import StreamError
 
-from ndsi.frame cimport JPEGFrame, H264Frame
+from ndsi.frame import JPEGFrame, H264Frame, FrameFactory
 from ndsi.frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
 
 NANO = 1e-9
@@ -33,7 +33,7 @@ class NotDataSubSupportedError(Exception):
     def __str__(self):
         return repr(self.value)
 
-cdef class Sensor:
+class Sensor:
 
     def __init__(self,
             host_uuid,
@@ -86,21 +86,21 @@ cdef class Sensor:
             self.data_sub.unsubscribe(self.uuid)
             self.data_sub.close(linger=0)
 
-    property supports_data_subscription:
-        def __get__(self):
-            return bool(self.data_sub)
+    @property
+    def supports_data_subscription(self):
+        return bool(self.data_sub)
 
-    property has_notifications:
-        def __get__(self):
-            has_n = self.notify_sub.get(zmq.EVENTS) & zmq.POLLIN
-            return has_n
+    @property
+    def has_notifications(self):
+        has_n = self.notify_sub.get(zmq.EVENTS) & zmq.POLLIN
+        return has_n
 
-    property has_data:
-        def __get__(self):
-            try:
-                return self.data_sub.get(zmq.EVENTS) & zmq.POLLIN
-            except AttributeError:
-                raise NotDataSubSupportedError()
+    @property
+    def has_data(self):
+        try:
+            return self.data_sub.get(zmq.EVENTS) & zmq.POLLIN
+        except AttributeError:
+            raise NotDataSubSupportedError()
 
     def __str__(self):
         return '<{} {}@{} [{}]>'.format(__name__, self.name, self.host_name, self.type)
@@ -192,14 +192,11 @@ cdef class Sensor:
         self.command_push.send_string(cmd)
 
 
-cdef class VideoSensor(Sensor):
-
-    def __cinit__(self, *args, **kwargs):
-        self.decoder = new H264Decoder(COLOR_FORMAT_YUV422)
+class VideoSensor(Sensor):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.tj_context = turbojpeg.tjInitDecompress()
+        self._frame_factory = FrameFactory()
         self._recent_frame = None
         self._waiting_for_iframe = True
 
@@ -207,42 +204,15 @@ cdef class VideoSensor(Sensor):
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
-        def create_jpeg_frame(buffer_, meta_data):
-            cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
-            frame.attach_tj_context(self.tj_context)
-            return frame
-
-        def create_h264_frame(buffer_, meta_data):
-            cdef H264Frame frame = None
-            cdef unsigned char[:] out_buffer
-            cdef int64_t pkt_pts = 0 # explicit define required for macos.
-            cdef uint64_t time_ns = meta_data[4]
-            cdef int64_t time_us = time_ns // 1000
-            cdef double pupil_ts = 0.0
-
-            out = self.decoder.set_input_buffer(bytearray(buffer_), meta_data[5], time_us)
-            if self.decoder.is_frame_ready():
-                out_size = self.decoder.get_output_bytes()
-                out_buffer = np.empty(out_size, dtype=np.uint8)
-                out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
-                # The observation here is that the output frame comes from the input set right before.
-                # this means that we can use the timestamps from meta_data of the input buffer frame.
-                # to be on the save side we still use the h264 packet pts of the output
-                # print(round(pkt_pts*1e-6,6),meta_data[4] )
-                pupil_ts = round(pkt_pts * 1e-6, 6)
-                frame = H264Frame(*meta_data[:4], timestamp=pupil_ts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
-                frame.attach_tj_context(self.tj_context)
-            return frame
-
         if self.data_sub.poll(timeout=timeout):
             newest_h264_frame = None
             while self.has_data:
                 data_msg = self.get_data(copy=False)
                 meta_data = py_struct.unpack("<LLLLQLL", data_msg[1])
                 if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                    return create_jpeg_frame(data_msg[2], meta_data)
+                    return self._frame_factory.create_jpeg_frame(data_msg[2], meta_data)
                 elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
-                    frame = create_h264_frame(data_msg[2], meta_data)
+                    frame = self._frame_factory.create_h264_frame(data_msg[2], meta_data)
                     newest_h264_frame = frame or newest_h264_frame
                 else:
                     raise StreamError('Frame was not of format MJPEG or H264')
@@ -254,7 +224,7 @@ cdef class VideoSensor(Sensor):
             raise StreamError('Operation timed out.')
 
 
-cdef class AnnotateSensor(Sensor):
+class AnnotateSensor(Sensor):
 
     def fetch_data(self):
         if not self.supports_data_subscription:
@@ -280,7 +250,7 @@ cdef class AnnotateSensor(Sensor):
         else:
             self.data_sub = None
 
-cdef class GazeSensor(Sensor):
+class GazeSensor(Sensor):
 
     def fetch_data(self):
         if not self.supports_data_subscription:
@@ -294,7 +264,7 @@ cdef class GazeSensor(Sensor):
             yield x, y, ts
 
 
-cdef class IMUSensor(Sensor):
+class IMUSensor(Sensor):
 
     CONTENT_DTYPE = np.dtype(
         [
