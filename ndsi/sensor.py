@@ -18,12 +18,16 @@ import zmq
 import logging
 logger = logging.getLogger(__name__)
 
-import typing
-
 from ndsi import StreamError
 
-from ndsi.frame import JPEGFrame, H264Frame, FrameFactory
-from ndsi.frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
+import typing
+
+from ndsi.formatter import DataFormat, DataMessage
+from ndsi.formatter import VideoDataFormatter, VideoValue
+from ndsi.formatter import GazeDataFormatter, GazeValue
+from ndsi.formatter import AnnotateDataFormatter, AnnotateValue
+from ndsi.formatter import IMUDataFormatter, IMUValue
+
 
 NANO = 1e-9
 
@@ -34,6 +38,9 @@ class NotDataSubSupportedError(Exception):
         return repr(self.value)
 
 class Sensor:
+
+    # TODO: Pass format on sensor init
+    format = DataFormat.V4
 
     def __init__(self,
             host_uuid,
@@ -196,28 +203,22 @@ class VideoSensor(Sensor):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._frame_factory = FrameFactory()
         self._recent_frame = None
         self._waiting_for_iframe = True
+        self._formatter = VideoDataFormatter.get_formatter(format=self.format)
 
     def get_newest_data_frame(self, timeout=None):
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
         if self.data_sub.poll(timeout=timeout):
-            newest_h264_frame = None
+            newest_frame = None
             while self.has_data:
                 data_msg = self.get_data(copy=False)
-                meta_data = py_struct.unpack("<LLLLQLL", data_msg[1])
-                if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                    return self._frame_factory.create_jpeg_frame(data_msg[2], meta_data)
-                elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
-                    frame = self._frame_factory.create_h264_frame(data_msg[2], meta_data)
-                    newest_h264_frame = frame or newest_h264_frame
-                else:
-                    raise StreamError('Frame was not of format MJPEG or H264')
-            if newest_h264_frame is not None:
-                return newest_h264_frame
+                data_msg = DataMessage(*data_msg)
+                newest_frame = self._formatter.decode_msg(data_msg=data_msg)
+            if newest_frame is not None:
+                return newest_frame
             else:
                 raise StreamError('Operation timed out.')
         else:
@@ -226,20 +227,17 @@ class VideoSensor(Sensor):
 
 class AnnotateSensor(Sensor):
 
-    def fetch_data(self):
+    def fetch_data(self) -> typing.Iterator[AnnotateValue]:
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
+        formatter = AnnotateDataFormatter.get_formatter(format=self.format)
+
         while self.has_data:
             data_msg = self.get_data(copy=False)
-            # data_msg[0]: sensor uuid
-            # data_msg[1]: metadata, None for now
-            # data_msg[2]: <uint8 - button state> <uint64_t - timestamp>
-
-            key, ts = py_struct.unpack("<BQ", data_msg[0])
-            ts *= NANO
-
-            yield key, ts
+            data_msg = DataMessage(*data_msg)
+            value = formatter.decode_msg(data_msg=data_msg)
+            yield value
 
     def _init_data_sub(self, context):
         if self.data_endpoint:
@@ -250,42 +248,35 @@ class AnnotateSensor(Sensor):
         else:
             self.data_sub = None
 
+
 class GazeSensor(Sensor):
 
-    def fetch_data(self):
+    def fetch_data(self) -> typing.Iterator[GazeValue]:
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
+        formatter = GazeDataFormatter.get_formatter(format=self.format)
+
         while self.has_data:
             data_msg = self.get_data(copy=False)
-            ts, = py_struct.unpack("<Q", data_msg[1])
-            ts *= NANO
-            x, y = py_struct.unpack("<ff", data_msg[2])
-            yield x, y, ts
+            data_msg = DataMessage(*data_msg)
+            value = formatter.decode_msg(data_msg=data_msg)
+            yield value
 
 
 class IMUSensor(Sensor):
 
-    CONTENT_DTYPE = np.dtype(
-        [
-            ("time_s", "<f8"),
-            ("accel_x", "<f4"),
-            ("accel_y", "<f4"),
-            ("accel_z", "<f4"),
-            ("gyro_x", "<f4"),
-            ("gyro_y", "<f4"),
-            ("gyro_z", "<f4"),
-        ]
-    )
-
-    def fetch_data(self):
+    def fetch_data(self) -> typing.Iterator[IMUValue]:
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
+        formatter = IMUDataFormatter.get_formatter(format=self.format)
+
         while self.has_data:
             data_msg = self.get_data(copy=False)
-            content = np.frombuffer(data_msg[2], dtype=self.CONTENT_DTYPE).view(np.recarray)
-            yield content
+            data_msg = DataMessage(*data_msg)
+            value = formatter.decode_msg(data_msg=data_msg)
+            yield value
 
 
 SENSOR_TYPE_CLASS_MAP = {
