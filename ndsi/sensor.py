@@ -8,8 +8,7 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-# importing `struct` module name-clashes with cython struct keyword
-import struct as py_struct
+import abc
 import json as serial
 import traceback as tb
 import numpy as np
@@ -22,7 +21,7 @@ from ndsi import StreamError
 
 import typing
 
-from ndsi.formatter import DataFormat, DataMessage
+from ndsi.formatter import DataFormatter, DataFormat, DataMessage
 from ndsi.formatter import VideoDataFormatter, VideoValue
 from ndsi.formatter import GazeDataFormatter, GazeValue
 from ndsi.formatter import AnnotateDataFormatter, AnnotateValue
@@ -199,23 +198,26 @@ class Sensor:
         self.command_push.send_string(cmd)
 
 
-class VideoSensor(Sensor):
+SensorFetchDataValue = typing.TypeVar('FetchDataValue')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self._recent_frame = None
-        self._waiting_for_iframe = True
-        self._formatter = VideoDataFormatter.get_formatter(format=self.format)
-
-    def fetch_data(self) -> typing.Iterator[VideoValue]:
+class SensorFetchDataMixin(typing.Generic[SensorFetchDataValue], abc.ABC):
+    def fetch_data(self) -> typing.Iterator[SensorFetchDataValue]:
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
         while self.has_data:
             data_msg = self.get_data(copy=False)
             data_msg = DataMessage(*data_msg)
-            value = self._formatter.decode_msg(data_msg=data_msg)
+            value = self.formatter.decode_msg(data_msg=data_msg)
             yield value
+
+
+class VideoSensor(SensorFetchDataMixin[VideoValue], Sensor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._recent_frame = None
+        self._waiting_for_iframe = True
+        self.formatter = VideoDataFormatter.get_formatter(format=self.format)
 
     def get_newest_data_frame(self, timeout=None):
         if not self.supports_data_subscription:
@@ -234,19 +236,10 @@ class VideoSensor(Sensor):
             raise StreamError('Operation timed out.')
 
 
-class AnnotateSensor(Sensor):
-
-    def fetch_data(self) -> typing.Iterator[AnnotateValue]:
-        if not self.supports_data_subscription:
-            raise NotDataSubSupportedError()
-
-        formatter = AnnotateDataFormatter.get_formatter(format=self.format)
-
-        while self.has_data:
-            data_msg = self.get_data(copy=False)
-            data_msg = DataMessage(*data_msg)
-            value = formatter.decode_msg(data_msg=data_msg)
-            yield value
+class AnnotateSensor(SensorFetchDataMixin[AnnotateValue], Sensor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.formatter = AnnotateDataFormatter.get_formatter(format=self.format)
 
     def _init_data_sub(self, context):
         if self.data_endpoint:
@@ -258,34 +251,16 @@ class AnnotateSensor(Sensor):
             self.data_sub = None
 
 
-class GazeSensor(Sensor):
-
-    def fetch_data(self) -> typing.Iterator[GazeValue]:
-        if not self.supports_data_subscription:
-            raise NotDataSubSupportedError()
-
-        formatter = GazeDataFormatter.get_formatter(format=self.format)
-
-        while self.has_data:
-            data_msg = self.get_data(copy=False)
-            data_msg = DataMessage(*data_msg)
-            value = formatter.decode_msg(data_msg=data_msg)
-            yield value
+class GazeSensor(SensorFetchDataMixin[GazeValue], Sensor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.formatter = GazeDataFormatter.get_formatter(format=self.format)
 
 
-class IMUSensor(Sensor):
-
-    def fetch_data(self) -> typing.Iterator[IMUValue]:
-        if not self.supports_data_subscription:
-            raise NotDataSubSupportedError()
-
-        formatter = IMUDataFormatter.get_formatter(format=self.format)
-
-        while self.has_data:
-            data_msg = self.get_data(copy=False)
-            data_msg = DataMessage(*data_msg)
-            value = formatter.decode_msg(data_msg=data_msg)
-            yield value
+class IMUSensor(SensorFetchDataMixin[IMUValue], Sensor):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.formatter = IMUDataFormatter.get_formatter(format=self.format)
 
 
 SENSOR_TYPE_CLASS_MAP = {
