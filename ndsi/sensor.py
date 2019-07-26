@@ -207,16 +207,25 @@ class VideoSensor(Sensor):
         self._waiting_for_iframe = True
         self._formatter = VideoDataFormatter.get_formatter(format=self.format)
 
+    def fetch_data(self) -> typing.Iterator[VideoValue]:
+        if not self.supports_data_subscription:
+            raise NotDataSubSupportedError()
+
+        while self.has_data:
+            data_msg = self.get_data(copy=False)
+            data_msg = DataMessage(*data_msg)
+            value = self._formatter.decode_msg(data_msg=data_msg)
+            yield value
+
     def get_newest_data_frame(self, timeout=None):
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
         if self.data_sub.poll(timeout=timeout):
             newest_frame = None
-            while self.has_data:
-                data_msg = self.get_data(copy=False)
-                data_msg = DataMessage(*data_msg)
-                newest_frame = self._formatter.decode_msg(data_msg=data_msg)
+            for newest_frame in self.fetch_data():
+                # Get the last avaiable frame
+                pass
             if newest_frame is not None:
                 return newest_frame
             else:
