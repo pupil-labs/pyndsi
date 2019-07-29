@@ -185,6 +185,62 @@ class NetworkNode:
         return bool(self.pyre_node)
 
 
+class Network:
+    def __init__(self, context=None, name=None, headers=(), callbacks=()):
+        self.context = context or zmq.Context()
+        self._callbacks = callbacks
+        self._nodes = [
+            NetworkNode(
+                format=format,
+                context=self.context,
+                name=name,
+                headers=headers,
+                callbacks=self._callbacks,
+            )
+            for format in DataFormat.supported_formats()
+        ]
+
+    @property
+    def callbacks(self):
+        return self._callbacks
+
+    @callbacks.setter
+    def callbacks(self, value):
+        self._callbacks = value
+        for node in self._nodes:
+            node.callbacks = value
+
+    @property
+    def has_events(self):
+        return any(node.has_events for node in self._nodes)
+
+    @property
+    def running(self):
+        return any(node.running for node in self._nodes)
+    
+    def start(self):
+        for node in self._nodes:
+            node.start()
+
+    def rejoin(self):
+        for node in self._nodes:
+            node.rejoin()
+
+    def stop(self):
+        for node in self._nodes:
+            node.stop()
+
+    def handle_event(self):
+        for node in self._nodes:
+            node.handle_event()
+
+    def sensor(self, sensor_uuid, callbacks=()):
+        for node in self._nodes:
+            if sensor_uuid in node.sensors:
+                return node.sensor(sensor_uuid=sensor_uuid, callbacks=callbacks)
+        raise ValueError('"{}" is not an available sensor id.'.format(sensor_uuid))
+
+
 def group_name_from_format(format: DataFormat) -> str:
     if format == DataFormat.V3:
         return 'pupil-mobile-v3'
