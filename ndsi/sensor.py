@@ -38,10 +38,8 @@ class NotDataSubSupportedError(Exception):
 
 class Sensor:
 
-    # TODO: Pass format on sensor init
-    format = DataFormat.V4
-
     def __init__(self,
+            format: DataFormat,
             host_uuid,
             host_name,
             sensor_uuid,
@@ -52,6 +50,7 @@ class Sensor:
             data_endpoint=None,
             context=None,
             callbacks=()):
+        self.format = format
         self.callbacks = [self.on_notification]+list(callbacks)
         self.context = context or zmq.Context()
         self.host_uuid = host_uuid
