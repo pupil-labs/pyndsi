@@ -77,6 +77,8 @@ class NetworkNode:
         self.pyre_node = None
 
     def handle_event(self):
+        if not self.has_events:
+            return
         event = PyreEvent(self.pyre_node)
         uuid = event.peer_uuid
         if event.type == 'SHOUT' or event.type == 'WHISPER':
