@@ -8,11 +8,13 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
+import abc
 import json as serial
 import logging
 import sys
 import time
 import traceback  as tb
+import typing
 
 import zmq
 from pyre import Pyre, PyreEvent, zhelper
@@ -20,19 +22,21 @@ from pyre import Pyre, PyreEvent, zhelper
 from ndsi import __protocol_version__
 from ndsi.sensor import SENSOR_TYPE_CLASS_MAP
 
+from ndsi.formatter import DataFormat
+
+
 logger = logging.getLogger(__name__)
 
 
-class Network:
+class NetworkNode:
     ''' Communication node
 
     Creates Pyre node and handles all communication.
     '''
 
-    group = 'pupil-mobile-v{}'.format(__protocol_version__)
-
-    def __init__(self, context=None, name=None, headers=(), callbacks=()):
+    def __init__(self, format: DataFormat, context=None, name=None, headers=(), callbacks=()):
         self.name = name
+        self.format = format
         self.headers = headers
         self.pyre_node = None
         self.context = context or zmq.Context()
@@ -40,6 +44,10 @@ class Network:
         self.callbacks = [self.on_event]+list(callbacks)
         self._warned_once_older_version = False
         self._warned_once_newer_version = False
+
+    @property
+    def group(self) -> str:
+        return group_name_from_format(self.format)
 
     def start(self):
         # Setup node
@@ -147,6 +155,7 @@ class Network:
             raise ValueError('Sensor of type "{}" is not supported.'.format(sensor_type))
 
         sensor = sensor_cls(
+            format=self.format,
             context=self.context,
             callbacks=callbacks,
             **sensor_settings
@@ -174,3 +183,11 @@ class Network:
     @property
     def running(self):
         return bool(self.pyre_node)
+
+
+def group_name_from_format(format: DataFormat) -> str:
+    if format == DataFormat.V3:
+        return 'pupil-mobile-v3'
+    if format == DataFormat.V4:
+        return 'pupil-mobile-v4'
+    raise ValueError("Unsupported format: {}".format(format))
