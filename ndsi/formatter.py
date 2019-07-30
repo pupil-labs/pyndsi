@@ -229,11 +229,6 @@ class IMUDataFormatter(DataFormatter[IMUValue]):
 
 
 class _IMUDataFormatter_V3(IMUDataFormatter):
-    def decode_msg(self, data_msg: DataMessage) -> IMUValue:
-        raise NotImplementedError()  # FIXME
-
-
-class _IMUDataFormatter_V4(IMUDataFormatter):
     CONTENT_DTYPE = np.dtype(
         [
             ("time_s", "<f8"),
@@ -249,3 +244,7 @@ class _IMUDataFormatter_V4(IMUDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> IMUValue:
         content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(np.recarray)
         return IMUValue(*content)
+
+
+class _IMUDataFormatter_V4(_IMUDataFormatter_V3):
+    pass
