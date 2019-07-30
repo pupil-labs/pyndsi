@@ -100,6 +100,9 @@ class NetworkNode:
                     if self.sensors.get(msg['sensor_uuid']):
                         # Sensor already attached. Drop event
                         return
+                    if msg['sensor_type'] not in SENSOR_TYPE_CLASS_MAP:
+                        logger.debug('Unknown sensor type: {}'.format(msg['sensor_type']))
+                        return
                 elif msg['subject'] == 'detach':
                     sensor_entry = self.sensors.get(msg['sensor_uuid'])
                     # Check if sensor has been detached already
