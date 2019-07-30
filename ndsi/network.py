@@ -90,58 +90,77 @@ class NetworkInterface(abc.ABC):
         pass
 
 
-class NetworkNode:
-    ''' Communication node
+class _NetworkNode(NetworkInterface):
+    """
+    Communication node
 
     Creates Pyre node and handles all communication.
-    '''
+    """
 
     def __init__(self, format: DataFormat, context=None, name=None, headers=(), callbacks=()):
-        self.name = name
-        self.format = format
-        self.headers = headers
-        self.pyre_node = None
-        self.context = context or zmq.Context()
-        self.sensors = {}
-        self.callbacks = [self.on_event]+list(callbacks)
+        self._name = name
+        self._format = format
+        self._headers = headers
+        self._pyre_node = None
+        self._context = context or zmq.Context()
+        self._sensors = {}
+        self._callbacks = [self._on_event]+list(callbacks)
         self._warned_once_older_version = False
         self._warned_once_newer_version = False
 
+    # Public NetworkInterface API
+
     @property
-    def group(self) -> str:
-        return group_name_from_format(self.format)
+    def has_events(self) -> bool:
+        return self.running and self._pyre_node.socket().get(zmq.EVENTS) & zmq.POLLIN
+
+    @property
+    def running(self) -> bool:
+        return bool(self._pyre_node)
+
+    @property
+    def sensors(self) -> typing.Mapping[str, NetworkSensor]:
+        return self._sensors
+
+    @property
+    def callbacks(self) -> typing.Iterable[NetworkEventCallback]:
+        return self._callbacks
+
+    @callbacks.setter
+    def callbacks(self, value: typing.Iterable[NetworkEventCallback]):
+        self._callbacks = value
 
     def start(self):
         # Setup node
         logger.debug('Starting network...')
-        self.pyre_node = Pyre(self.name)
-        self.name = self.pyre_node.name()
-        for header in self.headers:
-            self.pyre_node.set_header(*header)
-        self.pyre_node.join(self.group)
-        self.pyre_node.start()
+        self._pyre_node = Pyre(self._name)
+        self._name = self._pyre_node.name()
+        for header in self._headers:
+            self._pyre_node.set_header(*header)
+        self._pyre_node.join(self._group)
+        self._pyre_node.start()
 
     def rejoin(self):
         for sensor_uuid, sensor in list(self.sensors.items()):
-            self.execute_callbacks({
+            self._execute_callbacks({
                 'subject': 'detach',
                 'sensor_uuid': sensor_uuid,
                 'sensor_name': sensor['sensor_name'],
                 'host_uuid': sensor['host_uuid'],
                 'host_name': sensor['host_name']})
-        self.pyre_node.leave(self.group)
-        self.pyre_node.join(self.group)
+        self._pyre_node.leave(self._group)
+        self._pyre_node.join(self._group)
 
     def stop(self):
         logger.debug('Stopping network...')
-        self.pyre_node.leave(self.group)
-        self.pyre_node.stop()
-        self.pyre_node = None
+        self._pyre_node.leave(self._group)
+        self._pyre_node.stop()
+        self._pyre_node = None
 
     def handle_event(self):
         if not self.has_events:
             return
-        event = PyreEvent(self.pyre_node)
+        event = PyreEvent(self._pyre_node)
         uuid = event.peer_uuid
         if event.type == 'SHOUT' or event.type == 'WHISPER':
             try:
@@ -174,7 +193,7 @@ class NetworkNode:
                 else:
                     logger.debug('Unknown host message: {}'.format(msg))
                     return
-                self.execute_callbacks(msg)
+                self._execute_callbacks(msg)
         elif event.type == 'JOIN':
             # possible values for `group_version`
             # - [<unrelated group>]
@@ -197,7 +216,7 @@ class NetworkNode:
             for sensor_uuid in list(self.sensors.keys()):
                 host = self.sensors[sensor_uuid]['host_uuid']
                 if host == gone_peer:
-                    self.execute_callbacks({
+                    self._execute_callbacks({
                         'subject': 'detach',
                         'sensor_uuid': sensor_uuid,
                         'sensor_name': self.sensors[sensor_uuid]['sensor_name'],
@@ -206,11 +225,7 @@ class NetworkNode:
         else:
             logger.debug('Dropping {}'.format(event))
 
-    def execute_callbacks(self, event):
-        for callback in self.callbacks:
-            callback(self, event)
-
-    def sensor(self, sensor_uuid, callbacks=()):
+    def sensor(self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback]=()) -> Sensor:
         try:
             sensor_settings = self.sensors[sensor_uuid]
         except KeyError:
@@ -224,13 +239,28 @@ class NetworkNode:
 
         return Sensor.create_sensor(
             sensor_type=sensor_type,
-            format=self.format,
-            context=self.context,
+            format=self._format,
+            context=self._context,
             callbacks=callbacks,
             **sensor_settings
         )
 
-    def on_event(self, caller, event):
+    # Public
+
+    def __str__(self):
+        return '<{} {} [{}]>'.format(__name__, self._name, self._pyre_node.uuid().hex)
+
+    # Private
+
+    @property
+    def _group(self) -> str:
+        return group_name_from_format(self._format)
+
+    def _execute_callbacks(self, event):
+        for callback in self.callbacks:
+            callback(self, event)
+
+    def _on_event(self, caller, event):
         if event['subject'] == 'attach':
             subject_less = event.copy()
             del subject_less['subject']
@@ -240,17 +270,6 @@ class NetworkNode:
                 del self.sensors[event['sensor_uuid']]
             except KeyError:
                 pass
-
-    def __str__(self):
-        return '<{} {} [{}]>'.format(__name__, self.name, self.pyre_node.uuid().hex)
-
-    @property
-    def has_events(self):
-        return self.running and self.pyre_node.socket().get(zmq.EVENTS) & zmq.POLLIN
-
-    @property
-    def running(self):
-        return bool(self.pyre_node)
 
 
 class Network:
