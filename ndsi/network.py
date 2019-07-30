@@ -9,6 +9,8 @@
 '''
 
 import abc
+import functools
+import itertools
 import json as serial
 import logging
 import sys
@@ -215,6 +217,11 @@ class Network:
         self._callbacks = value
         for node in self._nodes:
             node.callbacks = value
+
+    @property
+    def sensors(self):
+        sensors = itertools.chain(n.sensors for n in self._nodes)
+        return { k: v for s in sensors for k, v in s.items() }
 
     @property
     def has_events(self):
