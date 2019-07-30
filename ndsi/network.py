@@ -22,9 +22,9 @@ import zmq
 from pyre import Pyre, PyreEvent, zhelper
 
 from ndsi import __protocol_version__
-from ndsi.sensor import SENSOR_TYPE_CLASS_MAP
 
 from ndsi.formatter import DataFormat
+from ndsi.sensor import SensorType, Sensor
 
 
 logger = logging.getLogger(__name__)
@@ -102,8 +102,9 @@ class NetworkNode:
                     if self.sensors.get(msg['sensor_uuid']):
                         # Sensor already attached. Drop event
                         return
-                    if msg['sensor_type'] not in SENSOR_TYPE_CLASS_MAP:
-                        logger.debug('Unknown sensor type: {}'.format(msg['sensor_type']))
+                    sensor_type = SensorType.supported_sensor_type_from_str(msg['sensor_type'])
+                    if sensor_type is None:
+                        logger.debug('Unsupported sensor type: {}'.format(msg['sensor_type']))
                         return
                 elif msg['subject'] == 'detach':
                     sensor_entry = self.sensors.get(msg['sensor_uuid'])
@@ -155,19 +156,19 @@ class NetworkNode:
         except KeyError:
             raise ValueError('"{}" is not an available sensor id.'.format(sensor_uuid))
 
-        try:
-            sensor_type = sensor_settings.get("sensor_type", "unknown")
-            sensor_cls = SENSOR_TYPE_CLASS_MAP[sensor_type]
-        except KeyError:
-            raise ValueError('Sensor of type "{}" is not supported.'.format(sensor_type))
+        sensor_type_str = sensor_settings.pop("sensor_type", "unknown")
+        sensor_type = SensorType.supported_sensor_type_from_str(sensor_type_str)
 
-        sensor = sensor_cls(
+        if sensor_type is None:
+            raise ValueError('Sensor of type "{}" is not supported.'.format(sensor_type_str))
+
+        return Sensor.create_sensor(
+            sensor_type=sensor_type,
             format=self.format,
             context=self.context,
             callbacks=callbacks,
             **sensor_settings
         )
-        return sensor
 
     def on_event(self, caller, event):
         if event['subject'] == 'attach':
