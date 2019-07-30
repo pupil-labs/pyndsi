@@ -36,6 +36,9 @@ class DataFormat(enum.Enum):
     def supported_formats() -> typing.Set['DataFormat']:
         return set(DataFormat)
 
+    def __str__(self) -> str:
+        return self.value
+
 
 class DataMessage(typing.NamedTuple):
     sensor_id: str
