@@ -9,6 +9,7 @@
 '''
 
 import abc
+import enum
 import json as serial
 import traceback as tb
 import numpy as np
@@ -35,6 +36,33 @@ class NotDataSubSupportedError(Exception):
         self.value = value or 'This sensor does not support data subscription.'
     def __str__(self):
         return repr(self.value)
+
+
+@enum.unique
+class SensorType(enum.Enum):
+    HARDWARE = 'hardware'
+    VIDEO = 'video'
+    ANNOTATE = 'annotate'
+    GAZE = 'gaze'
+    IMU = 'imu'
+
+    @staticmethod
+    def supported_types() -> typing.Set['SensorType']:
+        return set(SensorType)
+
+    @staticmethod
+    def supported_sensor_type_from_str(sensor_type: str) -> typing.Optional['SensorType']:
+        try:
+            sensor_type = SensorType(sensor_type)
+        except ValueError:
+            return None
+        if sensor_type not in SensorType.supported_types():
+            return None
+        return sensor_type
+
+    def __str__(self) -> str:
+        return self.value
+
 
 class Sensor:
 
