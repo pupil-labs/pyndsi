@@ -272,13 +272,13 @@ class _NetworkNode(NetworkInterface):
                 pass
 
 
-class Network:
+class Network(NetworkInterface):
     def __init__(self, formats:typing.Set[DataFormat]=None, context=None, name=None, headers=(), callbacks=()):
         formats = formats or {DataFormat.latest()}
         self.context = context or zmq.Context()
         self._callbacks = callbacks
         self._nodes = [
-            NetworkNode(
+            _NetworkNode(
                 format=format,
                 context=self.context,
                 name=name,
@@ -287,30 +287,33 @@ class Network:
             )
             for format in formats
         ]
+        assert len(self._nodes) > 0
+
+    # Public NetworkInterface API
 
     @property
-    def callbacks(self):
-        return self._callbacks
-
-    @callbacks.setter
-    def callbacks(self, value):
-        self._callbacks = value
-        for node in self._nodes:
-            node.callbacks = value
+    def has_events(self) -> bool:
+        return any(node.has_events for node in self._nodes)
 
     @property
-    def sensors(self):
+    def running(self) -> bool:
+        return any(node.running for node in self._nodes)
+
+    @property
+    def sensors(self) -> typing.Mapping[str, NetworkSensor]:
         sensors = itertools.chain(n.sensors for n in self._nodes)
         return { k: v for s in sensors for k, v in s.items() }
 
     @property
-    def has_events(self):
-        return any(node.has_events for node in self._nodes)
+    def callbacks(self) -> typing.Iterable[NetworkEventCallback]:
+        return self._callbacks
 
-    @property
-    def running(self):
-        return any(node.running for node in self._nodes)
-    
+    @callbacks.setter
+    def callbacks(self, value: typing.Iterable[NetworkEventCallback]):
+        self._callbacks = value
+        for node in self._nodes:
+            node.callbacks = value
+
     def start(self):
         for node in self._nodes:
             node.start()
@@ -327,7 +330,7 @@ class Network:
         for node in self._nodes:
             node.handle_event()
 
-    def sensor(self, sensor_uuid, callbacks=()):
+    def sensor(self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback]=()) -> Sensor:
         for node in self._nodes:
             if sensor_uuid in node.sensors:
                 return node.sensor(sensor_uuid=sensor_uuid, callbacks=callbacks)
