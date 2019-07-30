@@ -29,6 +29,10 @@ class DataFormat(enum.Enum):
     V4 = 'v4'
 
     @staticmethod
+    def latest() -> 'DataFormat':
+        return DataFormat.V4
+
+    @staticmethod
     def supported_formats() -> typing.Set['DataFormat']:
         return set(DataFormat)
 

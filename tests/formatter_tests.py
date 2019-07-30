@@ -10,6 +10,7 @@ def test_supported_formats():
     formats = DataFormat.supported_formats()
     assert isinstance(formats, set)
     assert len(formats) > 0
+    assert DataFormat.latest() in formats
 
 
 def test_gaze_formatter():
