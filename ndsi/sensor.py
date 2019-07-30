@@ -66,6 +66,21 @@ class SensorType(enum.Enum):
 
 class Sensor:
 
+    @staticmethod
+    def class_for_type(sensor_type: SensorType):
+        try:
+            return _SENSOR_TYPE_CLASS_MAP[sensor_type]
+        except KeyError:
+            raise ValueError("Unknown sensor type: {}".format(sensor_type))
+
+    @staticmethod
+    def create_sensor(sensor_type: SensorType, **kwargs) -> 'Sensor':
+        sensor_class = Sensor.class_for_type(sensor_type=sensor_type)
+        # TODO: Passing sensor_type to the class init as str, to preserve API compatibility.
+        #       Ideally, the sensor_type passed and stored by Sensor is of type SensorType.
+        kwargs['sensor_type'] = str(sensor_type)
+        return sensor_class(**kwargs)
+
     def __init__(self,
             format: DataFormat,
             host_uuid,
@@ -290,10 +305,10 @@ class IMUSensor(SensorFetchDataMixin[IMUValue], Sensor):
         self.formatter = IMUDataFormatter.get_formatter(format=self.format)
 
 
-SENSOR_TYPE_CLASS_MAP = {
-    "hardware": Sensor,
-    "video": VideoSensor,
-    "annotate": AnnotateSensor,
-    "gaze": GazeSensor,
-    "imu": IMUSensor,
+_SENSOR_TYPE_CLASS_MAP = {
+    SensorType.HARDWARE: Sensor,
+    SensorType.VIDEO: VideoSensor,
+    SensorType.ANNOTATE: AnnotateSensor,
+    SensorType.GAZE: GazeSensor,
+    SensorType.IMU: IMUSensor,
 }
