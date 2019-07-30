@@ -24,9 +24,3 @@ def test_sensor_factory():
     for sensor_type in SensorType.supported_types():
         sensor_class = Sensor.class_for_type(sensor_type=sensor_type)
         assert issubclass(sensor_class, Sensor)
-
-
-if __name__ == "__main__":
-    test_supported_types()
-    test_sensor_types_factory()
-    test_sensor_factory()

@@ -35,11 +35,3 @@ def test_video_formatter():
     for format in DataFormat.supported_formats():
         imu_formatter = VideoDataFormatter.get_formatter(format=format)
         assert isinstance(imu_formatter, VideoDataFormatter)
-
-
-if __name__ == "__main__":
-    test_supported_formats()
-    test_gaze_formatter()
-    test_annotate_formatter()
-    test_imu_formatter()
-    test_video_formatter()
