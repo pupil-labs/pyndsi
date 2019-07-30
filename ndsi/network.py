@@ -188,7 +188,8 @@ class NetworkNode:
 
 
 class Network:
-    def __init__(self, context=None, name=None, headers=(), callbacks=()):
+    def __init__(self, formats:typing.Set[DataFormat]=None, context=None, name=None, headers=(), callbacks=()):
+        formats = formats or {DataFormat.latest()}
         self.context = context or zmq.Context()
         self._callbacks = callbacks
         self._nodes = [
@@ -199,7 +200,7 @@ class Network:
                 headers=headers,
                 callbacks=self._callbacks,
             )
-            for format in DataFormat.supported_formats()
+            for format in formats
         ]
 
     @property
