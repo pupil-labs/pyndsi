@@ -30,6 +30,66 @@ from ndsi.sensor import SensorType, Sensor
 logger = logging.getLogger(__name__)
 
 
+NetworkEvent = typing.Mapping[str, typing.Any]
+
+
+NetworkEventCallback = typing.Callable[[typing.Any, NetworkEvent], None]
+
+
+NetworkSensor = typing.Mapping[str, typing.Any]
+
+
+class NetworkInterface(abc.ABC):
+    """
+    Public interface for a Network-like object.
+    """
+
+    @property
+    @abc.abstractmethod
+    def has_events(self) -> bool:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def running(self) -> bool:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def sensors(self) -> typing.Mapping[str, NetworkSensor]:
+        pass
+
+    @property
+    @abc.abstractmethod
+    def callbacks(self) -> typing.Iterable[NetworkEventCallback]:
+        pass
+
+    @callbacks.setter
+    @abc.abstractmethod
+    def callbacks(self, value: typing.Iterable[NetworkEventCallback]):
+        pass
+
+    @abc.abstractmethod
+    def start(self):
+        pass
+
+    @abc.abstractmethod
+    def rejoin(self):
+        pass
+
+    @abc.abstractmethod
+    def stop(self):
+        pass
+
+    @abc.abstractmethod
+    def handle_event(self):
+        pass
+
+    @abc.abstractmethod
+    def sensor(self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback]=()) -> Sensor:
+        pass
+
+
 class NetworkNode:
     ''' Communication node
 
