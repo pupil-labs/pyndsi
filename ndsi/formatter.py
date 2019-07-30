@@ -188,7 +188,9 @@ class GazeDataFormatter(DataFormatter[GazeValue]):
 
 class _GazeDataFormatter_V3(GazeDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> GazeValue:
-        raise NotImplementedError()  # FIXME
+        ts, = struct.unpack("<d", data_msg.header)
+        x, y = struct.unpack("<ff", data_msg.body)
+        return GazeValue(x=x, y=y, timestamp=ts)
 
 
 class _GazeDataFormatter_V4(GazeDataFormatter):
