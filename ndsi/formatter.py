@@ -71,8 +71,13 @@ VideoValue = typing.Union[JPEGFrame, H264Frame]
 
 
 class VideoDataFormatter(DataFormatter[VideoValue]):
+    def __init__(self):
+        super().__init__()
+        self._frame_factory = FrameFactory()
+        self._newest_h264_frame = None
+
     def reset(self):
-        pass
+        self._newest_h264_frame = None
 
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
@@ -89,19 +94,21 @@ class VideoDataFormatter(DataFormatter[VideoValue]):
 
 class _VideoDataFormatter_V3(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
-        raise NotImplementedError()  # FIXME
+        meta_data = struct.unpack("<LLLLdLL", data_msg.header)
+        meta_data = list(meta_data)
+        meta_data[4] *= 1000.0 #  ms -> ns
+        meta_data = tuple(meta_data)
+        if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
+            return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
+        elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
+            frame = self._frame_factory.create_h264_frame(data_msg.body, meta_data)
+            self._newest_h264_frame = frame or self._newest_h264_frame
+            return self._newest_h264_frame
+        else:
+            raise StreamError('Frame was not of format MJPEG or H264')
 
 
 class _VideoDataFormatter_V4(VideoDataFormatter):
-    def __init__(self):
-        super().__init__()
-        self._frame_factory = FrameFactory()
-        self._newest_h264_frame = None
-
-    def reset(self):
-        super().reset()
-        self._newest_h264_frame = None
-
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLQLL", data_msg.header)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
