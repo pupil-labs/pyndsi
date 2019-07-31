@@ -32,6 +32,13 @@ def test_supported_formats():
     assert DataFormat.latest() in formats
 
 
+def test_format_version():
+    for format in DataFormat.supported_formats():
+        major = format.version_major
+        assert isinstance(major, int)
+        assert major > 0
+
+
 def test_gaze_formatter():
     for format in DataFormat.supported_formats():
         gaze_formatter = GazeDataFormatter.get_formatter(format=format)
