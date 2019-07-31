@@ -38,6 +38,17 @@ class NotDataSubSupportedError(Exception):
         return repr(self.value)
 
 
+"""
+To add a new sensor, in `sensor.py`:
+1. Add a new case to the `SensorType` enum.
+2. Add a new subclass of `Sensor` and implement the custom sensor behaviour.
+3. Add a new entry into the `_SENSOR_TYPE_CLASS_MAP`, mapping the new `SensorType` case to the new `Sensor` subclass.
+4. (Optional) If the new `Sensor` subclass will include `SensorFetchDataMixin`, the subclass must define a property `formatter` that returns an instance of `DataFormatter` which serializes/deserializes the data handled by the sensor.
+5. Run the test suit to make sure that all the tests pass again.
+6. Write additional tests to cover the custom behaviour of the new sensor type.
+"""
+
+
 @enum.unique
 class SensorType(enum.Enum):
     HARDWARE = 'hardware'
