@@ -30,7 +30,7 @@ class DataFormat(enum.Enum):
 
     @staticmethod
     def latest() -> 'DataFormat':
-        return DataFormat.V4
+        return max(DataFormat.supported_formats(), key=lambda f: f.version_major)
 
     @staticmethod
     def supported_formats() -> typing.Set['DataFormat']:
