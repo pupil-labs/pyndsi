@@ -23,8 +23,20 @@ __all__ = [
 NANO = 1e-9
 
 
+"""
+To add a new data format version, in `formatter.py`:
+1. Add a new case to the `DataFormat` enum.
+2. For each sublcass of `DataFormatter`, extend the implementation of `get_formatter` to correctly handle the new format version.
+3. Run the test suit to make sure that all the tests pass again.
+4. Write additional tests to cover the custom behaviour of the new data format.
+"""
+
+
 @enum.unique
 class DataFormat(enum.Enum):
+    """
+    `DataFormat` enum represents the format for serializing and deserializing data between NDSI hosts and clients.
+    """
     V3 = 'v3'
     V4 = 'v4'
 
