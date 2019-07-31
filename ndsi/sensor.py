@@ -243,7 +243,15 @@ class Sensor:
 SensorFetchDataValue = typing.TypeVar('FetchDataValue')
 
 class SensorFetchDataMixin(typing.Generic[SensorFetchDataValue], abc.ABC):
+
+    @property
+    @abc.abstractmethod
+    def formatter(self) -> DataFormatter[SensorFetchDataValue]:
+        pass
+
     def fetch_data(self) -> typing.Iterator[SensorFetchDataValue]:
+        assert isinstance(self, Sensor)
+
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
@@ -259,7 +267,11 @@ class VideoSensor(SensorFetchDataMixin[VideoValue], Sensor):
         super().__init__(*args, **kwargs)
         self._recent_frame = None
         self._waiting_for_iframe = True
-        self.formatter = VideoDataFormatter.get_formatter(format=self.format)
+        self._formatter = VideoDataFormatter.get_formatter(format=self.format)
+
+    @property
+    def formatter(self) -> VideoDataFormatter:
+        return self._formatter
 
     def get_newest_data_frame(self, timeout=None):
         if not self.supports_data_subscription:
@@ -279,9 +291,9 @@ class VideoSensor(SensorFetchDataMixin[VideoValue], Sensor):
 
 
 class AnnotateSensor(SensorFetchDataMixin[AnnotateValue], Sensor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.formatter = AnnotateDataFormatter.get_formatter(format=self.format)
+    @property
+    def formatter(self) -> AnnotateDataFormatter:
+        return AnnotateDataFormatter.get_formatter(format=self.format)
 
     def _init_data_sub(self, context):
         if self.data_endpoint:
@@ -294,15 +306,15 @@ class AnnotateSensor(SensorFetchDataMixin[AnnotateValue], Sensor):
 
 
 class GazeSensor(SensorFetchDataMixin[GazeValue], Sensor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.formatter = GazeDataFormatter.get_formatter(format=self.format)
+    @property
+    def formatter(self) -> GazeDataFormatter:
+        return GazeDataFormatter.get_formatter(format=self.format)
 
 
 class IMUSensor(SensorFetchDataMixin[IMUValue], Sensor):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.formatter = IMUDataFormatter.get_formatter(format=self.format)
+    @property
+    def formatter(self) -> IMUDataFormatter:
+        return IMUDataFormatter.get_formatter(format=self.format)
 
 
 _SENSOR_TYPE_CLASS_MAP = {
