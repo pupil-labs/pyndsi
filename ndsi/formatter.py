@@ -36,6 +36,10 @@ class DataFormat(enum.Enum):
     def supported_formats() -> typing.Set['DataFormat']:
         return set(DataFormat)
 
+    @property
+    def version_major(self) -> int:
+        return int(self.value[1:])
+
     def __str__(self) -> str:
         return self.value
 
