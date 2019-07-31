@@ -338,8 +338,4 @@ class Network(NetworkInterface):
 
 
 def group_name_from_format(format: DataFormat) -> str:
-    if format == DataFormat.V3:
-        return 'pupil-mobile-v3'
-    if format == DataFormat.V4:
-        return 'pupil-mobile-v4'
-    raise ValueError("Unsupported format: {}".format(format))
+    return "pupil-mobile-{}".format(format)
