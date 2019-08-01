@@ -206,20 +206,13 @@ class GazeDataFormatter(DataFormatter[GazeValue]):
     @functools.lru_cache(maxsize=1, typed=True)
     def get_formatter(format: DataFormat) -> typing.Union['GazeDataFormatter', UnsupportedFormatter]:
         if format == DataFormat.V3:
-            return _GazeDataFormatter_V3()
+            return UnsupportedFormatter()
         if format == DataFormat.V4:
             return _GazeDataFormatter_V4()
         raise ValueError(format)
 
     def encode_msg(self, value: GazeValue) -> DataMessage:
         raise NotImplementedError()
-
-
-class _GazeDataFormatter_V3(GazeDataFormatter):
-    def decode_msg(self, data_msg: DataMessage) -> GazeValue:
-        ts, = struct.unpack("<d", data_msg.header)
-        x, y = struct.unpack("<ff", data_msg.body)
-        return GazeValue(x=x, y=y, timestamp=ts)
 
 
 class _GazeDataFormatter_V4(GazeDataFormatter):
