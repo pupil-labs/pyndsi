@@ -271,5 +271,19 @@ class _IMUDataFormatter_V3(IMUDataFormatter):
         return IMUValue(*content)
 
 
-class _IMUDataFormatter_V4(_IMUDataFormatter_V3):
-    pass
+class _IMUDataFormatter_V4(IMUDataFormatter):
+    CONTENT_DTYPE = np.dtype(
+        [
+            ("time_ns", "<u8"),
+            ("accel_x", "<f4"),
+            ("accel_y", "<f4"),
+            ("accel_z", "<f4"),
+            ("gyro_x", "<f4"),
+            ("gyro_y", "<f4"),
+            ("gyro_z", "<f4"),
+        ]
+    )
+
+    def decode_msg(self, data_msg: DataMessage) -> IMUValue:
+        content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(np.recarray)
+        return IMUValue(*content)
