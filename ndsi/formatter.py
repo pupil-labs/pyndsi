@@ -26,7 +26,7 @@ NANO = 1e-9
 """
 To add a new data format version, in `formatter.py`:
 1. Add a new case to the `DataFormat` enum.
-2. For each sublcass of `DataFormatter`, extend the implementation of `get_formatter` to correctly handle the new format version.
+2. For each concrete sublcass of `DataFormatter` (except `UnsupportedFormatter`), extend the implementation of `get_formatter` to correctly handle the new format version.
 3. Run the test suit to make sure that all the tests pass again.
 4. Write additional tests to cover the custom behaviour of the new data format.
 """
