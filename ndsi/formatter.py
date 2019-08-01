@@ -83,6 +83,23 @@ class DataFormatter(typing.Generic[DT], abc.ABC):
 ##########
 
 
+class UnsupportedFormatter(DataFormatter[typing.Any]):
+    """
+    Represents a formatter that is not supported for a specific data format and sensor type combination.
+    """
+    def get_formatter(format: DataFormat) -> 'UnsupportedFormatter':
+        return UnsupportedFormatter()
+
+    def encode_msg(value: typing.Any) -> DataMessage:
+        raise ValueError("Unsupported data format.")
+
+    def decode_msg(value: typing.Any) -> DataMessage:
+        raise ValueError("Unsupported data format.")
+
+
+##########
+
+
 VideoValue = typing.Union[JPEGFrame, H264Frame]
 
 
