@@ -9,6 +9,7 @@
 '''
 
 import abc
+import collections
 import functools
 import itertools
 import json as serial
@@ -302,7 +303,8 @@ class Network(NetworkInterface):
     @property
     def sensors(self) -> typing.Mapping[str, NetworkSensor]:
         sensors = itertools.chain(n.sensors for n in self._nodes)
-        return { k: v for s in sensors for k, v in s.items() }
+        sensors = collections.ChainMap(*sensors)
+        return dict(sensors)
 
     @property
     def callbacks(self) -> typing.Iterable[NetworkEventCallback]:
