@@ -162,19 +162,15 @@ class AnnotateDataFormatter(DataFormatter[AnnotateValue]):
 
 class _AnnotateDataFormatter_V3(AnnotateDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> AnnotateValue:
-        # data_msg[0]: sensor uuid
-        # data_msg[1]: metadata, None for now
-        # data_msg[2]: <uint8 - button state> <float - timestamp>
-        key, ts = struct.unpack("<Bd", data_msg[0]) # FIXME: Why do we pass item at index 0 here?
+        # NOTE: Annotation sensor is currently not NDSI-conformant.
+        key, ts = struct.unpack("<Bd", data_msg[0])
         return AnnotateValue(key=key, timestamp=ts)
 
 
 class _AnnotateDataFormatter_V4(AnnotateDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> AnnotateValue:
-        # data_msg[0]: sensor uuid
-        # data_msg[1]: metadata, None for now
-        # data_msg[2]: <uint8 - button state> <uint64_t - timestamp>
-        key, ts = struct.unpack("<BQ", data_msg[0]) # FIXME: Why do we pass item at index 0 here?
+        # NOTE: Annotation sensor is currently not NDSI-conformant.
+        key, ts = struct.unpack("<BQ", data_msg[0])
         ts *= NANO
         return AnnotateValue(key=key, timestamp=ts)
 
