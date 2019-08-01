@@ -74,16 +74,24 @@ cdef class FrameFactory:
         self.tj_context = turbojpeg.tjInitDecompress()
 
     def create_jpeg_frame(self, buffer_, meta_data):
+        """
+        meta_data[4] - timestamp in microseconds
+        """
+        meta_data = list(meta_data)
+        meta_data[4] /= 1e6  # Convert timestamp us -> s
+        meta_data = tuple(meta_data)
         cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
         frame.attach_tj_context(self.tj_context)
         return frame
 
     def create_h264_frame(self, buffer_, meta_data):
+        """
+        meta_data[4] - timestamp in microseconds
+        """
         cdef H264Frame frame = None
         cdef unsigned char[:] out_buffer
         cdef int64_t pkt_pts = 0 # explicit define required for macos.
-        cdef uint64_t time_ns = meta_data[4]
-        cdef int64_t time_us = time_ns // 1000
+        cdef int64_t time_us = int(meta_data[4])
         cdef double pupil_ts = 0.0
 
         out = self.decoder.set_input_buffer(bytearray(buffer_), meta_data[5], time_us)
@@ -95,7 +103,7 @@ cdef class FrameFactory:
             # this means that we can use the timestamps from meta_data of the input buffer frame.
             # to be on the save side we still use the h264 packet pts of the output
             # print(round(pkt_pts*1e-6,6),meta_data[4] )
-            pupil_ts = round(pkt_pts * 1e-6, 6)
+            pupil_ts = round(pkt_pts * 1e-6, 6)  # Convert timestamp us -> s
             frame = H264Frame(*meta_data[:4], timestamp=pupil_ts, data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
             frame.attach_tj_context(self.tj_context)
         return frame

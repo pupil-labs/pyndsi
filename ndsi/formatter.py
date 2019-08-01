@@ -129,7 +129,7 @@ class _VideoDataFormatter_V3(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLdLL", data_msg.header)
         meta_data = list(meta_data)
-        meta_data[4] *= 1000.0 #  ms -> ns
+        meta_data[4] *= 1e6 #  Convert timestamp s -> us
         meta_data = tuple(meta_data)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
             return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
@@ -144,6 +144,9 @@ class _VideoDataFormatter_V3(VideoDataFormatter):
 class _VideoDataFormatter_V4(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLQLL", data_msg.header)
+        meta_data = list(meta_data)
+        meta_data[4] /= 1e3 #  Convert timestamp ns -> us
+        meta_data = tuple(meta_data)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
             return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
         elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
