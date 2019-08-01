@@ -114,7 +114,7 @@ class VideoDataFormatter(DataFormatter[VideoValue]):
 
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
-    def get_formatter(format: DataFormat) -> 'VideoDataFormatter':
+    def get_formatter(format: DataFormat) -> typing.Union['VideoDataFormatter', UnsupportedFormatter]:
         if format == DataFormat.V3:
             return _VideoDataFormatter_V3()
         if format == DataFormat.V4:
@@ -166,7 +166,7 @@ class AnnotateValue(typing.NamedTuple):
 class AnnotateDataFormatter(DataFormatter[AnnotateValue]):
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
-    def get_formatter(format: DataFormat) -> 'AnnotateDataFormatter':
+    def get_formatter(format: DataFormat) -> typing.Union['AnnotateDataFormatter', UnsupportedFormatter]:
         if format == DataFormat.V3:
             return _AnnotateDataFormatter_V3()
         if format == DataFormat.V4:
@@ -204,7 +204,7 @@ class GazeValue(typing.NamedTuple):
 class GazeDataFormatter(DataFormatter[GazeValue]):
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
-    def get_formatter(format: DataFormat) -> 'GazeDataFormat':
+    def get_formatter(format: DataFormat) -> typing.Union['GazeDataFormatter', UnsupportedFormatter]:
         if format == DataFormat.V3:
             return _GazeDataFormatter_V3()
         if format == DataFormat.V4:
@@ -246,7 +246,7 @@ class IMUValue(typing.NamedTuple):
 class IMUDataFormatter(DataFormatter[IMUValue]):
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
-    def get_formatter(format: DataFormat) -> 'IMUDataFormatter':
+    def get_formatter(format: DataFormat) -> typing.Union['IMUDataFormatter', UnsupportedFormatter]:
         if format == DataFormat.V3:
             return _IMUDataFormatter_V3()
         if format == DataFormat.V4:

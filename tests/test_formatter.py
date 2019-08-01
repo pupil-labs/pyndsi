@@ -1,6 +1,7 @@
 import collections
 import pytest
 from ndsi.formatter import DataFormat, DataMessage
+from ndsi.formatter import UnsupportedFormatter
 from ndsi.formatter import GazeDataFormatter, GazeValue
 from ndsi.formatter import AnnotateDataFormatter
 from ndsi.formatter import IMUDataFormatter
@@ -42,7 +43,7 @@ def test_format_version():
 def test_gaze_formatter():
     for format in DataFormat.supported_formats():
         gaze_formatter = GazeDataFormatter.get_formatter(format=format)
-        assert isinstance(gaze_formatter, GazeDataFormatter)
+        assert isinstance(gaze_formatter, (GazeDataFormatter, UnsupportedFormatter))
 
 
 def test_gaze_formatter_v4(gaze_v4_fixture: DataFixture):
@@ -54,16 +55,16 @@ def test_gaze_formatter_v4(gaze_v4_fixture: DataFixture):
 def test_annotate_formatter():
     for format in DataFormat.supported_formats():
         annotate_formatter = AnnotateDataFormatter.get_formatter(format=format)
-        assert isinstance(annotate_formatter, AnnotateDataFormatter)
+        assert isinstance(annotate_formatter, (AnnotateDataFormatter, UnsupportedFormatter))
 
 
 def test_imu_formatter():
     for format in DataFormat.supported_formats():
         imu_formatter = IMUDataFormatter.get_formatter(format=format)
-        assert isinstance(imu_formatter, IMUDataFormatter)
+        assert isinstance(imu_formatter, (IMUDataFormatter, UnsupportedFormatter))
 
 
 def test_video_formatter():
     for format in DataFormat.supported_formats():
         imu_formatter = VideoDataFormatter.get_formatter(format=format)
-        assert isinstance(imu_formatter, VideoDataFormatter)
+        assert isinstance(imu_formatter, (VideoDataFormatter, UnsupportedFormatter))
