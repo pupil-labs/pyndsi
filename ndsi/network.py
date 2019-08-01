@@ -228,7 +228,7 @@ class _NetworkNode(NetworkInterface):
 
     def sensor(self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback]=()) -> Sensor:
         try:
-            sensor_settings = self.sensors[sensor_uuid]
+            sensor_settings = self.sensors[sensor_uuid].copy()
         except KeyError:
             raise ValueError('"{}" is not an available sensor id.'.format(sensor_uuid))
 
