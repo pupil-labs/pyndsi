@@ -302,8 +302,7 @@ class Network(NetworkInterface):
 
     @property
     def sensors(self) -> typing.Mapping[str, NetworkSensor]:
-        sensors = itertools.chain(n.sensors for n in self._nodes)
-        sensors = collections.ChainMap(*sensors)
+        sensors = collections.ChainMap(*(n.sensors for n in self._nodes))
         return dict(sensors)
 
     @property
