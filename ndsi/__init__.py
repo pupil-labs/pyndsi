@@ -8,9 +8,6 @@
 ----------------------------------------------------------------------------------~(*)
 """
 
-__version__ = "0.5"
-__protocol_version__ = "3"
-
 
 class CaptureError(Exception):
     def __init__(self, message):
@@ -22,6 +19,13 @@ class StreamError(CaptureError):
     def __init__(self, message):
         super(StreamError, self).__init__(message)
         self.message = message
+
+
+from ndsi.formatter import DataFormat
+
+
+__version__ = "1.0"
+__protocol_version__ = str(DataFormat.latest().version_major)
 
 
 from ndsi.network import Network
