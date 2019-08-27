@@ -10,6 +10,11 @@
 '''
 
 cimport ndsi.cturbojpeg as turbojpeg
+from ndsi.h264 cimport H264Decoder, COLOR_FORMAT_YUV422
+
+cdef class FrameFactory:
+    cdef H264Decoder *decoder
+    cdef turbojpeg.tjhandle tj_context
 
 cdef class JPEGFrame:
     cdef turbojpeg.tjhandle tj_context
