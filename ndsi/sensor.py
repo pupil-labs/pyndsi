@@ -1,4 +1,3 @@
-# cython: language_level=3
 '''
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
@@ -9,9 +8,8 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-# importing `struct` module name-clashes with cython struct keyword
-import struct as py_struct
-from libc.stdint cimport int64_t
+import abc
+import enum
 import json as serial
 import traceback as tb
 import numpy as np
@@ -22,9 +20,16 @@ logger = logging.getLogger(__name__)
 
 from ndsi import StreamError
 
-from ndsi.frame cimport JPEGFrame, H264Frame
-from ndsi.frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
+import typing
 
+from ndsi.formatter import DataFormatter, DataFormat, DataMessage
+from ndsi.formatter import VideoDataFormatter, VideoValue
+from ndsi.formatter import GazeDataFormatter, GazeValue
+from ndsi.formatter import AnnotateDataFormatter, AnnotateValue
+from ndsi.formatter import IMUDataFormatter, IMUValue
+
+
+NANO = 1e-9
 
 class NotDataSubSupportedError(Exception):
     def __init__(self, value=None):
@@ -32,9 +37,63 @@ class NotDataSubSupportedError(Exception):
     def __str__(self):
         return repr(self.value)
 
-cdef class Sensor:
+
+"""
+To add a new sensor, in `sensor.py`:
+1. Add a new case to the `SensorType` enum.
+2. Add a new subclass of `Sensor` and implement the custom sensor behaviour.
+3. Add a new entry into the `_SENSOR_TYPE_CLASS_MAP`, mapping the new `SensorType` case to the new `Sensor` subclass.
+4. (Optional) If the new `Sensor` subclass will include `SensorFetchDataMixin`, the subclass must define a property `formatter` that returns an instance of `DataFormatter` which serializes/deserializes the data handled by the sensor.
+5. Run the test suit to make sure that all the tests pass again.
+6. Write additional tests to cover the custom behaviour of the new sensor type.
+"""
+
+
+@enum.unique
+class SensorType(enum.Enum):
+    HARDWARE = 'hardware'
+    VIDEO = 'video'
+    ANNOTATE = 'annotate'
+    GAZE = 'gaze'
+    IMU = 'imu'
+
+    @staticmethod
+    def supported_types() -> typing.Set['SensorType']:
+        return set(SensorType)
+
+    @staticmethod
+    def supported_sensor_type_from_str(sensor_type: str) -> typing.Optional['SensorType']:
+        try:
+            sensor_type = SensorType(sensor_type)
+        except ValueError:
+            return None
+        if sensor_type not in SensorType.supported_types():
+            return None
+        return sensor_type
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class Sensor:
+
+    @staticmethod
+    def class_for_type(sensor_type: SensorType):
+        try:
+            return _SENSOR_TYPE_CLASS_MAP[sensor_type]
+        except KeyError:
+            raise ValueError("Unknown sensor type: {}".format(sensor_type))
+
+    @staticmethod
+    def create_sensor(sensor_type: SensorType, **kwargs) -> 'Sensor':
+        sensor_class = Sensor.class_for_type(sensor_type=sensor_type)
+        # TODO: Passing sensor_type to the class init as str, to preserve API compatibility.
+        #       Ideally, the sensor_type passed and stored by Sensor is of type SensorType.
+        kwargs['sensor_type'] = str(sensor_type)
+        return sensor_class(**kwargs)
 
     def __init__(self,
+            format: DataFormat,
             host_uuid,
             host_name,
             sensor_uuid,
@@ -45,6 +104,7 @@ cdef class Sensor:
             data_endpoint=None,
             context=None,
             callbacks=()):
+        self.format = format
         self.callbacks = [self.on_notification]+list(callbacks)
         self.context = context or zmq.Context()
         self.host_uuid = host_uuid
@@ -85,21 +145,21 @@ cdef class Sensor:
             self.data_sub.unsubscribe(self.uuid)
             self.data_sub.close(linger=0)
 
-    property supports_data_subscription:
-        def __get__(self):
-            return bool(self.data_sub)
+    @property
+    def supports_data_subscription(self):
+        return bool(self.data_sub)
 
-    property has_notifications:
-        def __get__(self):
-            has_n = self.notify_sub.get(zmq.EVENTS) & zmq.POLLIN
-            return has_n
+    @property
+    def has_notifications(self):
+        has_n = self.notify_sub.get(zmq.EVENTS) & zmq.POLLIN
+        return has_n
 
-    property has_data:
-        def __get__(self):
-            try:
-                return self.data_sub.get(zmq.EVENTS) & zmq.POLLIN
-            except AttributeError:
-                raise NotDataSubSupportedError()
+    @property
+    def has_data(self):
+        try:
+            return self.data_sub.get(zmq.EVENTS) & zmq.POLLIN
+        except AttributeError:
+            raise NotDataSubSupportedError()
 
     def __str__(self):
         return '<{} {}@{} [{}]>'.format(__name__, self.name, self.host_name, self.type)
@@ -191,77 +251,60 @@ cdef class Sensor:
         self.command_push.send_string(cmd)
 
 
-cdef class VideoSensor(Sensor):
+SensorFetchDataValue = typing.TypeVar('FetchDataValue')
 
-    def __cinit__(self, *args, **kwargs):
-        self.decoder = new H264Decoder(COLOR_FORMAT_YUV422)
+class SensorFetchDataMixin(typing.Generic[SensorFetchDataValue], abc.ABC):
 
+    @property
+    @abc.abstractmethod
+    def formatter(self) -> DataFormatter[SensorFetchDataValue]:
+        pass
+
+    def fetch_data(self) -> typing.Iterator[SensorFetchDataValue]:
+        assert isinstance(self, Sensor)
+
+        if not self.supports_data_subscription:
+            raise NotDataSubSupportedError()
+
+        while self.has_data:
+            data_msg = self.get_data(copy=False)
+            data_msg = DataMessage(*data_msg)
+            value = self.formatter.decode_msg(data_msg=data_msg)
+            yield value
+
+
+class VideoSensor(SensorFetchDataMixin[VideoValue], Sensor):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.tj_context = turbojpeg.tjInitDecompress()
         self._recent_frame = None
         self._waiting_for_iframe = True
+        self._formatter = VideoDataFormatter.get_formatter(format=self.format)
+
+    @property
+    def formatter(self) -> VideoDataFormatter:
+        return self._formatter
 
     def get_newest_data_frame(self, timeout=None):
         if not self.supports_data_subscription:
             raise NotDataSubSupportedError()
 
-        def create_jpeg_frame(buffer_, meta_data):
-            cdef JPEGFrame frame = JPEGFrame(*meta_data, zmq_frame=buffer_)
-            frame.attach_tj_context(self.tj_context)
-            return frame
-
-        def create_h264_frame(buffer_, meta_data):
-            cdef H264Frame frame = None
-            cdef unsigned char[:] out_buffer
-            cdef int64_t pkt_pts = 0 # explicit define required for macos.
-            out = self.decoder.set_input_buffer(bytearray(buffer_), meta_data[5], int(meta_data[4]*1e6))
-            if self.decoder.is_frame_ready():
-                out_size = self.decoder.get_output_bytes()
-                out_buffer = np.empty(out_size, dtype=np.uint8)
-                out_size = self.decoder.get_output_buffer(&out_buffer[0], out_size, pkt_pts)
-                # The observation here is that the output frame comes from the input set right before.
-                # this means that we can use the timestamps from meta_data of the input buffer frame.
-                # to be on the save side we still use the h264 packet pts of the output
-                # print(round(pkt_pts*1e-6,6),meta_data[4] )
-                frame = H264Frame(*meta_data[:4], timestamp=round(pkt_pts*1e-6,6), data_len=out_size, yuv_buffer=out_buffer, h264_buffer=buffer_)
-                frame.attach_tj_context(self.tj_context)
-            return frame
-
         if self.data_sub.poll(timeout=timeout):
-            newest_h264_frame = None
-            while self.has_data:
-                data_msg = self.get_data(copy=False)
-                meta_data = py_struct.unpack("<LLLLdLL", data_msg[1])
-                if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-                    return create_jpeg_frame(data_msg[2], meta_data)
-                elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
-                    frame = create_h264_frame(data_msg[2], meta_data)
-                    newest_h264_frame = frame or newest_h264_frame
-                else:
-                    raise StreamError('Frame was not of format MJPEG or H264')
-            if newest_h264_frame is not None:
-                return newest_h264_frame
+            newest_frame = None
+            for newest_frame in self.fetch_data():
+                # Get the last avaiable frame
+                pass
+            if newest_frame is not None:
+                return newest_frame
             else:
                 raise StreamError('Operation timed out.')
         else:
             raise StreamError('Operation timed out.')
 
 
-cdef class AnnotateSensor(Sensor):
-
-    def fetch_data(self):
-        if not self.supports_data_subscription:
-            raise NotDataSubSupportedError()
-
-        while self.has_data:
-            data_msg = self.get_data(copy=False)
-            # data_msg[0]: sensor uuid
-            # data_msg[1]: metadata, None for now
-            # data_msg[2]: <uint8 - button state> <float - timestamp>
-
-            data = py_struct.unpack("<Bd", data_msg[0])
-            yield data
+class AnnotateSensor(SensorFetchDataMixin[AnnotateValue], Sensor):
+    @property
+    def formatter(self) -> AnnotateDataFormatter:
+        return AnnotateDataFormatter.get_formatter(format=self.format)
 
     def _init_data_sub(self, context):
         if self.data_endpoint:
@@ -272,47 +315,23 @@ cdef class AnnotateSensor(Sensor):
         else:
             self.data_sub = None
 
-cdef class GazeSensor(Sensor):
 
-    def fetch_data(self):
-        if not self.supports_data_subscription:
-            raise NotDataSubSupportedError()
-
-        while self.has_data:
-            data_msg = self.get_data(copy=False)
-            ts, = py_struct.unpack("<d", data_msg[1])
-            x, y = py_struct.unpack("<ff", data_msg[2])
-            yield x, y, ts
+class GazeSensor(SensorFetchDataMixin[GazeValue], Sensor):
+    @property
+    def formatter(self) -> GazeDataFormatter:
+        return GazeDataFormatter.get_formatter(format=self.format)
 
 
-cdef class IMUSensor(Sensor):
-
-    CONTENT_DTYPE = np.dtype(
-        [
-            ("time_s", "<f8"),
-            ("accel_x", "<f4"),
-            ("accel_y", "<f4"),
-            ("accel_z", "<f4"),
-            ("gyro_x", "<f4"),
-            ("gyro_y", "<f4"),
-            ("gyro_z", "<f4"),
-        ]
-    )
-
-    def fetch_data(self):
-        if not self.supports_data_subscription:
-            raise NotDataSubSupportedError()
-
-        while self.has_data:
-            data_msg = self.get_data(copy=False)
-            content = np.frombuffer(data_msg[2], dtype=self.CONTENT_DTYPE).view(np.recarray)
-            yield content
+class IMUSensor(SensorFetchDataMixin[IMUValue], Sensor):
+    @property
+    def formatter(self) -> IMUDataFormatter:
+        return IMUDataFormatter.get_formatter(format=self.format)
 
 
-SENSOR_TYPE_CLASS_MAP = {
-    "hardware": Sensor,
-    "video": VideoSensor,
-    "annotate": AnnotateSensor,
-    "gaze": GazeSensor,
-    "imu": IMUSensor,
+_SENSOR_TYPE_CLASS_MAP = {
+    SensorType.HARDWARE: Sensor,
+    SensorType.VIDEO: VideoSensor,
+    SensorType.ANNOTATE: AnnotateSensor,
+    SensorType.GAZE: GazeSensor,
+    SensorType.IMU: IMUSensor,
 }
