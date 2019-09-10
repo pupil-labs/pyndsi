@@ -17,6 +17,8 @@ import numpy
 from Cython.Build import cythonize
 from setuptools import Extension, setup
 
+requirements = ["numpy", "pyzmq", "pyre"]
+
 
 def read(*names, **kwargs):
     with io.open(
@@ -98,6 +100,7 @@ extensions = [
 setup(
     name="ndsi",
     version=find_version("ndsi", "__init__.py"),
+    install_requires=requirements,
     description="Remote Device Sensor Interface",
     packages=["ndsi"],
     ext_modules=cythonize(extensions),
