@@ -75,6 +75,12 @@ class NetworkInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def whisper(self, peer, msg_p):
+        """Send message to single peer, specified as a UUID string
+        """
+        pass
+
+    @abc.abstractmethod
     def rejoin(self):
         pass
 
@@ -140,6 +146,14 @@ class _NetworkNode(NetworkInterface):
             self._pyre_node.set_header(*header)
         self._pyre_node.join(self._group)
         self._pyre_node.start()
+
+    def whisper(self, peer, msg_p):
+        if self._format == DataFormat.V3:
+            return  # no-op
+        elif self._format == DataFormat.V4:
+            self._pyre_node.whisper(peer, msg_p)
+        else:
+            raise NotImplementedError()
 
     def rejoin(self):
         for sensor_uuid, sensor in list(self.sensors.items()):
@@ -318,6 +332,10 @@ class Network(NetworkInterface):
     def start(self):
         for node in self._nodes:
             node.start()
+
+    def whisper(self, peer, msg_p):
+        for node in self._nodes:
+            node.whisper(peer=peer, msg_p=msg_p)
 
     def rejoin(self):
         for node in self._nodes:
