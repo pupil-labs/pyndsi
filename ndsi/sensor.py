@@ -1,4 +1,4 @@
-'''
+"""
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
  Copyright (C) 2012-2015  Pupil Labs
@@ -6,7 +6,7 @@
  Distributed under the terms of the CC BY-NC-SA License.
  License details are in the file LICENSE, distributed as part of this software.
 ----------------------------------------------------------------------------------~(*)
-'''
+"""
 
 import abc
 import enum
@@ -16,6 +16,7 @@ import numpy as np
 import zmq
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 from ndsi import StreamError
@@ -32,9 +33,11 @@ from ndsi.formatter import EventDataFormatter, EventValue
 
 NANO = 1e-9
 
+
 class NotDataSubSupportedError(Exception):
     def __init__(self, value=None):
-        self.value = value or 'This sensor does not support data subscription.'
+        self.value = value or "This sensor does not support data subscription."
+
     def __str__(self):
         return repr(self.value)
 
@@ -52,19 +55,21 @@ To add a new sensor, in `sensor.py`:
 
 @enum.unique
 class SensorType(enum.Enum):
-    HARDWARE = 'hardware'
-    VIDEO = 'video'
-    ANNOTATE = 'annotate'
-    GAZE = 'gaze'
-    IMU = 'imu'
-    EVENT = 'event'
+    HARDWARE = "hardware"
+    VIDEO = "video"
+    ANNOTATE = "annotate"
+    GAZE = "gaze"
+    IMU = "imu"
+    EVENT = "event"
 
     @staticmethod
-    def supported_types() -> typing.Set['SensorType']:
+    def supported_types() -> typing.Set["SensorType"]:
         return set(SensorType)
 
     @staticmethod
-    def supported_sensor_type_from_str(sensor_type: str) -> typing.Optional['SensorType']:
+    def supported_sensor_type_from_str(
+        sensor_type: str,
+    ) -> typing.Optional["SensorType"]:
         try:
             sensor_type = SensorType(sensor_type)
         except ValueError:
@@ -78,7 +83,6 @@ class SensorType(enum.Enum):
 
 
 class Sensor:
-
     @staticmethod
     def class_for_type(sensor_type: SensorType):
         try:
@@ -87,27 +91,29 @@ class Sensor:
             raise ValueError("Unknown sensor type: {}".format(sensor_type))
 
     @staticmethod
-    def create_sensor(sensor_type: SensorType, **kwargs) -> 'Sensor':
+    def create_sensor(sensor_type: SensorType, **kwargs) -> "Sensor":
         sensor_class = Sensor.class_for_type(sensor_type=sensor_type)
         # TODO: Passing sensor_type to the class init as str, to preserve API compatibility.
         #       Ideally, the sensor_type passed and stored by Sensor is of type SensorType.
-        kwargs['sensor_type'] = str(sensor_type)
+        kwargs["sensor_type"] = str(sensor_type)
         return sensor_class(**kwargs)
 
-    def __init__(self,
-            format: DataFormat,
-            host_uuid,
-            host_name,
-            sensor_uuid,
-            sensor_name,
-            sensor_type,
-            notify_endpoint,
-            command_endpoint,
-            data_endpoint=None,
-            context=None,
-            callbacks=()):
+    def __init__(
+        self,
+        format: DataFormat,
+        host_uuid,
+        host_name,
+        sensor_uuid,
+        sensor_name,
+        sensor_type,
+        notify_endpoint,
+        command_endpoint,
+        data_endpoint=None,
+        context=None,
+        callbacks=(),
+    ):
         self.format = format
-        self.callbacks = [self.on_notification]+list(callbacks)
+        self.callbacks = [self.on_notification] + list(callbacks)
         self.context = context or zmq.Context()
         self.host_uuid = host_uuid
         self.host_name = host_name
@@ -164,22 +170,32 @@ class Sensor:
             raise NotDataSubSupportedError()
 
     def __str__(self):
-        return '<{} {}@{} [{}]>'.format(__name__, self.name, self.host_name, self.type)
+        return "<{} {}@{} [{}]>".format(__name__, self.name, self.host_name, self.type)
 
     def handle_notification(self):
         raw_notification = self.notify_sub.recv_multipart()
         if len(raw_notification) != 2:
-            logger.debug('Message for sensor {} has not correct amount of frames: {}'.format(self.uuid,raw_notification))
+            logger.debug(
+                "Message for sensor {} has not correct amount of frames: {}".format(
+                    self.uuid, raw_notification
+                )
+            )
             return
         sender_id = raw_notification[0].decode()
         notification_payload = raw_notification[1].decode()
         try:
             if sender_id != self.uuid:
-                raise ValueError('Message was destined for {} but was recieved by {}'.format(sender_id, self.uuid))
+                raise ValueError(
+                    "Message was destined for {} but was recieved by {}".format(
+                        sender_id, self.uuid
+                    )
+                )
             notification = serial.loads(notification_payload)
-            notification['subject']
+            notification["subject"]
         except serial.decoder.JSONDecodeError:
-            logger.debug('JSONDecodeError for payload: `{}`'.format(notification_payload))
+            logger.debug(
+                "JSONDecodeError for payload: `{}`".format(notification_payload)
+            )
         except Exception:
             logger.debug(tb.format_exc())
         else:
@@ -193,31 +209,38 @@ class Sensor:
             callback(self, event)
 
     def on_notification(self, caller, notification):
-        if notification['subject'] == 'update':
+        if notification["subject"] == "update":
+
             class UnsettableDict(dict):
                 def __getitem__(self, key):
                     return self.get(key)
-                def __setitem__(self, key, value):
-                    raise ValueError('Dictionary is read-only. Use Sensor.set_control_value instead.')
 
-            ctrl_id_key = notification['control_id']
+                def __setitem__(self, key, value):
+                    raise ValueError(
+                        "Dictionary is read-only. Use Sensor.set_control_value instead."
+                    )
+
+            ctrl_id_key = notification["control_id"]
             if ctrl_id_key in self.controls:
-                self.controls[ctrl_id_key].update(UnsettableDict(notification['changes']))
-            else: self.controls[ctrl_id_key] = UnsettableDict(notification['changes'])
-        elif notification['subject'] == 'remove':
+                self.controls[ctrl_id_key].update(
+                    UnsettableDict(notification["changes"])
+                )
+            else:
+                self.controls[ctrl_id_key] = UnsettableDict(notification["changes"])
+        elif notification["subject"] == "remove":
             try:
-                del self.controls[notification['control_id']]
+                del self.controls[notification["control_id"]]
             except KeyError:
                 pass
 
-    def get_data(self,copy=True):
+    def get_data(self, copy=True):
         try:
             return self.data_sub.recv_multipart(copy=copy)
         except AttributeError:
             raise NotDataSubSupportedError()
 
     def refresh_controls(self):
-        cmd = serial.dumps({'action': 'refresh_controls'})
+        cmd = serial.dumps({"action": "refresh_controls"})
         self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
         self.command_push.send_string(cmd)
 
@@ -227,36 +250,46 @@ class Sensor:
 
     def reset_control_value(self, control_id):
         if control_id in self.controls:
-            if 'def' in self.controls[control_id]:
-                value = self.controls[control_id]['def']
+            if "def" in self.controls[control_id]:
+                value = self.controls[control_id]["def"]
                 self.set_control_value(control_id, value)
             else:
-                logger.error(('Could not reset control `{}` because it does not have a default value.').format(control_id))
-        else: logger.error('Could not reset unknown control `{}`'.format(control_id))
+                logger.error(
+                    (
+                        "Could not reset control `{}` because it does not have a default value."
+                    ).format(control_id)
+                )
+        else:
+            logger.error("Could not reset unknown control `{}`".format(control_id))
 
     def set_control_value(self, control_id, value):
         try:
-            dtype = self.controls[control_id]['dtype']
-            if dtype == 'bool': value = bool(value)
-            elif dtype == 'string': value = str(value)
-            elif dtype == 'integer': value = int(value)
-            elif dtype == 'float': value = float(value)
-            elif dtype == 'intmapping': value = int(value)
-            elif dtype == 'strmapping': value = str(value)
+            dtype = self.controls[control_id]["dtype"]
+            if dtype == "bool":
+                value = bool(value)
+            elif dtype == "string":
+                value = str(value)
+            elif dtype == "integer":
+                value = int(value)
+            elif dtype == "float":
+                value = float(value)
+            elif dtype == "intmapping":
+                value = int(value)
+            elif dtype == "strmapping":
+                value = str(value)
         except KeyError:
             pass
-        cmd = serial.dumps({
-            "action": "set_control_value",
-            "control_id": control_id,
-            "value": value})
+        cmd = serial.dumps(
+            {"action": "set_control_value", "control_id": control_id, "value": value}
+        )
         self.command_push.send_string(self.uuid, flags=zmq.SNDMORE)
         self.command_push.send_string(cmd)
 
 
-SensorFetchDataValue = typing.TypeVar('FetchDataValue')
+SensorFetchDataValue = typing.TypeVar("FetchDataValue")
+
 
 class SensorFetchDataMixin(typing.Generic[SensorFetchDataValue], abc.ABC):
-
     @property
     @abc.abstractmethod
     def formatter(self) -> DataFormatter[SensorFetchDataValue]:
@@ -298,9 +331,9 @@ class VideoSensor(SensorFetchDataMixin[VideoValue], Sensor):
             if newest_frame is not None:
                 return newest_frame
             else:
-                raise StreamError('Operation timed out.')
+                raise StreamError("Operation timed out.")
         else:
-            raise StreamError('Operation timed out.')
+            raise StreamError("Operation timed out.")
 
 
 class AnnotateSensor(SensorFetchDataMixin[AnnotateValue], Sensor):

@@ -12,11 +12,17 @@ from ndsi.frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
 
 
 __all__ = [
-    'DataFormat', 'DataFormatter', 'DataMessage',
-    'VideoDataFormatter', 'VideoValue',
-    'GazeDataFormatter', 'GazeValue',
-    'AnnotateDataFormatter', 'AnnotateValue',
-    'IMUDataFormatter', 'IMUValue',
+    "DataFormat",
+    "DataFormatter",
+    "DataMessage",
+    "VideoDataFormatter",
+    "VideoValue",
+    "GazeDataFormatter",
+    "GazeValue",
+    "AnnotateDataFormatter",
+    "AnnotateValue",
+    "IMUDataFormatter",
+    "IMUValue",
 ]
 
 
@@ -37,15 +43,16 @@ class DataFormat(enum.Enum):
     """
     `DataFormat` enum represents the format for serializing and deserializing data between NDSI hosts and clients.
     """
-    V3 = 'v3'
-    V4 = 'v4'
+
+    V3 = "v3"
+    V4 = "v4"
 
     @staticmethod
-    def latest() -> 'DataFormat':
+    def latest() -> "DataFormat":
         return max(DataFormat.supported_formats(), key=lambda f: f.version_major)
 
     @staticmethod
-    def supported_formats() -> typing.Set['DataFormat']:
+    def supported_formats() -> typing.Set["DataFormat"]:
         return set(DataFormat)
 
     @property
@@ -62,13 +69,12 @@ class DataMessage(typing.NamedTuple):
     body: bytes
 
 
-DT = typing.TypeVar('DataValue')
+DT = typing.TypeVar("DataValue")
 
 
 class DataFormatter(typing.Generic[DT], abc.ABC):
-
     @abc.abstractstaticmethod
-    def get_formatter(format: DataFormat) -> 'DataFormatter':
+    def get_formatter(format: DataFormat) -> "DataFormatter":
         pass
 
     @abc.abstractmethod
@@ -87,7 +93,8 @@ class UnsupportedFormatter(DataFormatter[typing.Any]):
     """
     Represents a formatter that is not supported for a specific data format and sensor type combination.
     """
-    def get_formatter(format: DataFormat) -> 'UnsupportedFormatter':
+
+    def get_formatter(format: DataFormat) -> "UnsupportedFormatter":
         return UnsupportedFormatter()
 
     def encode_msg(value: typing.Any) -> DataMessage:
@@ -114,7 +121,9 @@ class VideoDataFormatter(DataFormatter[VideoValue]):
 
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
-    def get_formatter(format: DataFormat) -> typing.Union['VideoDataFormatter', UnsupportedFormatter]:
+    def get_formatter(
+        format: DataFormat,
+    ) -> typing.Union["VideoDataFormatter", UnsupportedFormatter]:
         if format == DataFormat.V3:
             return _VideoDataFormatter_V3()
         if format == DataFormat.V4:
@@ -129,7 +138,7 @@ class _VideoDataFormatter_V3(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLdLL", data_msg.header)
         meta_data = list(meta_data)
-        meta_data[4] *= 1e6 #  Convert timestamp s -> us
+        meta_data[4] *= 1e6  #  Convert timestamp s -> us
         meta_data = tuple(meta_data)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
             return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
@@ -138,14 +147,14 @@ class _VideoDataFormatter_V3(VideoDataFormatter):
             self._newest_h264_frame = frame or self._newest_h264_frame
             return self._newest_h264_frame
         else:
-            raise StreamError('Frame was not of format MJPEG or H264')
+            raise StreamError("Frame was not of format MJPEG or H264")
 
 
 class _VideoDataFormatter_V4(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLQLL", data_msg.header)
         meta_data = list(meta_data)
-        meta_data[4] /= 1e3 #  Convert timestamp ns -> us
+        meta_data[4] /= 1e3  #  Convert timestamp ns -> us
         meta_data = tuple(meta_data)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
             return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
@@ -154,7 +163,7 @@ class _VideoDataFormatter_V4(VideoDataFormatter):
             self._newest_h264_frame = frame or self._newest_h264_frame
             return self._newest_h264_frame
         else:
-            raise StreamError('Frame was not of format MJPEG or H264')
+            raise StreamError("Frame was not of format MJPEG or H264")
 
 
 ##########
@@ -169,7 +178,9 @@ class AnnotateValue(typing.NamedTuple):
 class AnnotateDataFormatter(DataFormatter[AnnotateValue]):
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
-    def get_formatter(format: DataFormat) -> typing.Union['AnnotateDataFormatter', UnsupportedFormatter]:
+    def get_formatter(
+        format: DataFormat,
+    ) -> typing.Union["AnnotateDataFormatter", UnsupportedFormatter]:
         if format == DataFormat.V3:
             return _AnnotateDataFormatter_V3()
         if format == DataFormat.V4:
@@ -207,7 +218,9 @@ class GazeValue(typing.NamedTuple):
 class GazeDataFormatter(DataFormatter[GazeValue]):
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
-    def get_formatter(format: DataFormat) -> typing.Union['GazeDataFormatter', UnsupportedFormatter]:
+    def get_formatter(
+        format: DataFormat,
+    ) -> typing.Union["GazeDataFormatter", UnsupportedFormatter]:
         if format == DataFormat.V3:
             return UnsupportedFormatter()
         if format == DataFormat.V4:
@@ -220,7 +233,7 @@ class GazeDataFormatter(DataFormatter[GazeValue]):
 
 class _GazeDataFormatter_V4(GazeDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> GazeValue:
-        ts, = struct.unpack("<Q", data_msg.header)
+        (ts,) = struct.unpack("<Q", data_msg.header)
         ts *= NANO
         x, y = struct.unpack("<ff", data_msg.body)
         return GazeValue(x=x, y=y, timestamp=ts)
@@ -242,7 +255,9 @@ class IMUValue(typing.NamedTuple):
 class IMUDataFormatter(DataFormatter[IMUValue]):
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
-    def get_formatter(format: DataFormat) -> typing.Union['IMUDataFormatter', UnsupportedFormatter]:
+    def get_formatter(
+        format: DataFormat,
+    ) -> typing.Union["IMUDataFormatter", UnsupportedFormatter]:
         if format == DataFormat.V3:
             return _IMUDataFormatter_V3()
         if format == DataFormat.V4:
@@ -267,7 +282,9 @@ class _IMUDataFormatter_V3(IMUDataFormatter):
     )
 
     def decode_msg(self, data_msg: DataMessage) -> IMUValue:
-        content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(np.recarray)
+        content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(
+            np.recarray
+        )
         return IMUValue(*content)
 
 
@@ -285,7 +302,9 @@ class _IMUDataFormatter_V4(IMUDataFormatter):
     )
 
     def decode_msg(self, data_msg: DataMessage) -> IMUValue:
-        content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(np.recarray)
+        content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(
+            np.recarray
+        )
         return IMUValue(*content)
 
 
@@ -300,7 +319,9 @@ class EventValue(typing.NamedTuple):
 class EventDataFormatter(DataFormatter[EventValue]):
     @staticmethod
     @functools.lru_cache(maxsize=1, typed=True)
-    def get_formatter(format: DataFormat) -> typing.Union['EventDataFormatter', UnsupportedFormatter]:
+    def get_formatter(
+        format: DataFormat,
+    ) -> typing.Union["EventDataFormatter", UnsupportedFormatter]:
         if format == DataFormat.V3:
             return UnsupportedFormatter()
         if format == DataFormat.V4:
