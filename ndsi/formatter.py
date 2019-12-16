@@ -325,10 +325,10 @@ class EventDataFormatter(DataFormatter[EventValue]):
         if format == DataFormat.V3:
             return UnsupportedFormatter()
         if format == DataFormat.V4:
-            return _IMUDataFormatter_V4()
+            return _EventDataFormatter_V4()
         raise ValueError(format)
 
-    def encode_msg(self, value: IMUValue) -> DataMessage:
+    def encode_msg(self, value: EventValue) -> DataMessage:
         raise NotImplementedError()
 
 
@@ -341,7 +341,7 @@ class _EventDataFormatter_V4(EventDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> EventValue:
         """
         1. sensor UUID
-        2. heaeder:
+        2. header:
             - int_64 timestamp_le
             - uint32 body_length_le
             - uint32 encoding_le
@@ -349,8 +349,9 @@ class _EventDataFormatter_V4(EventDataFormatter):
         3. body:
             - `encoding_le` encoded string of lenght `body_length_le`
         """
-        ts, len_, enc_code = struct.unpack("<q", data_msg.header)
+        ts, len_, enc_code = struct.unpack("<qii", data_msg.header)
         ts *= NANO
         enc = self._encoding_lookup[enc_code]
-        body = data_msg.body[:len_].decode(enc)
-        return EventValue(body=body, timestamp=ts)
+        body = data_msg.body.bytes[:len_]
+        label = body.decode(enc)
+        return EventValue(body=label, timestamp=ts)
