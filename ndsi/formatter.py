@@ -313,7 +313,7 @@ class _IMUDataFormatter_V4(IMUDataFormatter):
 
 class EventValue(typing.NamedTuple):
     timestamp: float
-    body: str
+    label: str
 
 
 class EventDataFormatter(DataFormatter[EventValue]):
@@ -354,4 +354,4 @@ class _EventDataFormatter_V4(EventDataFormatter):
         enc = self._encoding_lookup[enc_code]
         body = data_msg.body.bytes[:len_]
         label = body.decode(enc)
-        return EventValue(body=label, timestamp=ts)
+        return EventValue(label=label, timestamp=ts)
