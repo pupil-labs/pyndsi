@@ -287,3 +287,49 @@ class _IMUDataFormatter_V4(IMUDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> IMUValue:
         content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(np.recarray)
         return IMUValue(*content)
+
+
+##########
+
+
+class EventValue(typing.NamedTuple):
+    timestamp: float
+    body: str
+
+
+class EventDataFormatter(DataFormatter[EventValue]):
+    @staticmethod
+    @functools.lru_cache(maxsize=1, typed=True)
+    def get_formatter(format: DataFormat) -> typing.Union['EventDataFormatter', UnsupportedFormatter]:
+        if format == DataFormat.V3:
+            return UnsupportedFormatter()
+        if format == DataFormat.V4:
+            return _IMUDataFormatter_V4()
+        raise ValueError(format)
+
+    def encode_msg(self, value: IMUValue) -> DataMessage:
+        raise NotImplementedError()
+
+
+class _EventDataFormatter_V4(EventDataFormatter):
+
+    _encoding_lookup = {
+        0: "utf-8",
+    }
+
+    def decode_msg(self, data_msg: DataMessage) -> EventValue:
+        """
+        1. sensor UUID
+        2. heaeder:
+            - int_64 timestamp_le
+            - uint32 body_length_le
+            - uint32 encoding_le
+                = 0 -> "utf-8"
+        3. body:
+            - `encoding_le` encoded string of lenght `body_length_le`
+        """
+        ts, len_, enc_code = struct.unpack("<q", data_msg.header)
+        ts *= NANO
+        enc = self._encoding_lookup[enc_code]
+        body = data_msg.body[:len_].decode(enc)
+        return EventValue(body=body, timestamp=ts)

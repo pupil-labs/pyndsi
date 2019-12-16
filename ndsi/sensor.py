@@ -27,6 +27,7 @@ from ndsi.formatter import VideoDataFormatter, VideoValue
 from ndsi.formatter import GazeDataFormatter, GazeValue
 from ndsi.formatter import AnnotateDataFormatter, AnnotateValue
 from ndsi.formatter import IMUDataFormatter, IMUValue
+from ndsi.formatter import EventDataFormatter, EventValue
 
 
 NANO = 1e-9
@@ -56,6 +57,7 @@ class SensorType(enum.Enum):
     ANNOTATE = 'annotate'
     GAZE = 'gaze'
     IMU = 'imu'
+    EVENT = 'event'
 
     @staticmethod
     def supported_types() -> typing.Set['SensorType']:
@@ -328,10 +330,17 @@ class IMUSensor(SensorFetchDataMixin[IMUValue], Sensor):
         return IMUDataFormatter.get_formatter(format=self.format)
 
 
+class EventSensor(SensorFetchDataMixin[EventValue], Sensor):
+    @property
+    def formatter(self) -> EventDataFormatter:
+        return EventDataFormatter.get_formatter(format=self.format)
+
+
 _SENSOR_TYPE_CLASS_MAP = {
     SensorType.HARDWARE: Sensor,
     SensorType.VIDEO: VideoSensor,
     SensorType.ANNOTATE: AnnotateSensor,
     SensorType.GAZE: GazeSensor,
     SensorType.IMU: IMUSensor,
+    SensorType.EVENT: EventSensor,
 }
