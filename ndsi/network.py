@@ -110,7 +110,7 @@ class _NetworkNode(NetworkInterface):
         self._headers = headers
         self._pyre_node = None
         self._context = context or zmq.Context()
-        self._sensors = {}
+        self._sensors_by_host = {}
         self._callbacks = [self._on_event]+list(callbacks)
         self._warned_once_older_version = False
         self._warned_once_newer_version = False
@@ -127,7 +127,10 @@ class _NetworkNode(NetworkInterface):
 
     @property
     def sensors(self) -> typing.Mapping[str, NetworkSensor]:
-        return self._sensors
+        sensors = {}
+        for sensor in self._sensors_by_host.values():
+            sensors.update(sensor)
+        return sensors
 
     @property
     def callbacks(self) -> typing.Iterable[NetworkEventCallback]:
@@ -228,15 +231,16 @@ class _NetworkNode(NetworkInterface):
 
         elif event.type == 'EXIT':
             gone_peer = event.peer_uuid.hex
-            for sensor_uuid in list(self.sensors.keys()):
-                host = self.sensors[sensor_uuid]['host_uuid']
-                if host == gone_peer:
-                    self._execute_callbacks({
-                        'subject': 'detach',
-                        'sensor_uuid': sensor_uuid,
-                        'sensor_name': self.sensors[sensor_uuid]['sensor_name'],
-                        'host_uuid': host,
-                        'host_name': self.sensors[sensor_uuid]['host_name']})
+            for host_uuid, sensors in self._sensors_by_host.items():
+                if host_uuid != gone_peer:
+                    continue
+                for sensor_uuid, sensor in list(sensors.items()):
+                        self._execute_callbacks({
+                            'subject': 'detach',
+                            'sensor_uuid': sensor_uuid,
+                            'sensor_name': sensor['sensor_name'],
+                            'host_uuid': host_uuid,
+                            'host_name': sensor['host_name']})
         else:
             logger.debug('Dropping {}'.format(event))
 
@@ -279,12 +283,16 @@ class _NetworkNode(NetworkInterface):
         if event['subject'] == 'attach':
             subject_less = event.copy()
             del subject_less['subject']
-            self.sensors.update({event['sensor_uuid']: subject_less})
+            self._sensors_by_host.update({event['host_uuid']: {event['sensor_uuid']: subject_less}})
         elif event['subject'] == 'detach':
-            try:
-                del self.sensors[event['sensor_uuid']]
-            except KeyError:
-                pass
+            for host_uuid, sensors in self._sensors_by_host.items():
+                try:
+                    del sensors[event['sensor_uuid']]
+                except KeyError:
+                    pass
+            hosts_to_remove = [host_uuid for host_uuid, sensors in self._sensors_by_host.items() if len(sensors) == 0]
+            for host_uuid in hosts_to_remove:
+                del self._sensors_by_host[host_uuid]
 
 
 class Network(NetworkInterface):
