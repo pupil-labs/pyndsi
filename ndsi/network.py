@@ -280,11 +280,17 @@ class _NetworkNode(NetworkInterface):
             callback(self, event)
 
     def _on_event(self, caller, event):
-        if event['subject'] == 'attach':
+        if event["subject"] == "attach":
             subject_less = event.copy()
-            del subject_less['subject']
-            self._sensors_by_host.update({event['host_uuid']: {event['sensor_uuid']: subject_less}})
-        elif event['subject'] == 'detach':
+            del subject_less["subject"]
+            host_uuid = event["host_uuid"]
+            host_sensor = {event["sensor_uuid"]: subject_less}
+            try:
+                self._sensors_by_host[host_uuid].update(host_sensor)
+            except KeyError:
+                self._sensors_by_host[host_uuid] = host_sensor
+            logger.debug(f'Attached {host_uuid}.{event["sensor_uuid"]}')
+        elif event["subject"] == "detach":
             for host_uuid, sensors in self._sensors_by_host.items():
                 try:
                     del sensors[event['sensor_uuid']]
