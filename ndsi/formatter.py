@@ -345,7 +345,7 @@ class _EventDataFormatter_V4(EventDataFormatter):
             - uint32 encoding_le
                 = 0 -> "utf-8"
         3. body:
-            - `encoding_le` encoded string of lenght `body_length_le`
+            - `encoding_le` encoded string of length `body_length_le`
         """
         ts, len_, enc_code = struct.unpack("<qii", data_msg.header)
         ts *= NANO
