@@ -334,9 +334,7 @@ class EventDataFormatter(DataFormatter[EventValue]):
 
 class _EventDataFormatter_V4(EventDataFormatter):
 
-    _encoding_lookup = {
-        0: "utf-8",
-    }
+    _encoding_lookup = {0: "utf-8"}
 
     def decode_msg(self, data_msg: DataMessage) -> EventValue:
         """

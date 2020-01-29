@@ -8,20 +8,18 @@ from ndsi.formatter import IMUDataFormatter
 from ndsi.formatter import VideoDataFormatter
 
 
-DataFixture = collections.namedtuple('DataFixture', ['value', 'data_msg'])
+DataFixture = collections.namedtuple("DataFixture", ["value", "data_msg"])
 
 
 @pytest.fixture
 def gaze_v4_fixture() -> DataFixture:
     value = GazeValue(
-        x=564.1744384765625,
-        y=542.271240234375,
-        timestamp=1564499230.2196853,
+        x=564.1744384765625, y=542.271240234375, timestamp=1564499230.2196853
     )
     data_msg = DataMessage(
-        sensor_id='6678360f-9850-468e-8b44-47b7c43712dc',
-        header=b'\x08\xcd\x9d\xc4\xc27\xb6\x15',
-        body=b'*\x0b\rD\\\x91\x07D',
+        sensor_id="6678360f-9850-468e-8b44-47b7c43712dc",
+        header=b"\x08\xcd\x9d\xc4\xc27\xb6\x15",
+        body=b"*\x0b\rD\\\x91\x07D",
     )
     return DataFixture(value=value, data_msg=data_msg)
 
@@ -55,7 +53,9 @@ def test_gaze_formatter_v4(gaze_v4_fixture: DataFixture):
 def test_annotate_formatter():
     for format in DataFormat.supported_formats():
         annotate_formatter = AnnotateDataFormatter.get_formatter(format=format)
-        assert isinstance(annotate_formatter, (AnnotateDataFormatter, UnsupportedFormatter))
+        assert isinstance(
+            annotate_formatter, (AnnotateDataFormatter, UnsupportedFormatter)
+        )
 
 
 def test_imu_formatter():
