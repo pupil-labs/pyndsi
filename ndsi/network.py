@@ -1,4 +1,4 @@
-'''
+"""
 (*)~----------------------------------------------------------------------------------
  Pupil - eye tracking platform
  Copyright (C) 2012-2015  Pupil Labs
@@ -6,7 +6,7 @@
  Distributed under the terms of the CC BY-NC-SA License.
  License details are in the file LICENSE, distributed as part of this software.
 ----------------------------------------------------------------------------------~(*)
-'''
+"""
 
 import abc
 import collections
@@ -16,7 +16,7 @@ import json as serial
 import logging
 import sys
 import time
-import traceback  as tb
+import traceback as tb
 import typing
 
 import zmq
@@ -75,6 +75,12 @@ class NetworkInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
+    def whisper(self, peer, msg_p):
+        """Send message to single peer, specified as a UUID string
+        """
+        pass
+
+    @abc.abstractmethod
     def rejoin(self):
         pass
 
@@ -87,7 +93,9 @@ class NetworkInterface(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def sensor(self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback]=()) -> Sensor:
+    def sensor(
+        self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback] = ()
+    ) -> Sensor:
         pass
 
 
@@ -98,14 +106,16 @@ class _NetworkNode(NetworkInterface):
     Creates Pyre node and handles all communication.
     """
 
-    def __init__(self, format: DataFormat, context=None, name=None, headers=(), callbacks=()):
+    def __init__(
+        self, format: DataFormat, context=None, name=None, headers=(), callbacks=()
+    ):
         self._name = name
         self._format = format
         self._headers = headers
         self._pyre_node = None
         self._context = context or zmq.Context()
-        self._sensors = {}
-        self._callbacks = [self._on_event]+list(callbacks)
+        self._sensors_by_host = {}
+        self._callbacks = [self._on_event] + list(callbacks)
         self._warned_once_older_version = False
         self._warned_once_newer_version = False
 
@@ -121,7 +131,10 @@ class _NetworkNode(NetworkInterface):
 
     @property
     def sensors(self) -> typing.Mapping[str, NetworkSensor]:
-        return self._sensors
+        sensors = {}
+        for sensor in self._sensors_by_host.values():
+            sensors.update(sensor)
+        return sensors
 
     @property
     def callbacks(self) -> typing.Iterable[NetworkEventCallback]:
@@ -133,7 +146,7 @@ class _NetworkNode(NetworkInterface):
 
     def start(self):
         # Setup node
-        logger.debug('Starting network...')
+        logger.debug("Starting network...")
         self._pyre_node = Pyre(self._name)
         self._name = self._pyre_node.name()
         for header in self._headers:
@@ -141,19 +154,30 @@ class _NetworkNode(NetworkInterface):
         self._pyre_node.join(self._group)
         self._pyre_node.start()
 
+    def whisper(self, peer, msg_p):
+        if self._format == DataFormat.V3:
+            return  # no-op
+        elif self._format == DataFormat.V4:
+            self._pyre_node.whisper(peer, msg_p)
+        else:
+            raise NotImplementedError()
+
     def rejoin(self):
         for sensor_uuid, sensor in list(self.sensors.items()):
-            self._execute_callbacks({
-                'subject': 'detach',
-                'sensor_uuid': sensor_uuid,
-                'sensor_name': sensor['sensor_name'],
-                'host_uuid': sensor['host_uuid'],
-                'host_name': sensor['host_name']})
+            self._execute_callbacks(
+                {
+                    "subject": "detach",
+                    "sensor_uuid": sensor_uuid,
+                    "sensor_name": sensor["sensor_name"],
+                    "host_uuid": sensor["host_uuid"],
+                    "host_name": sensor["host_name"],
+                }
+            )
         self._pyre_node.leave(self._group)
         self._pyre_node.join(self._group)
 
     def stop(self):
-        logger.debug('Stopping network...')
+        logger.debug("Stopping network...")
         self._pyre_node.leave(self._group)
         self._pyre_node.stop()
         self._pyre_node = None
@@ -163,70 +187,91 @@ class _NetworkNode(NetworkInterface):
             return
         event = PyreEvent(self._pyre_node)
         uuid = event.peer_uuid
-        if event.type == 'SHOUT' or event.type == 'WHISPER':
+        if event.type == "SHOUT" or event.type == "WHISPER":
             try:
                 payload = event.msg.pop(0).decode()
                 msg = serial.loads(payload)
-                msg['subject']
-                msg['sensor_uuid']
-                msg['host_uuid'] = event.peer_uuid.hex
-                msg['host_name'] = event.peer_name
+                msg["subject"]
+                msg["sensor_uuid"]
+                msg["host_uuid"] = event.peer_uuid.hex
+                msg["host_name"] = event.peer_name
             except serial.decoder.JSONDecodeError:
                 logger.warning('Malformatted message: "{}"'.format(payload))
             except (ValueError, KeyError):
-                logger.warning('Malformatted message: {}'.format(msg))
+                logger.warning("Malformatted message: {}".format(msg))
             except Exception:
                 logger.debug(tb.format_exc())
             else:
-                if msg['subject'] == 'attach':
-                    if self.sensors.get(msg['sensor_uuid']):
+                if msg["subject"] == "attach":
+                    if self.sensors.get(msg["sensor_uuid"]):
                         # Sensor already attached. Drop event
                         return
-                    sensor_type = SensorType.supported_sensor_type_from_str(msg['sensor_type'])
+                    sensor_type = SensorType.supported_sensor_type_from_str(
+                        msg["sensor_type"]
+                    )
                     if sensor_type is None:
-                        logger.debug('Unsupported sensor type: {}'.format(msg['sensor_type']))
+                        logger.debug(
+                            "Unsupported sensor type: {}".format(msg["sensor_type"])
+                        )
                         return
-                elif msg['subject'] == 'detach':
-                    sensor_entry = self.sensors.get(msg['sensor_uuid'])
+                elif msg["subject"] == "detach":
+                    sensor_entry = self.sensors.get(msg["sensor_uuid"])
                     # Check if sensor has been detached already
-                    if not sensor_entry: return
+                    if not sensor_entry:
+                        return
                     msg.update(sensor_entry)
                 else:
-                    logger.debug('Unknown host message: {}'.format(msg))
+                    logger.debug("Unknown host message: {}".format(msg))
                     return
                 self._execute_callbacks(msg)
-        elif event.type == 'JOIN':
+        elif event.type == "JOIN":
             # possible values for `group_version`
             # - [<unrelated group>]
             # - [<unrelated group>, <unrelated version>]
             # - ['pupil-mobile']
             # - ['pupil-mobile', <version>]
-            group_version = event.group.split('-v')
+            group_version = event.group.split("-v")
             group = group_version[0]
-            version = group_version[1] if len(group_version) > 1 else '0'
-            if group == 'pupil-mobile':
-                if not self._warned_once_older_version and version < __protocol_version__:
-                    logger.warning('Devices with outdated NDSI version found. Please update these devices.')
+            version = group_version[1] if len(group_version) > 1 else "0"
+            if group == "pupil-mobile":
+                if (
+                    not self._warned_once_older_version
+                    and version < __protocol_version__
+                ):
+                    logger.warning(
+                        "Devices with outdated NDSI version found. Please update these devices."
+                    )
                     self._warned_once_older_version = True
-                elif not self._warned_once_newer_version and version > __protocol_version__:
-                    logger.warning('Devices with newer NDSI version found. You should update.')
+                elif (
+                    not self._warned_once_newer_version
+                    and version > __protocol_version__
+                ):
+                    logger.warning(
+                        "Devices with newer NDSI version found. You should update."
+                    )
                     self._warned_once_newer_version = True
 
-        elif event.type == 'EXIT':
+        elif event.type == "EXIT":
             gone_peer = event.peer_uuid.hex
-            for sensor_uuid in list(self.sensors.keys()):
-                host = self.sensors[sensor_uuid]['host_uuid']
-                if host == gone_peer:
-                    self._execute_callbacks({
-                        'subject': 'detach',
-                        'sensor_uuid': sensor_uuid,
-                        'sensor_name': self.sensors[sensor_uuid]['sensor_name'],
-                        'host_uuid': host,
-                        'host_name': self.sensors[sensor_uuid]['host_name']})
+            for host_uuid, sensors in list(self._sensors_by_host.items()):
+                if host_uuid != gone_peer:
+                    continue
+                for sensor_uuid, sensor in list(sensors.items()):
+                    self._execute_callbacks(
+                        {
+                            "subject": "detach",
+                            "sensor_uuid": sensor_uuid,
+                            "sensor_name": sensor["sensor_name"],
+                            "host_uuid": host_uuid,
+                            "host_name": sensor["host_name"],
+                        }
+                    )
         else:
-            logger.debug('Dropping {}'.format(event))
+            logger.debug("Dropping {}".format(event))
 
-    def sensor(self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback]=()) -> Sensor:
+    def sensor(
+        self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback] = ()
+    ) -> Sensor:
         try:
             sensor_settings = self.sensors[sensor_uuid].copy()
         except KeyError:
@@ -236,20 +281,22 @@ class _NetworkNode(NetworkInterface):
         sensor_type = SensorType.supported_sensor_type_from_str(sensor_type_str)
 
         if sensor_type is None:
-            raise ValueError('Sensor of type "{}" is not supported.'.format(sensor_type_str))
+            raise ValueError(
+                'Sensor of type "{}" is not supported.'.format(sensor_type_str)
+            )
 
         return Sensor.create_sensor(
             sensor_type=sensor_type,
             format=self._format,
             context=self._context,
             callbacks=callbacks,
-            **sensor_settings
+            **sensor_settings,
         )
 
     # Public
 
     def __str__(self):
-        return '<{} {} [{}]>'.format(__name__, self._name, self._pyre_node.uuid().hex)
+        return "<{} {} [{}]>".format(__name__, self._name, self._pyre_node.uuid().hex)
 
     # Private
 
@@ -262,19 +309,41 @@ class _NetworkNode(NetworkInterface):
             callback(self, event)
 
     def _on_event(self, caller, event):
-        if event['subject'] == 'attach':
+        if event["subject"] == "attach":
             subject_less = event.copy()
-            del subject_less['subject']
-            self.sensors.update({event['sensor_uuid']: subject_less})
-        elif event['subject'] == 'detach':
+            del subject_less["subject"]
+            host_uuid = event["host_uuid"]
+            host_sensor = {event["sensor_uuid"]: subject_less}
             try:
-                del self.sensors[event['sensor_uuid']]
+                self._sensors_by_host[host_uuid].update(host_sensor)
             except KeyError:
-                pass
+                self._sensors_by_host[host_uuid] = host_sensor
+            logger.debug(f'Attached {host_uuid}.{event["sensor_uuid"]}')
+        elif event["subject"] == "detach":
+            for host_uuid, sensors in self._sensors_by_host.items():
+                try:
+                    del sensors[event["sensor_uuid"]]
+                    logger.debug(f'Detached {host_uuid}.{event["sensor_uuid"]}')
+                except KeyError:
+                    pass
+            hosts_to_remove = [
+                host_uuid
+                for host_uuid, sensors in self._sensors_by_host.items()
+                if len(sensors) == 0
+            ]
+            for host_uuid in hosts_to_remove:
+                del self._sensors_by_host[host_uuid]
 
 
 class Network(NetworkInterface):
-    def __init__(self, formats:typing.Set[DataFormat]=None, context=None, name=None, headers=(), callbacks=()):
+    def __init__(
+        self,
+        formats: typing.Set[DataFormat] = None,
+        context=None,
+        name=None,
+        headers=(),
+        callbacks=(),
+    ):
         formats = formats or {DataFormat.latest()}
         self.context = context or zmq.Context()
         self._callbacks = callbacks
@@ -319,6 +388,10 @@ class Network(NetworkInterface):
         for node in self._nodes:
             node.start()
 
+    def whisper(self, peer, msg_p):
+        for node in self._nodes:
+            node.whisper(peer=peer, msg_p=msg_p)
+
     def rejoin(self):
         for node in self._nodes:
             node.rejoin()
@@ -331,7 +404,9 @@ class Network(NetworkInterface):
         for node in self._nodes:
             node.handle_event()
 
-    def sensor(self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback]=()) -> Sensor:
+    def sensor(
+        self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback] = ()
+    ) -> Sensor:
         for node in self._nodes:
             if sensor_uuid in node.sensors:
                 return node.sensor(sensor_uuid=sensor_uuid, callbacks=callbacks)
