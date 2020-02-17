@@ -61,6 +61,7 @@ class SensorType(enum.Enum):
     GAZE = "gaze"
     IMU = "imu"
     EVENT = "event"
+    LED = "led"
 
     @staticmethod
     def supported_types() -> typing.Set["SensorType"]:
@@ -369,6 +370,10 @@ class EventSensor(SensorFetchDataMixin[EventValue], Sensor):
         return EventDataFormatter.get_formatter(format=self.format)
 
 
+class LEDSensor(Sensor):
+    pass
+
+
 _SENSOR_TYPE_CLASS_MAP = {
     SensorType.HARDWARE: Sensor,
     SensorType.VIDEO: VideoSensor,
@@ -376,4 +381,5 @@ _SENSOR_TYPE_CLASS_MAP = {
     SensorType.GAZE: GazeSensor,
     SensorType.IMU: IMUSensor,
     SensorType.EVENT: EventSensor,
+    SensorType.LED: LEDSensor,
 }

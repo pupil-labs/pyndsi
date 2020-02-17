@@ -120,6 +120,7 @@ hardware
 key
 location
 gaze
+led
 ```
 
 Endpoints are strings which are used for zmq sockets and follow the `<protocol>://<address>:<port>` scheme.
