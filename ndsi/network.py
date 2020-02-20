@@ -116,8 +116,6 @@ class _NetworkNode(NetworkInterface):
         self._context = context or zmq.Context()
         self._sensors_by_host = {}
         self._callbacks = [self._on_event] + list(callbacks)
-        self._warned_once_older_version = False
-        self._warned_once_newer_version = False
 
     # Public NetworkInterface API
 
@@ -233,23 +231,6 @@ class _NetworkNode(NetworkInterface):
             group_version = event.group.split("-v")
             group = group_version[0]
             version = group_version[1] if len(group_version) > 1 else "0"
-            if group == "pupil-mobile":
-                if (
-                    not self._warned_once_older_version
-                    and version < __protocol_version__
-                ):
-                    logger.warning(
-                        "Devices with outdated NDSI version found. Please update these devices."
-                    )
-                    self._warned_once_older_version = True
-                elif (
-                    not self._warned_once_newer_version
-                    and version > __protocol_version__
-                ):
-                    logger.warning(
-                        "Devices with newer NDSI version found. You should update."
-                    )
-                    self._warned_once_newer_version = True
 
         elif event.type == "EXIT":
             gone_peer = event.peer_uuid.hex
