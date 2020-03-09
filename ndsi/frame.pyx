@@ -400,7 +400,7 @@ cdef class H264Frame:
         cdef int result
         self._bgr_buffer = np.empty(self.width*self.height*channels, dtype=np.uint8)
         result = turbojpeg.tjDecodeYUV(
-            self.tj_context, &self._yuv_buffer[0], 4, turbojpeg.TJSAMP_420,
+            self.tj_context, &self._yuv_buffer[0], 4, turbojpeg.TJSAMP_422,
             &self._bgr_buffer[0], self.width, 0,
             self.height, turbojpeg.TJPF_BGR, 0)
         if result == -1:
