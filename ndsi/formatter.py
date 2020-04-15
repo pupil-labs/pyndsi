@@ -309,7 +309,7 @@ class _IMUDataFormatter_V4(IMUDataFormatter):
             np.recarray
         )
         for imu_frame in content:
-            yield IMUValue(*content)
+            yield IMUValue(*imu_frame)
 
 
 ##########
