@@ -75,7 +75,7 @@ class SensorType(enum.Enum):
             sensor_type = SensorType(sensor_type_name)
         except ValueError:
             return None
-        if sensor_type_name not in SensorType.supported_types():
+        if sensor_type not in SensorType.supported_types():
             return None
         return sensor_type
 
