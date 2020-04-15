@@ -83,7 +83,7 @@ class DataFormatter(typing.Generic[DataValue], abc.ABC):
         pass
 
     @abc.abstractmethod
-    def decode_msg(self, data_msg: DataMessage) -> DataValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[DataValue]:
         pass
 
 
@@ -99,10 +99,10 @@ class UnsupportedFormatter(DataFormatter[typing.Any]):
     def get_formatter(format: DataFormat) -> "UnsupportedFormatter":
         return UnsupportedFormatter()
 
-    def encode_msg(self, value: typing.Any) -> DataMessage:
+    def encode_msg(self, value: DataValue) -> DataMessage:
         raise ValueError("Unsupported data format.")
 
-    def decode_msg(self, value: typing.Any) -> DataMessage:
+    def decode_msg(self, value: DataMessage) -> typing.Iterator[DataValue]:
         raise ValueError("Unsupported data format.")
 
 
@@ -194,18 +194,18 @@ class AnnotateDataFormatter(DataFormatter[AnnotateValue]):
 
 
 class _AnnotateDataFormatter_V3(AnnotateDataFormatter):
-    def decode_msg(self, data_msg: DataMessage) -> AnnotateValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[AnnotateValue]:
         # NOTE: Annotation sensor is currently not NDSI-conformant.
         key, ts = struct.unpack("<Bd", data_msg[0])
-        return AnnotateValue(key=key, timestamp=ts)
+        yield AnnotateValue(key=key, timestamp=ts)
 
 
 class _AnnotateDataFormatter_V4(AnnotateDataFormatter):
-    def decode_msg(self, data_msg: DataMessage) -> AnnotateValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[AnnotateValue]:
         # NOTE: Annotation sensor is currently not NDSI-conformant.
         key, ts = struct.unpack("<BQ", data_msg[0])
         ts *= NANO
-        return AnnotateValue(key=key, timestamp=ts)
+        yield AnnotateValue(key=key, timestamp=ts)
 
 
 ##########
@@ -234,11 +234,11 @@ class GazeDataFormatter(DataFormatter[GazeValue]):
 
 
 class _GazeDataFormatter_V4(GazeDataFormatter):
-    def decode_msg(self, data_msg: DataMessage) -> GazeValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[GazeValue]:
         (ts,) = struct.unpack("<Q", data_msg.header)
         ts *= NANO
         x, y = struct.unpack("<ff", data_msg.body)
-        return GazeValue(x=x, y=y, timestamp=ts)
+        yield GazeValue(x=x, y=y, timestamp=ts)
 
 
 ##########
@@ -283,11 +283,12 @@ class _IMUDataFormatter_V3(IMUDataFormatter):
         ]
     )
 
-    def decode_msg(self, data_msg: DataMessage) -> IMUValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[IMUValue]:
         content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(
             np.recarray
         )
-        return IMUValue(*content)
+        for imu_frame in content:
+            yield IMUValue(*imu_frame)
 
 
 class _IMUDataFormatter_V4(IMUDataFormatter):
@@ -303,11 +304,12 @@ class _IMUDataFormatter_V4(IMUDataFormatter):
         ]
     )
 
-    def decode_msg(self, data_msg: DataMessage) -> IMUValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[IMUValue]:
         content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(
             np.recarray
         )
-        return IMUValue(*content)
+        for imu_frame in content:
+            yield IMUValue(*content)
 
 
 ##########
@@ -338,7 +340,7 @@ class _EventDataFormatter_V4(EventDataFormatter):
 
     _encoding_lookup = {0: "utf-8"}
 
-    def decode_msg(self, data_msg: DataMessage) -> EventValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[EventValue]:
         """
         1. sensor UUID
         2. header:
@@ -354,4 +356,4 @@ class _EventDataFormatter_V4(EventDataFormatter):
         enc = self._encoding_lookup[enc_code]
         body = data_msg.body.bytes[:len_]
         label = body.decode(enc)
-        return EventValue(label=label, timestamp=ts)
+        yield EventValue(label=label, timestamp=ts)

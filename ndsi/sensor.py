@@ -305,8 +305,7 @@ class SensorFetchDataMixin(typing.Generic[SensorFetchDataValue], abc.ABC):
         while self.has_data:
             data_msg = self.get_data(copy=False)
             data_msg = DataMessage(*data_msg)
-            value = self.formatter.decode_msg(data_msg=data_msg)
-            yield value
+            yield from self.formatter.decode_msg(data_msg=data_msg)
 
 
 class VideoSensor(SensorFetchDataMixin[VideoValue], Sensor):
