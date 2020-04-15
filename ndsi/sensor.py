@@ -69,13 +69,13 @@ class SensorType(enum.Enum):
 
     @staticmethod
     def supported_sensor_type_from_str(
-        sensor_type: str,
+        sensor_type_name: str,
     ) -> typing.Optional["SensorType"]:
         try:
-            sensor_type = SensorType(sensor_type)
+            sensor_type = SensorType(sensor_type_name)
         except ValueError:
             return None
-        if sensor_type not in SensorType.supported_types():
+        if sensor_type_name not in SensorType.supported_types():
             return None
         return sensor_type
 
@@ -124,7 +124,7 @@ class Sensor:
         self.notify_endpoint = notify_endpoint
         self.command_endpoint = command_endpoint
         self.data_endpoint = data_endpoint
-        self.controls = {}
+        self.controls: typing.Dict[str, typing.Any] = {}
 
         self.notify_sub = context.socket(zmq.SUB)
         self.notify_sub.connect(self.notify_endpoint)
@@ -287,7 +287,7 @@ class Sensor:
         self.command_push.send_string(cmd)
 
 
-SensorFetchDataValue = typing.TypeVar("FetchDataValue")
+SensorFetchDataValue = typing.TypeVar("SensorFetchDataValue")
 
 
 class SensorFetchDataMixin(typing.Generic[SensorFetchDataValue], abc.ABC):

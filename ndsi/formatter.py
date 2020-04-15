@@ -69,20 +69,21 @@ class DataMessage(typing.NamedTuple):
     body: bytes
 
 
-DT = typing.TypeVar("DataValue")
+DataValue = typing.TypeVar("DataValue")
 
 
-class DataFormatter(typing.Generic[DT], abc.ABC):
-    @abc.abstractstaticmethod
+class DataFormatter(typing.Generic[DataValue], abc.ABC):
+    @staticmethod
+    @abc.abstractmethod
     def get_formatter(format: DataFormat) -> "DataFormatter":
         pass
 
     @abc.abstractmethod
-    def encode_msg(self, value: DT) -> DataMessage:
+    def encode_msg(self, value: DataValue) -> DataMessage:
         pass
 
     @abc.abstractmethod
-    def decode_msg(self, data_msg: DataMessage) -> DT:
+    def decode_msg(self, data_msg: DataMessage) -> DataValue:
         pass
 
 
@@ -94,13 +95,14 @@ class UnsupportedFormatter(DataFormatter[typing.Any]):
     Represents a formatter that is not supported for a specific data format and sensor type combination.
     """
 
+    @staticmethod
     def get_formatter(format: DataFormat) -> "UnsupportedFormatter":
         return UnsupportedFormatter()
 
-    def encode_msg(value: typing.Any) -> DataMessage:
+    def encode_msg(self, value: typing.Any) -> DataMessage:
         raise ValueError("Unsupported data format.")
 
-    def decode_msg(value: typing.Any) -> DataMessage:
+    def decode_msg(self, value: typing.Any) -> DataMessage:
         raise ValueError("Unsupported data format.")
 
 
@@ -137,9 +139,9 @@ class VideoDataFormatter(DataFormatter[VideoValue]):
 class _VideoDataFormatter_V3(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLdLL", data_msg.header)
-        meta_data = list(meta_data)
-        meta_data[4] *= 1e6  #  Convert timestamp s -> us
-        meta_data = tuple(meta_data)
+        meta_data_mutable = list(meta_data)
+        meta_data_mutable[4] *= 1e6  #  Convert timestamp s -> us
+        meta_data = tuple(meta_data_mutable)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
             return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
         elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
@@ -153,9 +155,9 @@ class _VideoDataFormatter_V3(VideoDataFormatter):
 class _VideoDataFormatter_V4(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLQLL", data_msg.header)
-        meta_data = list(meta_data)
-        meta_data[4] /= 1e3  #  Convert timestamp ns -> us
-        meta_data = tuple(meta_data)
+        meta_data_mutable = list(meta_data)
+        meta_data_mutable[4] /= 1e3  #  Convert timestamp ns -> us
+        meta_data = tuple(meta_data_mutable)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
             return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
         elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
