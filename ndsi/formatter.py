@@ -143,11 +143,11 @@ class _VideoDataFormatter_V3(VideoDataFormatter):
         meta_data_mutable[4] *= 1e6  #  Convert timestamp s -> us
         meta_data = tuple(meta_data_mutable)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-            return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
+            yield self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
         elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
             frame = self._frame_factory.create_h264_frame(data_msg.body, meta_data)
             self._newest_h264_frame = frame or self._newest_h264_frame
-            return self._newest_h264_frame
+            yield self._newest_h264_frame
         else:
             raise StreamError("Frame was not of format MJPEG or H264")
 
@@ -159,11 +159,11 @@ class _VideoDataFormatter_V4(VideoDataFormatter):
         meta_data_mutable[4] /= 1e3  #  Convert timestamp ns -> us
         meta_data = tuple(meta_data_mutable)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-            return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
+            yield self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
         elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
             frame = self._frame_factory.create_h264_frame(data_msg.body, meta_data)
             self._newest_h264_frame = frame or self._newest_h264_frame
-            return self._newest_h264_frame
+            yield self._newest_h264_frame
         else:
             raise StreamError("Frame was not of format MJPEG or H264")
 
