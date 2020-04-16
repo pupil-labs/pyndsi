@@ -69,20 +69,21 @@ class DataMessage(typing.NamedTuple):
     body: bytes
 
 
-DT = typing.TypeVar("DataValue")
+DataValue = typing.TypeVar("DataValue")
 
 
-class DataFormatter(typing.Generic[DT], abc.ABC):
-    @abc.abstractstaticmethod
+class DataFormatter(typing.Generic[DataValue], abc.ABC):
+    @staticmethod
+    @abc.abstractmethod
     def get_formatter(format: DataFormat) -> "DataFormatter":
         pass
 
     @abc.abstractmethod
-    def encode_msg(self, value: DT) -> DataMessage:
+    def encode_msg(self, value: DataValue) -> DataMessage:
         pass
 
     @abc.abstractmethod
-    def decode_msg(self, data_msg: DataMessage) -> DT:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[DataValue]:
         pass
 
 
@@ -94,13 +95,14 @@ class UnsupportedFormatter(DataFormatter[typing.Any]):
     Represents a formatter that is not supported for a specific data format and sensor type combination.
     """
 
+    @staticmethod
     def get_formatter(format: DataFormat) -> "UnsupportedFormatter":
         return UnsupportedFormatter()
 
-    def encode_msg(value: typing.Any) -> DataMessage:
+    def encode_msg(self, value: DataValue) -> DataMessage:
         raise ValueError("Unsupported data format.")
 
-    def decode_msg(value: typing.Any) -> DataMessage:
+    def decode_msg(self, value: DataMessage) -> typing.Iterator[DataValue]:
         raise ValueError("Unsupported data format.")
 
 
@@ -137,15 +139,15 @@ class VideoDataFormatter(DataFormatter[VideoValue]):
 class _VideoDataFormatter_V3(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLdLL", data_msg.header)
-        meta_data = list(meta_data)
-        meta_data[4] *= 1e6  #  Convert timestamp s -> us
-        meta_data = tuple(meta_data)
+        meta_data_mutable = list(meta_data)
+        meta_data_mutable[4] *= 1e6  #  Convert timestamp s -> us
+        meta_data = tuple(meta_data_mutable)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-            return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
+            yield self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
         elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
             frame = self._frame_factory.create_h264_frame(data_msg.body, meta_data)
             self._newest_h264_frame = frame or self._newest_h264_frame
-            return self._newest_h264_frame
+            yield self._newest_h264_frame
         else:
             raise StreamError("Frame was not of format MJPEG or H264")
 
@@ -153,15 +155,15 @@ class _VideoDataFormatter_V3(VideoDataFormatter):
 class _VideoDataFormatter_V4(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLQLL", data_msg.header)
-        meta_data = list(meta_data)
-        meta_data[4] /= 1e3  #  Convert timestamp ns -> us
-        meta_data = tuple(meta_data)
+        meta_data_mutable = list(meta_data)
+        meta_data_mutable[4] /= 1e3  #  Convert timestamp ns -> us
+        meta_data = tuple(meta_data_mutable)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
-            return self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
+            yield self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
         elif meta_data[0] == VIDEO_FRAME_FORMAT_H264:
             frame = self._frame_factory.create_h264_frame(data_msg.body, meta_data)
             self._newest_h264_frame = frame or self._newest_h264_frame
-            return self._newest_h264_frame
+            yield self._newest_h264_frame
         else:
             raise StreamError("Frame was not of format MJPEG or H264")
 
@@ -192,18 +194,18 @@ class AnnotateDataFormatter(DataFormatter[AnnotateValue]):
 
 
 class _AnnotateDataFormatter_V3(AnnotateDataFormatter):
-    def decode_msg(self, data_msg: DataMessage) -> AnnotateValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[AnnotateValue]:
         # NOTE: Annotation sensor is currently not NDSI-conformant.
         key, ts = struct.unpack("<Bd", data_msg[0])
-        return AnnotateValue(key=key, timestamp=ts)
+        yield AnnotateValue(key=key, timestamp=ts)
 
 
 class _AnnotateDataFormatter_V4(AnnotateDataFormatter):
-    def decode_msg(self, data_msg: DataMessage) -> AnnotateValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[AnnotateValue]:
         # NOTE: Annotation sensor is currently not NDSI-conformant.
         key, ts = struct.unpack("<BQ", data_msg[0])
         ts *= NANO
-        return AnnotateValue(key=key, timestamp=ts)
+        yield AnnotateValue(key=key, timestamp=ts)
 
 
 ##########
@@ -232,11 +234,11 @@ class GazeDataFormatter(DataFormatter[GazeValue]):
 
 
 class _GazeDataFormatter_V4(GazeDataFormatter):
-    def decode_msg(self, data_msg: DataMessage) -> GazeValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[GazeValue]:
         (ts,) = struct.unpack("<Q", data_msg.header)
         ts *= NANO
         x, y = struct.unpack("<ff", data_msg.body)
-        return GazeValue(x=x, y=y, timestamp=ts)
+        yield GazeValue(x=x, y=y, timestamp=ts)
 
 
 ##########
@@ -281,11 +283,12 @@ class _IMUDataFormatter_V3(IMUDataFormatter):
         ]
     )
 
-    def decode_msg(self, data_msg: DataMessage) -> IMUValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[IMUValue]:
         content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(
             np.recarray
         )
-        return IMUValue(*content)
+        for imu_frame in content:
+            yield IMUValue(*imu_frame)
 
 
 class _IMUDataFormatter_V4(IMUDataFormatter):
@@ -301,11 +304,12 @@ class _IMUDataFormatter_V4(IMUDataFormatter):
         ]
     )
 
-    def decode_msg(self, data_msg: DataMessage) -> IMUValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[IMUValue]:
         content = np.frombuffer(data_msg.body, dtype=self.CONTENT_DTYPE).view(
             np.recarray
         )
-        return IMUValue(*content)
+        for imu_frame in content:
+            yield IMUValue(*imu_frame)
 
 
 ##########
@@ -336,7 +340,7 @@ class _EventDataFormatter_V4(EventDataFormatter):
 
     _encoding_lookup = {0: "utf-8"}
 
-    def decode_msg(self, data_msg: DataMessage) -> EventValue:
+    def decode_msg(self, data_msg: DataMessage) -> typing.Iterator[EventValue]:
         """
         1. sensor UUID
         2. header:
@@ -352,4 +356,4 @@ class _EventDataFormatter_V4(EventDataFormatter):
         enc = self._encoding_lookup[enc_code]
         body = data_msg.body.bytes[:len_]
         label = body.decode(enc)
-        return EventValue(label=label, timestamp=ts)
+        yield EventValue(label=label, timestamp=ts)
