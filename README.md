@@ -64,7 +64,7 @@ brew install libjpeg-turbo
 
 #### Windows 10
 
-Please change the `tj_dir` and `ffmpeg_libs` variables in `setup.py` as well as [`setup.py:L63`](https://github.com/pupil-labs/pyndsi/blob/master/setup.py#L63) to the location of the turbo-jpeg and ffmpeg installations on your machine.
+Please change the `tj_dir` and `ffmpeg_libs` variables in `setup.py` as well as [`setup.py:L63`](https://github.com/pupil-labs/pyndsi/blob/master/setup.py#L63) to the location of the [turbo-jpeg](https://sourceforge.net/projects/libjpeg-turbo/files/latest/download) and [ffmpeg](https://ffmpeg.zeranoe.com/builds/) installations on your machine.
 
 ## Installation
 
