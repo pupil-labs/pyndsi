@@ -17,7 +17,12 @@ import numpy
 from Cython.Build import cythonize
 from setuptools import Extension, setup
 
-requirements = ["numpy", "pyzmq", "pyre"]
+
+requirements = [
+    "numpy",
+    "pyzmq",
+    "pyre @ https://github.com/zeromq/pyre/archive/master.zip",
+]
 
 
 def read(*names, **kwargs):
