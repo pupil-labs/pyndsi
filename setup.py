@@ -25,6 +25,14 @@ requirements = [
 ]
 
 
+def examples_requirements() -> list:
+    if platform.system() == "Windows":
+        pyuvc = "uvc @ https://github.com/pupil-labs/pyuvc/releases/download/v0.13/uvc-0.13-cp36-cp36m-win_amd64.whl"
+    else:
+        pyuvc = "uvc @ git+https://github.com/pupil-labs/pyuvc@master"
+    return [pyuvc]
+
+
 def read(*names, **kwargs):
     with io.open(
         os.path.join(os.path.dirname(__file__), *names),
@@ -106,6 +114,7 @@ setup(
     name="ndsi",
     version=find_version("ndsi", "__init__.py"),
     install_requires=requirements,
+    extras_require={"examples": examples_requirements()},
     description="Remote Device Sensor Interface",
     packages=["ndsi"],
     ext_modules=cythonize(extensions),
