@@ -79,3 +79,19 @@ cd pyndsi
 python -m pip install -U pip
 python -m pip install -r requirements.txt
 ```
+
+### Examples
+
+To run the examples, `ndsi` should be installed with additional requirements:
+
+```sh
+git clone git@github.com:pupil-labs/pyndsi.git
+# Clone via HTTPS if you did not configure SSH correctly
+# git clone https://github.com/pupil-labs/pyndsi.git
+
+cd pyndsi
+
+# Use the Python 3 installation of your choice
+python -m pip install -U pip
+python -m pip install -e ".[examples]"
+```
