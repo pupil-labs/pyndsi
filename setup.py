@@ -58,8 +58,8 @@ extra_link_args = []
 extra_objects = []
 include_dirs = [numpy.get_include()]
 if os.environ.get("CIBUILDWHEEL"):
-    include_dirs += ["/tmp/libjpeg-turbo-build/include/", "/tmp/ffmpeg-build/include/"]
-    library_dirs += ["/tmp/libjpeg-turbo-build/lib/", "/tmp/ffmpeg-build/lib/"]
+    include_dirs += ["/tmp/libjpeg-turbo-build/include/", "/tmp/vendor/include/"]
+    library_dirs += ["/tmp/libjpeg-turbo-build/lib/", "/tmp/vendor/lib/"]
     for folder in include_dirs + library_dirs:
         assert os.path.exists(folder), f"{folder} not found!"
     libs += ["turbojpeg", "avutil", "avformat", "avcodec", "swscale"]

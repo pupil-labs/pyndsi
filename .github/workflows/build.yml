@@ -7,12 +7,18 @@ jobs:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-20.04] #, windows-2019, macos-10.15]
+        os: [ubuntu-20.04, macos-10.15] #, windows-2019]
 
     steps:
       - uses: actions/checkout@v2
 
+      - name: Install packages
+        if: contains(matrix.os, 'macos')
+        run: |
+          brew update
+          brew install wget pkg-config nasm
       - name: Build wheels
         uses: joerick/cibuildwheel@v1.11.0
         # to supply options, put them in 'env', like:
@@ -20,11 +26,21 @@ jobs:
           # only build for python >= 3.6
           CIBW_SKIP: "{cp,pp}27-* {cp,pp}35-*"
           CIBW_BUILD: cp39-*64  # TODO: remove
-          CIBW_BEFORE_ALL_LINUX: bash -euxo pipefail scripts/prepare_linux_build.sh
-          CIBW_BEFORE_BUILD: python scripts/fetch-vendor /tmp/ffmpeg-build
+          CIBW_BEFORE_ALL_LINUX: >
+            yum install -y nasm wget &&
+            bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
+          CIBW_BEFORE_ALL_MACOS: bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
+
+          # /tmp/vendor is a hardcoded path in the fetched ffmpeg dependencies
+          CIBW_BEFORE_BUILD: python scripts/fetch-ffmpeg /tmp/vendor
           CIBW_ENVIRONMENT_LINUX: >  # required for auditwheel
-            LD_LIBRARY_PATH=/tmp/libjpeg-turbo-build/lib:/tmp/ffmpeg-build/lib:$LD_LIBRARY_PATH
-            PKG_CONFIG_PATH=/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/ffmpeg-build/lib/pkgconfig
+            LD_LIBRARY_PATH=/tmp/libjpeg-turbo-build/lib:/tmp/vendor/lib:$LD_LIBRARY_PATH
+            PKG_CONFIG_PATH=/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/vendor/lib/pkgconfig
+          CIBW_ENVIRONMENT_MACOS: >
+            LDFLAGS=-headerpad_max_install_names
+            PKG_CONFIG_PATH=/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/vendor/lib/pkgconfig
+          
+          # manylinux2010 runs into a gcc-specific compiler error
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
           CIBW_MANYLINUX_PYPY_X86_64_IMAGE: manylinux2014
