@@ -57,7 +57,13 @@ include_dirs = []
 extra_link_args = []
 extra_objects = []
 include_dirs = [numpy.get_include()]
-if platform.system() == "Darwin":
+if os.environ.get("CIBUILDWHEEL"):
+    include_dirs += ["/tmp/libjpeg-turbo-build/include/", "/tmp/ffmpeg-build/include/"]
+    library_dirs += ["/tmp/libjpeg-turbo-build/lib/", "/tmp/ffmpeg-build/lib/"]
+    for folder in include_dirs + library_dirs:
+        assert os.path.exists(folder), f"{folder} not found!"
+    libs += ["turbojpeg", "avutil", "avformat", "avcodec", "swscale"]
+elif platform.system() == "Darwin":
     include_dirs += ["/usr/local/opt/jpeg-turbo/include/"]
     libs += ["turbojpeg"]
     library_dirs += ["/usr/local/opt/jpeg-turbo/lib/"]

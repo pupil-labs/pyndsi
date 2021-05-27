@@ -1,6 +1,6 @@
 name: CI Build
 
-on: [push, pull_request]
+on: [push] #, pull_request]
 
 jobs:
   build_wheels:
@@ -8,7 +8,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-20.04, windows-2019, macos-10.15]
+        os: [ubuntu-20.04] #, windows-2019, macos-10.15]
 
     steps:
       - uses: actions/checkout@v2
@@ -19,7 +19,27 @@ jobs:
         env:
           # only build for python >= 3.6
           CIBW_SKIP: "{cp,pp}27-* {cp,pp}35-*"
-        #   CIBW_SOME_OPTION: value
+          CIBW_BUILD: cp39-*64  # TODO: remove
+          CIBW_BEFORE_ALL_LINUX: bash -euxo pipefail scripts/prepare_linux_build.sh
+          CIBW_BEFORE_BUILD: python scripts/fetch-vendor /tmp/ffmpeg-build
+          CIBW_ENVIRONMENT_LINUX: >  # required for auditwheel
+            LD_LIBRARY_PATH=/tmp/libjpeg-turbo-build/lib:/tmp/ffmpeg-build/lib:$LD_LIBRARY_PATH
+            PKG_CONFIG_PATH=/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/ffmpeg-build/lib/pkgconfig
+          CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_I686_IMAGE: manylinux2014
+          CIBW_MANYLINUX_PYPY_X86_64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
+          CIBW_MANYLINUX_PPC64LE_IMAGE: manylinux2014
+          CIBW_MANYLINUX_S390X_IMAGE: manylinux2014
+
+          CIBW_TEST_REQUIRES: pytest
+          CIBW_TEST_COMMAND: pytest {package}/tests
+
+          # 1) Will avoid testing on emulated architectures
+          # 2) Skip trying to test arm64 builds on Intel Macs
+          CIBW_TEST_SKIP: >
+            "*-manylinux_{aarch64,ppc64le,s390x}"
+            "*-macosx_arm64 *-macosx_universal2:arm64"
 
       - uses: actions/upload-artifact@v2
         with:

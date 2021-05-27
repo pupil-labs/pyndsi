@@ -47,7 +47,7 @@ def test_gaze_formatter():
 def test_gaze_formatter_v4(gaze_v4_fixture: DataFixture):
     formatter_v4 = GazeDataFormatter.get_formatter(format=DataFormat.V4)
     decoded_value = formatter_v4.decode_msg(data_msg=gaze_v4_fixture.data_msg)
-    assert decoded_value == gaze_v4_fixture.value
+    assert next(decoded_value) == gaze_v4_fixture.value
 
 
 def test_annotate_formatter():
