@@ -20,6 +20,7 @@ sudo apt install -y libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev
 
 ##### TurboJPEG
 ```sh
+sudo apt install nasm
 wget -O libjpeg-turbo.tar.gz https://sourceforge.net/projects/libjpeg-turbo/files/1.5.1/libjpeg-turbo-1.5.1.tar.gz/download
 tar xvzf libjpeg-turbo.tar.gz
 cd libjpeg-turbo-1.5.1
@@ -40,6 +41,7 @@ sudo apt install -y libavformat-dev libavcodec-dev libavdevice-dev libavutil-dev
 
 ##### TurboJPEG
 ```sh
+sudo apt install nasm
 wget -O libjpeg-turbo.tar.gz https://sourceforge.net/projects/libjpeg-turbo/files/1.5.1/libjpeg-turbo-1.5.1.tar.gz/download
 tar xvzf libjpeg-turbo.tar.gz
 cd libjpeg-turbo-1.5.1
