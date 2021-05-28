@@ -58,11 +58,25 @@ extra_link_args = []
 extra_objects = []
 include_dirs = [numpy.get_include()]
 if os.environ.get("CIBUILDWHEEL"):
-    include_dirs += ["/tmp/libjpeg-turbo-build/include/", "/tmp/vendor/include/"]
-    library_dirs += ["/tmp/libjpeg-turbo-build/lib/", "/tmp/vendor/lib/"]
-    for folder in include_dirs + library_dirs:
-        assert os.path.exists(folder), f"{folder} not found!"
-    libs += ["turbojpeg", "avutil", "avformat", "avcodec", "swscale"]
+    if platform.system() == "Windows":
+        ffmpeg_base = "C:\\cibw\\vendor\\"
+        libjpeg_turbo_base = "C:\\cibw\\libjpeg-turbo-build\\"
+        include_dirs += [
+            f"{libjpeg_turbo_base}include",
+            f"{ffmpeg_base}include",
+            "ndsi\\h264\\windows",
+        ]
+        extra_objects += [f"{libjpeg_turbo_base}lib\\turbojpeg-static.lib"]
+        libs = ["winmm"] + [
+            f"{ffmpeg_base}lib\\{L}"
+            for L in ("avutil", "avformat", "avcodec", "swscale")
+        ]
+    else:
+        include_dirs += ["/tmp/libjpeg-turbo-build/include/", "/tmp/vendor/include/"]
+        library_dirs += ["/tmp/libjpeg-turbo-build/lib/", "/tmp/vendor/lib/"]
+        for folder in include_dirs + library_dirs:
+            assert os.path.exists(folder), f"{folder} not found!"
+        libs += ["turbojpeg", "avutil", "avformat", "avcodec", "swscale"]
 elif platform.system() == "Darwin":
     include_dirs += ["/usr/local/opt/jpeg-turbo/include/"]
     libs += ["turbojpeg"]

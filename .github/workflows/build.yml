@@ -9,23 +9,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-10.15] #, windows-2019]
+        os: [ubuntu-20.04, macos-10.15, windows-2019]
 
     steps:
       - uses: actions/checkout@v2
 
-      - name: Install packages
+      - name: Install packages on macOS
         if: contains(matrix.os, 'macos')
         run: |
           brew update
           brew install wget pkg-config nasm
+
+      - name: Download libjpeg-turbo for Windows
+        if: contains(matrix.os, 'windows')
+        run: |
+          [System.IO.Directory]::CreateDirectory('C:\cibw')
+          Invoke-WebRequest -Uri ${{ env.LIBJPEG_TURBO_URL }} -OutFile "C:\cibw\libjpeg-turbo.exe"
+        env:
+          LIBJPEG_TURBO_URL: "https://github.com/pupil-labs/pyndsi/wiki/libjpeg-turbo-2.1.0-vc64.exe"
+      - name: Install libjpeg-turbo for Windows
+        if: contains(matrix.os, 'windows')
+        run: C:\cibw\libjpeg-turbo.exe /S /D="C:\cibw\libjpeg-turbo-build"
+
       - name: Build wheels
         uses: joerick/cibuildwheel@v1.11.0
         # to supply options, put them in 'env', like:
         env:
           # only build for python >= 3.6
           CIBW_SKIP: "{cp,pp}27-* {cp,pp}35-*"
-          CIBW_BUILD: cp39-*64  # TODO: remove
+          CIBW_BUILD: cp39-*64 # TODO: remove
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y nasm wget &&
             bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
@@ -33,13 +45,15 @@ jobs:
 
           # /tmp/vendor is a hardcoded path in the fetched ffmpeg dependencies
           CIBW_BEFORE_BUILD: python scripts/fetch-ffmpeg /tmp/vendor
-          CIBW_ENVIRONMENT_LINUX: >  # required for auditwheel
+          CIBW_BEFORE_BUILD_WINDOWS: pip install delvewheel && python scripts\fetch-ffmpeg C:\cibw\vendor
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: "delvewheel repair -w {dest_dir} {wheel} --add-path C:\\cibw\\vendor\\bin"
+
+          CIBW_ENVIRONMENT_LINUX: > # required for auditwheel
             LD_LIBRARY_PATH=/tmp/libjpeg-turbo-build/lib:/tmp/vendor/lib:$LD_LIBRARY_PATH
             PKG_CONFIG_PATH=/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/vendor/lib/pkgconfig
           CIBW_ENVIRONMENT_MACOS: >
             LDFLAGS=-headerpad_max_install_names
             PKG_CONFIG_PATH=/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/vendor/lib/pkgconfig
-          
           # manylinux2010 runs into a gcc-specific compiler error
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
           CIBW_MANYLINUX_I686_IMAGE: manylinux2014
