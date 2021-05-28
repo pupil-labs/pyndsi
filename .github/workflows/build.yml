@@ -37,7 +37,6 @@ jobs:
         env:
           # only build for python >= 3.6
           CIBW_SKIP: "{cp,pp}27-* {cp,pp}35-*"
-          CIBW_BUILD: cp39-*64 # TODO: remove
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y nasm wget &&
             bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
