@@ -36,7 +36,7 @@ jobs:
         # to supply options, put them in 'env', like:
         env:
           # only build for python >= 3.6
-          CIBW_SKIP: "{cp,pp}27-* {cp,pp}35-*"
+          CIBW_SKIP: "{cp,pp}27-* {cp,pp}35-* pp* *win32"
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y nasm wget &&
             bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
