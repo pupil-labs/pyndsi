@@ -76,8 +76,7 @@ class NetworkInterface(abc.ABC):
 
     @abc.abstractmethod
     def whisper(self, peer, msg_p):
-        """Send message to single peer, specified as a UUID string
-        """
+        """Send message to single peer, specified as a UUID string"""
         pass
 
     @abc.abstractmethod

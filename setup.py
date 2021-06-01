@@ -57,7 +57,27 @@ include_dirs = []
 extra_link_args = []
 extra_objects = []
 include_dirs = [numpy.get_include()]
-if platform.system() == "Darwin":
+if os.environ.get("CIBUILDWHEEL"):
+    if platform.system() == "Windows":
+        ffmpeg_base = "C:\\cibw\\vendor\\"
+        libjpeg_turbo_base = "C:\\cibw\\libjpeg-turbo-build\\"
+        include_dirs += [
+            f"{libjpeg_turbo_base}include",
+            f"{ffmpeg_base}include",
+            "ndsi\\h264\\windows",
+        ]
+        extra_objects += [f"{libjpeg_turbo_base}lib\\turbojpeg-static.lib"]
+        libs = ["winmm"] + [
+            f"{ffmpeg_base}lib\\{L}"
+            for L in ("avutil", "avformat", "avcodec", "swscale")
+        ]
+    else:
+        include_dirs += ["/tmp/libjpeg-turbo-build/include/", "/tmp/vendor/include/"]
+        library_dirs += ["/tmp/libjpeg-turbo-build/lib/", "/tmp/vendor/lib/"]
+        for folder in include_dirs + library_dirs:
+            assert os.path.exists(folder), f"{folder} not found!"
+        libs += ["turbojpeg", "avutil", "avformat", "avcodec", "swscale"]
+elif platform.system() == "Darwin":
     include_dirs += ["/usr/local/opt/jpeg-turbo/include/"]
     libs += ["turbojpeg"]
     library_dirs += ["/usr/local/opt/jpeg-turbo/lib/"]
@@ -112,10 +132,32 @@ extensions = [
 
 setup(
     name="ndsi",
-    version=find_version("ndsi", "__init__.py"),
+    version="1.4.0",
     install_requires=requirements,
-    extras_require={"examples": examples_requirements()},
+    extras_require={
+        "examples": examples_requirements(),
+        "dev": ["pytest", "bump2version", "black"],
+    },
     description="Remote Device Sensor Interface",
     packages=["ndsi"],
     ext_modules=cythonize(extensions),
+    url="https://github.com/pupil-labs/pyndsi",
+    author="Pupil Labs",
+    author_email="info@pupil-labs.com",
+    license="LGPL-3.0",
+    classifiers={
+        "Development Status :: 5 - Production/Stable",
+        "Intended Audience :: Developers",
+        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+        "Natural Language :: English",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3 :: Only",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: Implementation :: CPython",
+        "Topic :: System :: Networking",
+    },
+    project_urls={"Changelog": "https://github.com/pupil-labs/pyndsi#Changelog"},
 )
