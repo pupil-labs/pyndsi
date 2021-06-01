@@ -132,9 +132,12 @@ extensions = [
 
 setup(
     name="ndsi",
-    version=find_version("ndsi", "__init__.py"),
+    version="1.4.0",
     install_requires=requirements,
-    extras_require={"examples": examples_requirements()},
+    extras_require={
+        "examples": examples_requirements(),
+        "dev": ["pytest", "bump2version", "black"],
+    },
     description="Remote Device Sensor Interface",
     packages=["ndsi"],
     ext_modules=cythonize(extensions),
@@ -156,4 +159,5 @@ setup(
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: System :: Networking",
     },
+    project_urls={"Changelog": "https://github.com/pupil-labs/pyndsi#Changelog"},
 )
