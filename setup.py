@@ -138,4 +138,8 @@ setup(
     description="Remote Device Sensor Interface",
     packages=["ndsi"],
     ext_modules=cythonize(extensions),
+    url="https://github.com/pupil-labs/pyndsi",
+    author="Pupil Labs",
+    author_email="info@pupil-labs.com",
+    license="LGPL-3.0",
 )

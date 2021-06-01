@@ -35,8 +35,8 @@ jobs:
         uses: joerick/cibuildwheel@v1.11.0
         # to supply options, put them in 'env', like:
         env:
-          # only build for python >= 3.6
-          CIBW_SKIP: "{cp,pp}27-* {cp,pp}35-* pp* *win32"
+          # only build for python >= 3.6 and Intel 64 bit archs
+          CIBW_SKIP: "{cp,pp}27-* {cp,pp}35-* pp* *win32 *_aarch64 *_ppc64le *_s390x *_i686"
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y nasm wget &&
             bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
@@ -55,11 +55,6 @@ jobs:
             PKG_CONFIG_PATH=/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/vendor/lib/pkgconfig
           # manylinux2010 runs into a gcc-specific compiler error
           CIBW_MANYLINUX_X86_64_IMAGE: manylinux2014
-          CIBW_MANYLINUX_I686_IMAGE: manylinux2014
-          CIBW_MANYLINUX_PYPY_X86_64_IMAGE: manylinux2014
-          CIBW_MANYLINUX_AARCH64_IMAGE: manylinux2014
-          CIBW_MANYLINUX_PPC64LE_IMAGE: manylinux2014
-          CIBW_MANYLINUX_S390X_IMAGE: manylinux2014
 
           CIBW_TEST_REQUIRES: pytest
           CIBW_TEST_COMMAND: pytest {package}/tests
@@ -73,3 +68,20 @@ jobs:
       - uses: actions/upload-artifact@v2
         with:
           path: ./wheelhouse/*.whl
+
+  build_sdist:
+    name: Build source distribution
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Build source package
+        run: |
+          pip install build
+          python -m build --sdist .
+      - name: Upload source package
+        uses: actions/upload-artifact@v2
+        with:
+          path: dist/
