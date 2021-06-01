@@ -37,7 +37,7 @@ jobs:
         env:
           # only build for python >= 3.6 and Intel 64 bit archs
           CIBW_SKIP: "{cp,pp}27-* {cp,pp}35-* pp* *win32 *_aarch64 *_ppc64le *_s390x *_i686"
-          CIBW_ARCHS_MACOS: "x86_64 arm64 universal2"
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_BEFORE_ALL_LINUX: >
             yum install -y nasm wget &&
             bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
