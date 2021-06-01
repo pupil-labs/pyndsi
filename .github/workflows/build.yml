@@ -73,6 +73,7 @@ jobs:
 
       - uses: actions/upload-artifact@v2
         with:
+          name: distribution
           path: ./wheelhouse/*.whl
 
   build_sdist:
@@ -91,6 +92,7 @@ jobs:
       - name: Upload source package
         uses: actions/upload-artifact@v2
         with:
+          name: distribution
           path: dist/
 
 
@@ -101,6 +103,7 @@ jobs:
       - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
         with:
+          name: distribution
           path: dist/
       - name: Publish to PyPI
         if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
