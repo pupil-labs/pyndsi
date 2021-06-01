@@ -1,3 +1,6 @@
+[![CI Build](https://github.com/pupil-labs/pyndsi/actions/workflows/build.yml/badge.svg)](https://github.com/pupil-labs/pyndsi/actions/workflows/build.yml)
+[![PyPI version](https://badge.fury.io/py/ndsi.svg)](https://badge.fury.io/py/ndsi)
+
 # Network Device Sensor Interface
 
 `ndsi-commspec.md` defines the *Network Device Sensor protocol*.
@@ -6,7 +9,20 @@
 
 `examples/ndsi-client-example.py` shows a simple client application.
 
-## Requirements
+## Recommended installation
+We provide pre-compiled wheels for macOS, Windows, and Linux 64-bit architectures and
+Python versions 3.6+. You can install them via
+
+```
+python -m pip 
+python -m pip install ndsi
+```
+
+For any other architecture or Python version, you will have to run the source installation described below.
+
+## Source installation
+
+### Dependencies
 
 NDSI requires ffmpeg 3.2 or higher to decode h.264 frames, and turbo-jpeg.
 
@@ -68,7 +84,7 @@ brew install libjpeg-turbo
 
 Please change the `tj_dir` and `ffmpeg_libs` variables in `setup.py` as well as [`setup.py:L63`](https://github.com/pupil-labs/pyndsi/blob/master/setup.py#L63) to the location of the [turbo-jpeg](https://sourceforge.net/projects/libjpeg-turbo/files/latest/download) and [ffmpeg](https://ffmpeg.zeranoe.com/builds/) installations on your machine.
 
-## Installation
+### Installation
 
 ```sh
 git clone git@github.com:pupil-labs/pyndsi.git
