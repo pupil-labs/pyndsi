@@ -132,7 +132,7 @@ extensions = [
 
 setup(
     name="ndsi",
-    version="1.4.0",
+    version="1.4.1",
     install_requires=requirements,
     extras_require={
         "examples": examples_requirements(),
