@@ -21,7 +21,7 @@ from setuptools import Extension, setup
 requirements = [
     "numpy",
     "pyzmq",
-    "pyre @ https://github.com/zeromq/pyre/archive/master.zip",
+    "zeromq-pyre @ https://github.com/zeromq/pyre/archive/master.zip",
 ]
 
 
