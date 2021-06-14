@@ -309,7 +309,9 @@ class _IMUDataFormatter_V4(IMUDataFormatter):
             np.recarray
         )
         for imu_frame in content:
-            yield IMUValue(*imu_frame)
+            ts, *data = imu_frame
+            ts *= NANO
+            yield IMUValue(ts, *data)
 
 
 ##########
