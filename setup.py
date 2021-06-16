@@ -8,15 +8,13 @@
 ----------------------------------------------------------------------------------~(*)
 """
 import glob
-import io
 import os
+import pathlib
 import platform
-import re
 
 import numpy
 from Cython.Build import cythonize
 from setuptools import Extension, setup
-
 
 requirements = [
     "numpy",
@@ -24,31 +22,9 @@ requirements = [
     "zeromq-pyre",
 ]
 
-
-def examples_requirements() -> list:
-    if platform.system() == "Windows":
-        pyuvc = "uvc @ https://github.com/pupil-labs/pyuvc/releases/download/v0.13/uvc-0.13-cp36-cp36m-win_amd64.whl"
-    else:
-        pyuvc = "uvc @ git+https://github.com/pupil-labs/pyuvc@master"
-    return [pyuvc]
-
-
-def read(*names, **kwargs):
-    with io.open(
-        os.path.join(os.path.dirname(__file__), *names),
-        encoding=kwargs.get("encoding", "utf8"),
-    ) as fp:
-        return fp.read()
-
-
-# pip's single-source version method as described here:
-# https://python-packaging-user-guide.readthedocs.io/single_source_version/
-def find_version(*file_paths):
-    version_file = read(*file_paths)
-    version_match = re.search(r"^__version__ = ['\"]([^'\"]*)['\"]", version_file, re.M)
-    if version_match:
-        return version_match.group(1)
-    raise RuntimeError("Unable to find version string.")
+here = pathlib.Path(__file__).parent
+with open(here / "README.md") as f:
+    long_description = f.read()
 
 
 libs = []
@@ -135,10 +111,13 @@ setup(
     version="1.4.1",
     install_requires=requirements,
     extras_require={
-        "examples": examples_requirements(),
+        # TODO: Publish pyuvc via PyPI and reenable:
+        # "examples": ["uvc"],
         "dev": ["pytest", "bump2version", "black"],
     },
     description="Remote Device Sensor Interface",
+    long_description=long_description,
+    long_description_content_type="text/markdown",
     packages=["ndsi"],
     ext_modules=cythonize(extensions),
     url="https://github.com/pupil-labs/pyndsi",
