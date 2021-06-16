@@ -108,7 +108,7 @@ extensions = [
 
 setup(
     name="ndsi",
-    version="1.4.1",
+    version="1.4.2",
     install_requires=requirements,
     extras_require={
         # TODO: Publish pyuvc via PyPI and reenable:
