@@ -27,6 +27,20 @@ with open(here / "README.md") as f:
     long_description = f.read()
 
 
+def macos_homebrew_prefix(package: str) -> str:
+    import subprocess
+
+    with subprocess.Popen(
+        ["brew", "--prefix", package], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+    ) as proc:
+        out = proc.stdout.read()
+        err = proc.stderr.read()
+    if out:
+        return out.decode("utf-8").strip()
+    else:
+        raise ValueError(err.decode("utf-8").strip())
+
+
 libs = []
 library_dirs = []
 include_dirs = []
@@ -54,9 +68,10 @@ if os.environ.get("CIBUILDWHEEL"):
             assert os.path.exists(folder), f"{folder} not found!"
         libs += ["turbojpeg", "avutil", "avformat", "avcodec", "swscale"]
 elif platform.system() == "Darwin":
-    include_dirs += ["/usr/local/opt/jpeg-turbo/include/"]
+    jpeg_turbo_path = macos_homebrew_prefix("jpeg-turbo")
+    include_dirs += [os.path.join(jpeg_turbo_path, "include")]
     libs += ["turbojpeg"]
-    library_dirs += ["/usr/local/opt/jpeg-turbo/lib/"]
+    library_dirs += [os.path.join(jpeg_turbo_path, "lib")]
     libs += ["avutil", "avformat", "avcodec", "swscale"]
 elif platform.system() == "Linux":
     libs = ["rt", "turbojpeg"]
