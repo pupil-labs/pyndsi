@@ -13,6 +13,7 @@ import pathlib
 import platform
 
 import numpy
+import pkgconfig
 from Cython.Build import cythonize
 from setuptools import Extension, setup
 
@@ -54,10 +55,10 @@ if os.environ.get("CIBUILDWHEEL"):
             assert os.path.exists(folder), f"{folder} not found!"
         libs += ["turbojpeg", "avutil", "avformat", "avcodec", "swscale"]
 elif platform.system() == "Darwin":
-    include_dirs += ["/usr/local/opt/jpeg-turbo/include/"]
-    libs += ["turbojpeg"]
-    library_dirs += ["/usr/local/opt/jpeg-turbo/lib/"]
-    libs += ["avutil", "avformat", "avcodec", "swscale"]
+    config = pkgconfig.parse("libturbojpeg libavutil libavformat libavcodec libswscale")
+    include_dirs += config["include_dirs"]
+    libs += config["libraries"]
+    library_dirs += config["library_dirs"]
 elif platform.system() == "Linux":
     libs = ["rt", "turbojpeg"]
     libs += ["avutil", "avformat", "avcodec", "swscale"]
