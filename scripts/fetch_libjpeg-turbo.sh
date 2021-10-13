@@ -3,4 +3,4 @@ tar xzf libjpeg-turbo.tar.gz
 mv libjpeg-turbo-* libjpeg-turbo-build
 cd libjpeg-turbo-build
 ./configure --enable-static=no --prefix=/tmp/libjpeg-turbo-build
-make install
+make install >/dev/null || make install
