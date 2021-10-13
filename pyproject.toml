@@ -3,7 +3,8 @@ requires = ["setuptools", "wheel", "numpy", "Cython"]
 build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
-skip = "{cp,pp}27-* {cp,pp}35-* pp* *win32 *_aarch64 *_ppc64le *_s390x *_i686 *-macosx_arm64 *-macosx_universal2"
+archs = ["native"]
+skip = "{cp,pp}27-* {cp,pp}35-* {cp,pp}310-* pp* *win32"
 
 build-frontend = "build"
 before-build = "python scripts/fetch-ffmpeg /tmp/vendor"
@@ -23,7 +24,6 @@ LD_LIBRARY_PATH="/tmp/libjpeg-turbo-build/lib:/tmp/vendor/lib:$LD_LIBRARY_PATH"
 PKG_CONFIG_PATH="/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/vendor/lib/pkgconfig"
 
 [tool.cibuildwheel.macos]
-archs = ["x86_64"]
 before-all = "bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh"
 
 [tool.cibuildwheel.macos.environment]
