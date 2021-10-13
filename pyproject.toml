@@ -18,6 +18,7 @@ manylinux-x86_64-image = "manylinux2014"
 
 [tool.cibuildwheel.linux]
 before-all = "yum install -y nasm && bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh"
+repair-wheel-command = "auditwheel show {wheel} && auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.linux.environment]
 LD_LIBRARY_PATH="/tmp/libjpeg-turbo-build/lib:/tmp/vendor/lib:$LD_LIBRARY_PATH"
