@@ -17,7 +17,11 @@ test-extras = []
 manylinux-x86_64-image = "manylinux2014"
 
 [tool.cibuildwheel.linux]
-before-build = "yum install -y nasm && bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh"
+before-build = """
+yum install -y nasm &&
+python scripts/fetch-ffmpeg /tmp/vendor &&
+bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
+"""
 repair-wheel-command = "auditwheel show {wheel} && auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.linux.environment]
