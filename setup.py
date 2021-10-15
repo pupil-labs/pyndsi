@@ -16,17 +16,6 @@ import numpy
 from Cython.Build import cythonize
 from setuptools import Extension, setup
 
-requirements = [
-    "numpy",
-    "pyzmq",
-    "zeromq-pyre",
-]
-
-here = pathlib.Path(__file__).parent
-with open(here / "README.md") as f:
-    long_description = f.read()
-
-
 libs = []
 library_dirs = []
 include_dirs = []
@@ -40,7 +29,7 @@ if os.environ.get("CIBUILDWHEEL"):
         include_dirs += [
             f"{libjpeg_turbo_base}include",
             f"{ffmpeg_base}include",
-            "ndsi\\h264\\windows",
+            "src\\ndsi\\h264\\windows",
         ]
         extra_objects += [f"{libjpeg_turbo_base}lib\\turbojpeg-static.lib"]
         libs = ["winmm"] + [
@@ -77,7 +66,7 @@ elif platform.system() == "Windows":
     tj_lib = tj_dir + "\\lib\\turbojpeg.lib"
     include_dirs += [tj_dir + "\\include"]
     extra_objects += [tj_lib]
-    include_dirs += ["ndsi\\h264\\windows"]
+    include_dirs += ["src\\ndsi\\h264\\windows"]
     ffmpeg_libs = "C:\\work\\ffmpeg-4.0-win64-dev\\lib"
     include_dirs += ["C:\\work\\ffmpeg-4.0-win64-dev\\include"]
     libs += [
@@ -87,14 +76,14 @@ elif platform.system() == "Windows":
         ffmpeg_libs + "\\swscale",
     ]
 
-h264_sources = glob.glob("ndsi/h264/*.cpp")
+h264_sources = glob.glob("src/ndsi/h264/*.cpp")
 if platform.system() == "Windows":
-    h264_sources += glob.glob("ndsi/h264/windows/*.cpp")
+    h264_sources += glob.glob("src/ndsi/h264/windows/*.cpp")
 
 extensions = [
     Extension(
         name="ndsi.frame",
-        sources=h264_sources + ["ndsi/frame.pyx"],
+        sources=h264_sources + ["src/ndsi/frame.pyx"],
         include_dirs=[numpy.get_include()] + include_dirs,
         library_dirs=library_dirs,
         libraries=libs,
@@ -105,7 +94,7 @@ extensions = [
     ),
     Extension(
         name="ndsi.writer",
-        sources=h264_sources + ["ndsi/writer.pyx"],
+        sources=h264_sources + ["src/ndsi/writer.pyx"],
         include_dirs=[numpy.get_include()] + include_dirs,
         library_dirs=library_dirs,
         libraries=libs,
@@ -116,37 +105,4 @@ extensions = [
     ),
 ]
 
-setup(
-    name="ndsi",
-    version="1.4.2",
-    install_requires=requirements,
-    extras_require={
-        # TODO: Publish pyuvc via PyPI and reenable:
-        # "examples": ["uvc"],
-        "dev": ["pytest", "bump2version", "black"],
-    },
-    description="Remote Device Sensor Interface",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    packages=["ndsi"],
-    ext_modules=cythonize(extensions),
-    url="https://github.com/pupil-labs/pyndsi",
-    author="Pupil Labs",
-    author_email="info@pupil-labs.com",
-    license="LGPL-3.0",
-    classifiers={
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
-        "Natural Language :: English",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Topic :: System :: Networking",
-    },
-    project_urls={"Changelog": "https://github.com/pupil-labs/pyndsi#Changelog"},
-)
+setup(ext_modules=cythonize(extensions))

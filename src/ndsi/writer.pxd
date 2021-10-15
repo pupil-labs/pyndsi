@@ -11,7 +11,8 @@
 
 cimport numpy as np
 
-from ndsi.h264 cimport VideoStream, Mp4Writer
+from ndsi.h264 cimport Mp4Writer, VideoStream
+
 
 cdef class H264Writer:
 

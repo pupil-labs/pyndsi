@@ -1,4 +1,7 @@
-import logging, time, signal, sys
+import logging
+import signal
+import sys
+import time
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s",
@@ -15,7 +18,9 @@ sensors = {}
 
 def on_sensor_event(sensor, event):
     logger.debug(
-        "%s [%s] %s %s" % (sensor, event["seq"], event["subject"], event["control_id"])
+        "{} [{}] {} {}".format(
+            sensor, event["seq"], event["subject"], event["control_id"]
+        )
     )
 
 

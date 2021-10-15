@@ -1,5 +1,6 @@
 import pytest
-from ndsi.sensor import SensorType, Sensor
+
+from ndsi.sensor import Sensor, SensorType
 
 
 def test_supported_types():

@@ -1,15 +1,19 @@
 import collections
 from datetime import datetime
+
 import numpy as np
-
 import pytest
-from ndsi.formatter import DataFormat, DataMessage
-from ndsi.formatter import UnsupportedFormatter
-from ndsi.formatter import GazeDataFormatter, GazeValue
-from ndsi.formatter import AnnotateDataFormatter
-from ndsi.formatter import IMUDataFormatter
-from ndsi.formatter import VideoDataFormatter
 
+from ndsi.formatter import (
+    AnnotateDataFormatter,
+    DataFormat,
+    DataMessage,
+    GazeDataFormatter,
+    GazeValue,
+    IMUDataFormatter,
+    UnsupportedFormatter,
+    VideoDataFormatter,
+)
 
 DataFixture = collections.namedtuple("DataFixture", ["value", "data_msg"])
 

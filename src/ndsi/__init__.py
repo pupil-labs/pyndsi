@@ -11,25 +11,23 @@
 
 class CaptureError(Exception):
     def __init__(self, message):
-        super(CaptureError, self).__init__()
+        super().__init__()
         self.message = message
 
 
 class StreamError(CaptureError):
     def __init__(self, message):
-        super(StreamError, self).__init__(message)
+        super().__init__(message)
         self.message = message
 
 
 from ndsi.formatter import DataFormat
 
-
 __version__ = "1.4.2"
 __protocol_version__ = str(DataFormat.latest().version_major)
 
 
+from ndsi import frame
 from ndsi.network import Network
 from ndsi.sensor import Sensor
 from ndsi.writer import H264Writer
-
-from ndsi import frame

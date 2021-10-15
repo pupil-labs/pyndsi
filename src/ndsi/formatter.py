@@ -2,14 +2,19 @@ import abc
 import collections
 import enum
 import functools
-import typing
 import struct
+import typing
+
 import numpy as np
 
 from ndsi import StreamError
-from ndsi.frame import JPEGFrame, H264Frame, FrameFactory
-from ndsi.frame import VIDEO_FRAME_FORMAT_H264, VIDEO_FRAME_FORMAT_MJPEG
-
+from ndsi.frame import (
+    VIDEO_FRAME_FORMAT_H264,
+    VIDEO_FRAME_FORMAT_MJPEG,
+    FrameFactory,
+    H264Frame,
+    JPEGFrame,
+)
 
 __all__ = [
     "DataFormat",
