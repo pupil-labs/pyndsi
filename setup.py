@@ -29,7 +29,7 @@ if os.environ.get("CIBUILDWHEEL"):
         include_dirs += [
             f"{libjpeg_turbo_base}include",
             f"{ffmpeg_base}include",
-            "ndsi\\h264\\windows",
+            "src\\ndsi\\h264\\windows",
         ]
         extra_objects += [f"{libjpeg_turbo_base}lib\\turbojpeg-static.lib"]
         libs = ["winmm"] + [
@@ -66,7 +66,7 @@ elif platform.system() == "Windows":
     tj_lib = tj_dir + "\\lib\\turbojpeg.lib"
     include_dirs += [tj_dir + "\\include"]
     extra_objects += [tj_lib]
-    include_dirs += ["ndsi\\h264\\windows"]
+    include_dirs += ["src\\ndsi\\h264\\windows"]
     ffmpeg_libs = "C:\\work\\ffmpeg-4.0-win64-dev\\lib"
     include_dirs += ["C:\\work\\ffmpeg-4.0-win64-dev\\include"]
     libs += [
@@ -76,14 +76,14 @@ elif platform.system() == "Windows":
         ffmpeg_libs + "\\swscale",
     ]
 
-h264_sources = glob.glob("ndsi/h264/*.cpp")
+h264_sources = glob.glob("src/ndsi/h264/*.cpp")
 if platform.system() == "Windows":
-    h264_sources += glob.glob("ndsi/h264/windows/*.cpp")
+    h264_sources += glob.glob("src/ndsi/h264/windows/*.cpp")
 
 extensions = [
     Extension(
         name="ndsi.frame",
-        sources=h264_sources + ["ndsi/frame.pyx"],
+        sources=h264_sources + ["src/ndsi/frame.pyx"],
         include_dirs=[numpy.get_include()] + include_dirs,
         library_dirs=library_dirs,
         libraries=libs,
@@ -94,7 +94,7 @@ extensions = [
     ),
     Extension(
         name="ndsi.writer",
-        sources=h264_sources + ["ndsi/writer.pyx"],
+        sources=h264_sources + ["src/ndsi/writer.pyx"],
         include_dirs=[numpy.get_include()] + include_dirs,
         library_dirs=library_dirs,
         libraries=libs,
@@ -105,13 +105,4 @@ extensions = [
     ),
 ]
 
-setup(
-    extras_require={
-        # TODO: Publish pyuvc via PyPI and reenable:
-        # "examples": ["uvc"],
-        "dev": ["pytest", "bump2version", "black"],
-    },
-    description="Remote Device Sensor Interface",
-    packages=["ndsi"],
-    ext_modules=cythonize(extensions),
-)
+setup(ext_modules=cythonize(extensions))
