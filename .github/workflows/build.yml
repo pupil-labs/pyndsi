@@ -7,16 +7,8 @@ on:
       - "**"
 
 jobs:
-  black_check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Black Check
-        uses: jpetrucciani/black-check@20.8b1
-
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
-    needs: [black_check]
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -55,7 +47,6 @@ jobs:
 
   build_sdist:
     name: Build source distribution
-    needs: [black_check]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
