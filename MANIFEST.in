@@ -1,2 +1,2 @@
-recursive-include ndsi *.pyx *.pxd *.pxi *.h *.c *.cpp
+recursive-include src/ndsi *.pyx *.pxd *.pxi *.h *.c *.cpp
 include scripts/*.py
