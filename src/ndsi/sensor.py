@@ -11,25 +11,32 @@
 import abc
 import enum
 import json as serial
+import logging
 import traceback as tb
+
 import numpy as np
 import zmq
 
-import logging
-
 logger = logging.getLogger(__name__)
-
-from ndsi import StreamError
 
 import typing
 
-from ndsi.formatter import DataFormatter, DataFormat, DataMessage
-from ndsi.formatter import VideoDataFormatter, VideoValue
-from ndsi.formatter import GazeDataFormatter, GazeValue
-from ndsi.formatter import AnnotateDataFormatter, AnnotateValue
-from ndsi.formatter import IMUDataFormatter, IMUValue
-from ndsi.formatter import EventDataFormatter, EventValue
-
+from ndsi import StreamError
+from ndsi.formatter import (
+    AnnotateDataFormatter,
+    AnnotateValue,
+    DataFormat,
+    DataFormatter,
+    DataMessage,
+    EventDataFormatter,
+    EventValue,
+    GazeDataFormatter,
+    GazeValue,
+    IMUDataFormatter,
+    IMUValue,
+    VideoDataFormatter,
+    VideoValue,
+)
 
 NANO = 1e-9
 
@@ -89,7 +96,7 @@ class Sensor:
         try:
             return _SENSOR_TYPE_CLASS_MAP[sensor_type]
         except KeyError:
-            raise ValueError("Unknown sensor type: {}".format(sensor_type))
+            raise ValueError(f"Unknown sensor type: {sensor_type}")
 
     @staticmethod
     def create_sensor(sensor_type: SensorType, **kwargs) -> "Sensor":
@@ -171,7 +178,7 @@ class Sensor:
             raise NotDataSubSupportedError()
 
     def __str__(self):
-        return "<{} {}@{} [{}]>".format(__name__, self.name, self.host_name, self.type)
+        return f"<{__name__} {self.name}@{self.host_name} [{self.type}]>"
 
     def handle_notification(self):
         raw_notification = self.notify_sub.recv_multipart()
@@ -194,9 +201,7 @@ class Sensor:
             notification = serial.loads(notification_payload)
             notification["subject"]
         except serial.decoder.JSONDecodeError:
-            logger.debug(
-                "JSONDecodeError for payload: `{}`".format(notification_payload)
-            )
+            logger.debug(f"JSONDecodeError for payload: `{notification_payload}`")
         except Exception:
             logger.debug(tb.format_exc())
         else:
@@ -261,7 +266,7 @@ class Sensor:
                     ).format(control_id)
                 )
         else:
-            logger.error("Could not reset unknown control `{}`".format(control_id))
+            logger.error(f"Could not reset unknown control `{control_id}`")
 
     def set_control_value(self, control_id, value):
         try:

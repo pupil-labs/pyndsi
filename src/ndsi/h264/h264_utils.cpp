@@ -241,5 +241,3 @@ ret:
 
 }	// namespace media
 }	// namespace serenegiant
-
-

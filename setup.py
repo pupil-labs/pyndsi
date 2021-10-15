@@ -16,17 +16,6 @@ import numpy
 from Cython.Build import cythonize
 from setuptools import Extension, setup
 
-requirements = [
-    "numpy",
-    "pyzmq",
-    "zeromq-pyre",
-]
-
-here = pathlib.Path(__file__).parent
-with open(here / "README.md") as f:
-    long_description = f.read()
-
-
 libs = []
 library_dirs = []
 include_dirs = []
@@ -117,36 +106,12 @@ extensions = [
 ]
 
 setup(
-    name="ndsi",
-    version="1.4.2",
-    install_requires=requirements,
     extras_require={
         # TODO: Publish pyuvc via PyPI and reenable:
         # "examples": ["uvc"],
         "dev": ["pytest", "bump2version", "black"],
     },
     description="Remote Device Sensor Interface",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
     packages=["ndsi"],
     ext_modules=cythonize(extensions),
-    url="https://github.com/pupil-labs/pyndsi",
-    author="Pupil Labs",
-    author_email="info@pupil-labs.com",
-    license="LGPL-3.0",
-    classifiers={
-        "Development Status :: 5 - Production/Stable",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
-        "Natural Language :: English",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
-        "Programming Language :: Python :: 3.9",
-        "Programming Language :: Python :: Implementation :: CPython",
-        "Topic :: System :: Networking",
-    },
-    project_urls={"Changelog": "https://github.com/pupil-labs/pyndsi#Changelog"},
 )

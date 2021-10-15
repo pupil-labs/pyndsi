@@ -11,10 +11,11 @@
 
 import hashlib
 import logging
-from libc.string cimport memset
-from libc.stdint cimport int64_t, uint64_t
 
 cimport numpy as np
+from libc.stdint cimport int64_t, uint64_t
+from libc.string cimport memset
+
 import numpy as np
 
 from ndsi.h264 cimport get_vop_type_annexb

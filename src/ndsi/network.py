@@ -23,10 +23,8 @@ import zmq
 from pyre import Pyre, PyreEvent, zhelper
 
 from ndsi import __protocol_version__
-
 from ndsi.formatter import DataFormat
-from ndsi.sensor import SensorType, Sensor
-
+from ndsi.sensor import Sensor, SensorType
 
 logger = logging.getLogger(__name__)
 
@@ -193,9 +191,9 @@ class _NetworkNode(NetworkInterface):
                 msg["host_uuid"] = event.peer_uuid.hex
                 msg["host_name"] = event.peer_name
             except serial.decoder.JSONDecodeError:
-                logger.warning('Malformatted message: "{}"'.format(payload))
+                logger.warning(f'Malformatted message: "{payload}"')
             except (ValueError, KeyError):
-                logger.warning("Malformatted message: {}".format(msg))
+                logger.warning(f"Malformatted message: {msg}")
             except Exception:
                 logger.debug(tb.format_exc())
             else:
@@ -218,7 +216,7 @@ class _NetworkNode(NetworkInterface):
                         return
                     msg.update(sensor_entry)
                 else:
-                    logger.debug("Unknown host message: {}".format(msg))
+                    logger.debug(f"Unknown host message: {msg}")
                     return
                 self._execute_callbacks(msg)
         elif event.type == "JOIN":
@@ -247,7 +245,7 @@ class _NetworkNode(NetworkInterface):
                         }
                     )
         else:
-            logger.debug("Dropping {}".format(event))
+            logger.debug(f"Dropping {event}")
 
     def sensor(
         self, sensor_uuid: str, callbacks: typing.Iterable[NetworkEventCallback] = ()
@@ -255,15 +253,13 @@ class _NetworkNode(NetworkInterface):
         try:
             sensor_settings = self.sensors[sensor_uuid].copy()
         except KeyError:
-            raise ValueError('"{}" is not an available sensor id.'.format(sensor_uuid))
+            raise ValueError(f'"{sensor_uuid}" is not an available sensor id.')
 
         sensor_type_str = sensor_settings.pop("sensor_type", "unknown")
         sensor_type = SensorType.supported_sensor_type_from_str(sensor_type_str)
 
         if sensor_type is None:
-            raise ValueError(
-                'Sensor of type "{}" is not supported.'.format(sensor_type_str)
-            )
+            raise ValueError(f'Sensor of type "{sensor_type_str}" is not supported.')
 
         return Sensor.create_sensor(
             sensor_type=sensor_type,
@@ -276,7 +272,7 @@ class _NetworkNode(NetworkInterface):
     # Public
 
     def __str__(self):
-        return "<{} {} [{}]>".format(__name__, self._name, self._pyre_node.uuid().hex)
+        return f"<{__name__} {self._name} [{self._pyre_node.uuid().hex}]>"
 
     # Private
 
@@ -390,8 +386,8 @@ class Network(NetworkInterface):
         for node in self._nodes:
             if sensor_uuid in node.sensors:
                 return node.sensor(sensor_uuid=sensor_uuid, callbacks=callbacks)
-        raise ValueError('"{}" is not an available sensor id.'.format(sensor_uuid))
+        raise ValueError(f'"{sensor_uuid}" is not an available sensor id.')
 
 
 def group_name_from_format(format: DataFormat) -> str:
-    return "pupil-mobile-{}".format(format)
+    return f"pupil-mobile-{format}"

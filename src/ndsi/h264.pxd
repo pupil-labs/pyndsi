@@ -9,8 +9,9 @@
 ----------------------------------------------------------------------------------~(*)
 '''
 
-from libcpp.string cimport string
 cimport numpy as np
+from libcpp.string cimport string
+
 
 cdef extern from "<libavcodec/avcodec.h>":
     struct AVCodec:
