@@ -54,10 +54,20 @@ if os.environ.get("CIBUILDWHEEL"):
             assert os.path.exists(folder), f"{folder} not found!"
         libs += ["turbojpeg", "avutil", "avformat", "avcodec", "swscale"]
 elif platform.system() == "Darwin":
-    include_dirs += ["/usr/local/opt/jpeg-turbo/include/"]
-    libs += ["turbojpeg"]
-    library_dirs += ["/usr/local/opt/jpeg-turbo/lib/"]
-    libs += ["avutil", "avformat", "avcodec", "swscale"]
+    import subprocess
+
+    prefixes = (
+        subprocess.check_output(
+            ["brew", "--prefix", "--installed", "jpeg-turbo", "ffmpeg"]
+        )
+        .decode("utf-8")
+        .strip()
+        .splitlines()
+    )
+
+    include_dirs += [os.path.join(pre, "include") for pre in prefixes]
+    libs += ["turbojpeg", "avutil", "avformat", "avcodec", "swscale"]
+    library_dirs += [os.path.join(pre, "lib") for pre in prefixes]
 elif platform.system() == "Linux":
     libs = ["rt", "turbojpeg"]
     libs += ["avutil", "avformat", "avcodec", "swscale"]

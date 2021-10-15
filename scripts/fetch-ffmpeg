@@ -34,6 +34,10 @@ parser.add_argument("--config-file", default=__file__ + ".json")
 args = parser.parse_args()
 logging.basicConfig(level=logging.INFO)
 
+logging.info(sys.version)
+platform = get_platform()
+logging.info("Platform %s" % platform)
+
 # read config file
 with open(args.config_file, "r") as fp:
     config = json.load(fp)
@@ -45,7 +49,7 @@ if os.path.exists(args.destination_dir):
 os.mkdir(args.destination_dir)
 
 for url_template in config["urls"]:
-    tarball_url = url_template.replace("{platform}", get_platform())
+    tarball_url = url_template.replace("{platform}", platform)
 
     # download tarball
     tarball_name = tarball_url.split("/")[-1]

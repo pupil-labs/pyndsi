@@ -1,3 +1,49 @@
 [build-system]
 requires = ["setuptools", "wheel", "numpy", "Cython"]
 build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+archs = ["native"]
+skip = "{cp,pp}27-* {cp,pp}35-* {cp,pp}310-* pp* *win32"
+
+build-frontend = "build"
+
+test-command = "pytest {package}/tests"
+before-test = ""
+test-requires = ["pytest"]
+test-extras = []
+
+manylinux-x86_64-image = "manylinux2014"
+
+[tool.cibuildwheel.linux]
+before-all = """
+yum update -y &&
+yum install -y nasm &&
+python scripts/fetch-ffmpeg /tmp/vendor &&
+bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
+"""
+before-build = "git clean -dxf *.cpp *.so *.c dist/ build/"
+repair-wheel-command = """
+python -m pip install -U auditwheel==4.0.0 &&
+python -m auditwheel -V &&
+python -m auditwheel show {wheel} &&
+python -m auditwheel repair -w {dest_dir} {wheel}
+"""
+
+[tool.cibuildwheel.linux.environment]
+LD_LIBRARY_PATH="/tmp/libjpeg-turbo-build/lib:/tmp/vendor/lib:$LD_LIBRARY_PATH"
+PKG_CONFIG_PATH="/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/vendor/lib/pkgconfig"
+
+[tool.cibuildwheel.macos]
+before-all = """
+python scripts/fetch-ffmpeg /tmp/vendor &&
+bash -euxo pipefail scripts/fetch_libjpeg-turbo.sh
+"""
+
+[tool.cibuildwheel.macos.environment]
+LDFLAGS="-headerpad_max_install_names"
+PKG_CONFIG_PATH="/tmp/libjpeg-turbo-build/lib/pkgconfig:/tmp/vendor/lib/pkgconfig"
+
+[tool.cibuildwheel.windows]
+before-all = "pip install delvewheel && python scripts\\fetch-ffmpeg C:\\cibw\\vendor"
+repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel} --add-path C:\\cibw\\vendor\\bin"
