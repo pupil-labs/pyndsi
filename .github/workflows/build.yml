@@ -1,6 +1,10 @@
 name: CI Build
 
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    tags:
+      - "**"
 
 jobs:
   black_check:
@@ -65,7 +69,6 @@ jobs:
         with:
           name: distribution
           path: dist/
-
 
   publish:
     runs-on: ubuntu-latest
