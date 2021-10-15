@@ -14,7 +14,7 @@ We provide pre-compiled wheels for macOS, Windows, and Linux 64-bit architecture
 Python versions 3.6+. You can install them via
 
 ```
-python -m pip 
+python -m pip
 python -m pip install ndsi
 ```
 

@@ -1,13 +1,13 @@
-import logging
-import zmq
+import hashlib
 import json
+import logging
 import socket
 import struct
 import time
 
-from pyre import Pyre
 import uvc
-import hashlib
+import zmq
+from pyre import Pyre
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s",
@@ -27,24 +27,24 @@ def has_data(socket):
     return socket.get(zmq.EVENTS) & zmq.POLLIN
 
 
-class Bridge(object):
+class Bridge:
     """docstring for Bridge"""
 
     def __init__(self, uvc_id):
-        super(Bridge, self).__init__()
+        super().__init__()
 
         self.data_seq = 0
         self.note_seq = 0
 
         # init capture
         self.cap = uvc.Capture(uvc_id)
-        logger.info("Initialised uvc device {}".format(self.cap.name))
+        logger.info(f"Initialised uvc device {self.cap.name}")
 
         # init pyre
         self.network = Pyre(socket.gethostname() + self.cap.name[-4:])
         self.network.join(GROUP)
         self.network.start()
-        logger.info('Bridging under "{}"'.format(self.network.name()))
+        logger.info(f'Bridging under "{self.network.name()}"')
 
         # init sensor sockets
         ctx = zmq.Context()
@@ -117,9 +117,9 @@ class Bridge(object):
             try:
                 cmd = json.loads(cmd_str.decode())
             except Exception as e:
-                logger.debug("Could not parse received cmd: {}".format(cmd_str))
+                logger.debug(f"Could not parse received cmd: {cmd_str}")
             else:
-                logger.debug("Received cmd: {}".format(cmd))
+                logger.debug(f"Received cmd: {cmd}")
                 if cmd.get("action") == "refresh_controls":
                     self.publish_controls()
                 elif cmd.get("action") == "set_control_value":
@@ -203,7 +203,7 @@ class Bridge(object):
                     "caption": "Frame Rate",
                     "readonly": False,
                     "map": [
-                        {"value": idx, "caption": "{:.1f} Hz".format(fr)}
+                        {"value": idx, "caption": f"{fr:.1f} Hz"}
                         for idx, fr in enumerate(self.cap.frame_rates)
                     ],
                 },
