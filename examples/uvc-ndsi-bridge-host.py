@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 logging.getLogger("pyre").setLevel(logging.WARNING)
 logging.getLogger("uvc").setLevel(logging.WARNING)
 
-sequence_limit = 2 ** 32 - 1
+sequence_limit = 2**32 - 1
 
 GROUP = "pupil-mobile-v3"
 
