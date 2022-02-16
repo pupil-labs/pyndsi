@@ -1,5 +1,8 @@
 # Changelog
 
+## 1.4.4 (2022-02-16)
+- Support wheels for Pythn 3.10
+
 ## 1.4.3 (2021-10-15)
 - Fix distribution
 - Setup pre-commit.ci
