@@ -23,7 +23,7 @@ class StreamError(CaptureError):
 
 from ndsi.formatter import DataFormat
 
-__version__ = "1.4.3"
+__version__ = "1.4.4"
 __protocol_version__ = str(DataFormat.latest().version_major)
 
 
