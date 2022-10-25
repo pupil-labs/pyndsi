@@ -13,11 +13,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-20.04, macos-10.15, windows-2019]
+        os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: "3.9"
       - name: Install packages on macOS
@@ -38,9 +38,9 @@ jobs:
         run: C:\cibw\libjpeg-turbo.exe /S /D="C:\cibw\libjpeg-turbo-build"
 
       - name: Build wheels
-        uses: joerick/cibuildwheel@v2.1.3
+        uses: joerick/cibuildwheel@v2.11.1
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v3
         with:
           name: distribution
           path: ./wheelhouse/*.whl
@@ -49,8 +49,8 @@ jobs:
     name: Build source distribution
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-python@v1
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
         with:
           python-version: 3.7
       - name: Build source package
@@ -58,22 +58,22 @@ jobs:
           pip install build
           python -m build --sdist .
       - name: Upload source package
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: distribution
           path: dist/
 
   publish:
+    if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
     runs-on: ubuntu-latest
     needs: [build_wheels, build_sdist]
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/download-artifact@v2
+      - uses: actions/checkout@v3
+      - uses: actions/download-artifact@v3
         with:
           name: distribution
           path: dist/
       - name: Publish to PyPI
-        if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags/')
         uses: pypa/gh-action-pypi-publish@master
         with:
           user: __token__

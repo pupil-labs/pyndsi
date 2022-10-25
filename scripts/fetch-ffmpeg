@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Copied from https://github.com/PyAV-Org/PyAV/blob/9ac05d9ac902d71ecb2fe80f04dcae454008378c/scripts/fetch-vendor
+Copied from https://github.com/PyAV-Org/PyAV/blob/bc4eedd5fc474e0f25b22102b2771fe5a42bb1c7/scripts/fetch-vendor.py
 
 BSD 3-Clause "New" or "Revised" License
 https://github.com/PyAV-Org/PyAV/blob/9ac05d9ac902d71ecb2fe80f04dcae454008378c/LICENSE.txt
@@ -10,33 +10,38 @@ import argparse
 import logging
 import json
 import os
+import platform
 import shutil
 import struct
 import subprocess
-import sys
 
 
 def get_platform():
-    if sys.platform == "linux":
-        return "manylinux_%s" % os.uname().machine
-    elif sys.platform == "darwin":
-        return "macosx_%s" % os.uname().machine
-    elif sys.platform == "win32":
-        return "win%s" % (struct.calcsize("P") * 8)
+    system = platform.system()
+    machine = platform.machine()
+    if system == "Linux":
+        return f"manylinux_{machine}"
+    elif system == "Darwin":
+        # cibuildwheel sets ARCHFLAGS:
+        # https://github.com/pypa/cibuildwheel/blob/5255155bc57eb6224354356df648dc42e31a0028/cibuildwheel/macos.py#L207-L220
+        if "ARCHFLAGS" in os.environ:
+            machine = os.environ["ARCHFLAGS"].split()[1]
+        return f"macosx_{machine}"
+    elif system == "Windows":
+        if struct.calcsize("P") * 8 == 64:
+            return "win_amd64"
+        else:
+            return "win32"
     else:
-        raise Exception("Unsupported platfom %s" % sys.platform)
+        raise Exception(f"Unsupported system {system}")
 
 
 parser = argparse.ArgumentParser(description="Fetch and extract tarballs")
 parser.add_argument("destination_dir")
 parser.add_argument("--cache-dir", default="tarballs")
-parser.add_argument("--config-file", default=__file__ + ".json")
+parser.add_argument("--config-file", default=os.path.splitext(__file__)[0] + ".json")
 args = parser.parse_args()
 logging.basicConfig(level=logging.INFO)
-
-logging.info(sys.version)
-platform = get_platform()
-logging.info("Platform %s" % platform)
 
 # read config file
 with open(args.config_file, "r") as fp:
@@ -46,10 +51,10 @@ with open(args.config_file, "r") as fp:
 logging.info("Creating directory %s" % args.destination_dir)
 if os.path.exists(args.destination_dir):
     shutil.rmtree(args.destination_dir)
-os.mkdir(args.destination_dir)
+os.makedirs(args.destination_dir)
 
 for url_template in config["urls"]:
-    tarball_url = url_template.replace("{platform}", platform)
+    tarball_url = url_template.replace("{platform}", get_platform())
 
     # download tarball
     tarball_name = tarball_url.split("/")[-1]

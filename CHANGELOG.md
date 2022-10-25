@@ -1,7 +1,11 @@
 # Changelog
 
+## 1.4.5 (WIP)
+- Support wheels for Python 3.11
+- Upgrade vendored ffmpeg to 5.1.2
+
 ## 1.4.4 (2022-02-16)
-- Support wheels for Pythn 3.10
+- Support wheels for Python 3.10
 
 ## 1.4.3 (2021-10-15)
 - Fix distribution

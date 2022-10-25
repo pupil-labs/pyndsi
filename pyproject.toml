@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
 archs = ["native"]
-skip = "cp27-* cp35-* pp* *win32"
+skip = "cp27-* cp35-* pp* *win32 *musllinux*"
 
 build-frontend = "build"
 
