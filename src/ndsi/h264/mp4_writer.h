@@ -38,7 +38,7 @@ class Mp4Writer {
 private:
 	const std::string file_name;
 	AVFormatContext *format_context;
-	AVOutputFormat *format;
+	const struct AVOutputFormat *format;
 	AVDictionary *option;
 	std::vector<MediaStream *> streams;
 	volatile bool is_running;

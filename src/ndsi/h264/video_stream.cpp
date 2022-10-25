@@ -29,8 +29,7 @@ namespace serenegiant {
 namespace media {
 
 AVCodecContext *default_codec() {
-	avcodec_register_all();
-	struct AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+	const AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
 	return avcodec_alloc_context3(codec);
 }
 

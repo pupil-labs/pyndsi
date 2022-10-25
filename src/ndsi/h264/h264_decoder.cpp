@@ -55,8 +55,7 @@ H264Decoder::H264Decoder(const color_format_t &_color_format)
 		break;
 	}
 
-	avcodec_register_all();
-	struct AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
+	const AVCodec *codec = avcodec_find_decoder(AV_CODEC_ID_H264);
 	if (LIKELY(codec)) {
 		codec_context = avcodec_alloc_context3(codec);
 		if (LIKELY(codec_context)) {
