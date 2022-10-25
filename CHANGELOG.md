@@ -1,6 +1,6 @@
 # Changelog
 
-## 1.4.5 (WIP)
+## 1.4.5 (2022-10-25)
 - Support wheels for Python 3.11
 - Upgrade vendored ffmpeg to 5.1.2
 - Use setuptools_scm instead of bump2version
