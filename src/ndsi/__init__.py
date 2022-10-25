@@ -23,7 +23,17 @@ class StreamError(CaptureError):
 
 from ndsi.formatter import DataFormat
 
-__version__ = "1.4.4"
+try:
+    from importlib.metadata import PackageNotFoundError, version
+except ImportError:
+    from importlib_metadata import PackageNotFoundError, version
+
+try:
+    __version__ = version("ndsi")
+except PackageNotFoundError:
+    # package is not installed
+    __version__ = "unknown"
+
 __protocol_version__ = str(DataFormat.latest().version_major)
 
 
@@ -31,3 +41,5 @@ from ndsi import frame
 from ndsi.network import Network
 from ndsi.sensor import Sensor
 from ndsi.writer import H264Writer
+
+__all__ = ["Network", "Sensor", "H264Writer", "__version__", "frame"]
