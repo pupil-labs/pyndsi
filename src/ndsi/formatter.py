@@ -1,5 +1,4 @@
 import abc
-import collections
 import enum
 import functools
 import struct
@@ -37,7 +36,8 @@ NANO = 1e-9
 """
 To add a new data format version, in `formatter.py`:
 1. Add a new case to the `DataFormat` enum.
-2. For each concrete sublcass of `DataFormatter` (except `UnsupportedFormatter`), extend the implementation of `get_formatter` to correctly handle the new format version.
+2. For each concrete sublcass of `DataFormatter` (except `UnsupportedFormatter`), extend
+   the implementation of `get_formatter` to correctly handle the new format version.
 3. Run the test suit to make sure that all the tests pass again.
 4. Write additional tests to cover the custom behaviour of the new data format.
 """
@@ -46,7 +46,8 @@ To add a new data format version, in `formatter.py`:
 @enum.unique
 class DataFormat(enum.Enum):
     """
-    `DataFormat` enum represents the format for serializing and deserializing data between NDSI hosts and clients.
+    `DataFormat` enum represents the format for serializing and deserializing data
+    between NDSI hosts and clients.
     """
 
     V3 = "v3"
@@ -97,7 +98,8 @@ class DataFormatter(typing.Generic[DataValue], abc.ABC):
 
 class UnsupportedFormatter(DataFormatter[typing.Any]):
     """
-    Represents a formatter that is not supported for a specific data format and sensor type combination.
+    Represents a formatter that is not supported for a specific data format and sensor
+    type combination.
     """
 
     @staticmethod
@@ -145,7 +147,7 @@ class _VideoDataFormatter_V3(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLdLL", data_msg.header)
         meta_data_mutable = list(meta_data)
-        meta_data_mutable[4] *= 1e6  #  Convert timestamp s -> us
+        meta_data_mutable[4] *= 1e6  # Convert timestamp s -> us
         meta_data = tuple(meta_data_mutable)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
             yield self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)
@@ -161,7 +163,7 @@ class _VideoDataFormatter_V4(VideoDataFormatter):
     def decode_msg(self, data_msg: DataMessage) -> VideoValue:
         meta_data = struct.unpack("<LLLLQLL", data_msg.header)
         meta_data_mutable = list(meta_data)
-        meta_data_mutable[4] /= 1e3  #  Convert timestamp ns -> us
+        meta_data_mutable[4] /= 1e3  # Convert timestamp ns -> us
         meta_data = tuple(meta_data_mutable)
         if meta_data[0] == VIDEO_FRAME_FORMAT_MJPEG:
             yield self._frame_factory.create_jpeg_frame(data_msg.body, meta_data)

@@ -116,7 +116,7 @@ class Bridge:
             sensor, cmd_str = self.cmd.recv_multipart()
             try:
                 cmd = json.loads(cmd_str.decode())
-            except Exception as e:
+            except Exception:
                 logger.debug(f"Could not parse received cmd: {cmd_str}")
             else:
                 logger.debug(f"Received cmd: {cmd}")

@@ -1,5 +1,3 @@
-import pytest
-
 from ndsi.sensor import Sensor, SensorType
 
 

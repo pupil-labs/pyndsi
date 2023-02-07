@@ -10,17 +10,13 @@
 
 import abc
 import collections
-import functools
-import itertools
 import json as serial
 import logging
-import sys
-import time
 import traceback as tb
 import typing
 
 import zmq
-from pyre import Pyre, PyreEvent, zhelper
+from pyre import Pyre, PyreEvent
 
 from ndsi import __protocol_version__
 from ndsi.formatter import DataFormat
@@ -181,7 +177,7 @@ class _NetworkNode(NetworkInterface):
         if not self.has_events:
             return
         event = PyreEvent(self._pyre_node)
-        uuid = event.peer_uuid
+        # uuid = event.peer_uuid
         if event.type == "SHOUT" or event.type == "WHISPER":
             try:
                 payload = event.msg.pop(0).decode()
@@ -225,9 +221,10 @@ class _NetworkNode(NetworkInterface):
             # - [<unrelated group>, <unrelated version>]
             # - ['pupil-mobile']
             # - ['pupil-mobile', <version>]
-            group_version = event.group.split("-v")
-            group = group_version[0]
-            version = group_version[1] if len(group_version) > 1 else "0"
+            # group_version = event.group.split("-v")
+            # group = group_version[0]
+            # version = group_version[1] if len(group_version) > 1 else "0"
+            pass
 
         elif event.type == "EXIT":
             gone_peer = event.peer_uuid.hex
@@ -391,3 +388,6 @@ class Network(NetworkInterface):
 
 def group_name_from_format(format: DataFormat) -> str:
     return f"pupil-mobile-{format}"
+
+
+__all__ = ["__protocol_version__"]
