@@ -13,13 +13,9 @@ import enum
 import json as serial
 import logging
 import traceback as tb
-
-import numpy as np
-import zmq
-
-logger = logging.getLogger(__name__)
-
 import typing
+
+import zmq
 
 from ndsi import StreamError
 from ndsi.formatter import (
@@ -38,6 +34,7 @@ from ndsi.formatter import (
     VideoValue,
 )
 
+logger = logging.getLogger(__name__)
 NANO = 1e-9
 
 
@@ -53,8 +50,11 @@ class NotDataSubSupportedError(Exception):
 To add a new sensor, in `sensor.py`:
 1. Add a new case to the `SensorType` enum.
 2. Add a new subclass of `Sensor` and implement the custom sensor behaviour.
-3. Add a new entry into the `_SENSOR_TYPE_CLASS_MAP`, mapping the new `SensorType` case to the new `Sensor` subclass.
-4. (Optional) If the new `Sensor` subclass will include `SensorFetchDataMixin`, the subclass must define a property `formatter` that returns an instance of `DataFormatter` which serializes/deserializes the data handled by the sensor.
+3. Add a new entry into the `_SENSOR_TYPE_CLASS_MAP`, mapping the new `SensorType` case
+   to the new `Sensor` subclass.
+4. (Optional) If the new `Sensor` subclass will include `SensorFetchDataMixin`, the
+   subclass must define a property `formatter` that returns an instance of
+   `DataFormatter` which serializes/deserializes the data handled by the sensor.
 5. Run the test suit to make sure that all the tests pass again.
 6. Write additional tests to cover the custom behaviour of the new sensor type.
 """
@@ -101,8 +101,9 @@ class Sensor:
     @staticmethod
     def create_sensor(sensor_type: SensorType, **kwargs) -> "Sensor":
         sensor_class = Sensor.class_for_type(sensor_type=sensor_type)
-        # TODO: Passing sensor_type to the class init as str, to preserve API compatibility.
-        #       Ideally, the sensor_type passed and stored by Sensor is of type SensorType.
+        # TODO: Passing sensor_type to the class init as str, to preserve API
+        #       compatibility. Ideally, the sensor_type passed and stored by Sensor is
+        #       of type SensorType.
         kwargs["sensor_type"] = str(sensor_type)
         return sensor_class(**kwargs)
 
@@ -207,7 +208,7 @@ class Sensor:
         else:
             try:
                 self.execute_callbacks(notification)
-            except:
+            except Exception:
                 logger.debug(tb.format_exc())
 
     def execute_callbacks(self, event):
@@ -261,9 +262,8 @@ class Sensor:
                 self.set_control_value(control_id, value)
             else:
                 logger.error(
-                    (
-                        "Could not reset control `{}` because it does not have a default value."
-                    ).format(control_id)
+                    f"Could not reset control `{control_id}` because it does not have a"
+                    " default value."
                 )
         else:
             logger.error(f"Could not reset unknown control `{control_id}`")

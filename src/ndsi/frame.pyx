@@ -50,22 +50,6 @@ VIDEO_FRAME_FORMAT_MJPEG       = 0x10
 VIDEO_FRAME_FORMAT_H264        = 0x12
 VIDEO_FRAME_FORMAT_VP8         = 0x13
 
-class CaptureError(Exception):
-    def __init__(self, message):
-        super(CaptureError, self).__init__()
-        self.message = message
-
-class StreamError(CaptureError):
-    def __init__(self, message):
-        super(StreamError, self).__init__(message)
-        self.message = message
-
-class InitError(CaptureError):
-    def __init__(self, message):
-        super(InitError, self).__init__(message)
-        self.message = message
-
-
 cdef class FrameFactory:
 
     def __cinit__(self, *args, **kwargs):

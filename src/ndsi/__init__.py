@@ -8,19 +8,7 @@
 ----------------------------------------------------------------------------------~(*)
 """
 
-
-class CaptureError(Exception):
-    def __init__(self, message):
-        super().__init__()
-        self.message = message
-
-
-class StreamError(CaptureError):
-    def __init__(self, message):
-        super().__init__(message)
-        self.message = message
-
-
+from ndsi.errors import CaptureError, StreamError
 from ndsi.formatter import DataFormat
 
 try:
@@ -42,4 +30,12 @@ from ndsi.network import Network
 from ndsi.sensor import Sensor
 from ndsi.writer import H264Writer
 
-__all__ = ["Network", "Sensor", "H264Writer", "__version__", "frame"]
+__all__ = [
+    "__version__",
+    "CaptureError",
+    "frame",
+    "H264Writer",
+    "Network",
+    "Sensor",
+    "StreamError",
+]

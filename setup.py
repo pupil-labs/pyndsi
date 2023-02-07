@@ -9,7 +9,6 @@
 """
 import glob
 import os
-import pathlib
 import platform
 
 import numpy

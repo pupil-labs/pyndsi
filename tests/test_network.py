@@ -1,5 +1,3 @@
-import pytest
-
 from ndsi.formatter import DataFormat
 from ndsi.network import group_name_from_format
 

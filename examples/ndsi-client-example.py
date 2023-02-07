@@ -1,7 +1,8 @@
 import logging
-import signal
 import sys
 import time
+
+import ndsi
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)8s | %(name)-14s] %(message)s",
@@ -10,8 +11,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 logging.getLogger("pyre").setLevel(logging.WARNING)
-
-import ndsi
 
 sensors = {}
 
