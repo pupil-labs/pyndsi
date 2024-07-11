@@ -61,16 +61,20 @@ H264Decoder::H264Decoder(const color_format_t &_color_format)
 		if (LIKELY(codec_context)) {
 			codec_context->pix_fmt = color_format;
 			codec_context->flags2 |= AV_CODEC_FLAG2_CHUNKS;
+#if LIBAVCODEC_VERSION_MAJOR < 60
 			if (codec->capabilities & AV_CODEC_CAP_TRUNCATED) {
 				codec_context->flags |= AV_CODEC_FLAG_TRUNCATED;
 			}
+#endif
 			int result = avcodec_open2(codec_context, codec, NULL);
 			if (LIKELY(!result)) {
 				src = av_frame_alloc();
 				dst = av_frame_alloc();
 			} else {
 				LOGE("avcodec_open2 failed with error %d:%s", result, av_error(result).c_str());
+# if LIBAVCODEC_VERSION_MAJOR < 61
 				avcodec_close(codec_context);
+# endif
 				av_free(codec_context);
 				codec_context = NULL;
 			}
@@ -91,7 +95,9 @@ H264Decoder::~H264Decoder() {
 	ENTER();
 
 	if (codec_context) {
+# if LIBAVCODEC_VERSION_MAJOR < 61
 		avcodec_close(codec_context);
+# endif
 		av_free(codec_context);
 		codec_context = NULL;
 	}
